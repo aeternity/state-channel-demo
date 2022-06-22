@@ -1,0 +1,14 @@
+version: '3'
+services:
+  node:
+    image: aeternity/aeternity:${NODE_TAG}
+    hostname: node
+    ports: ["3013:3013", "3113:3113", "3014:3014", "3114:3114"]
+    volumes:
+      - ./docker/aeternity_node_mean16.yaml:/home/aeternity/node/aeternity.yaml
+      - ./docker/accounts_test.json:/home/aeternity/node/data/aecore/.genesis/accounts_test.json
+
+  compiler:
+    image: aeternity/aesophia_http:${COMPILER_TAG}
+    hostname: compiler
+    ports: ["3080:3080"]
