@@ -12,6 +12,7 @@ module.exports = {
     'plugin:prettier/recommended',
     'prettier',
     '@vue/typescript/recommended',
+    '@vue/eslint-config-airbnb',
   ],
   rules: {
     'prettier/prettier': ['error', { endOfLine: 'auto' }],
