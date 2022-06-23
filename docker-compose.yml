@@ -1,14 +1,49 @@
-version: '3'
+version: "3.8"
+
 services:
   node:
-    image: aeternity/aeternity:${NODE_TAG}
+    image: aeternity/aeternity:${NODE_TAG-v6.5.1}
     hostname: node
     ports: ["3013:3013", "3113:3113", "3014:3014", "3114:3114"]
     volumes:
       - ./docker/aeternity_node_mean16.yaml:/home/aeternity/node/aeternity.yaml
       - ./docker/accounts_test.json:/home/aeternity/node/data/aecore/.genesis/accounts_test.json
+    logging:
+      driver: none
+    networks:      
+      - game_network
 
   compiler:
-    image: aeternity/aesophia_http:${COMPILER_TAG}
+    image: aeternity/aesophia_http:${COMPILER_TAG-v6.1.0}
     hostname: compiler
     ports: ["3080:3080"]
+    logging:
+      driver: none
+    networks:      
+      - game_network
+    depends_on:
+      - node
+    
+  api:
+    build:
+      context: ./nodejs
+      dockerfile: ./Dockerfile
+      target: development
+    volumes:
+      - .:/app
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_URL=http://node:3013
+      - WS_URL=ws://node:3014/channel
+      - COMPILER_URL=http://compiler:3080
+    networks:      
+      - game_network
+    links:
+      - node
+      - compiler
+    
+networks:
+  game_network: 
+    driver: bridge
