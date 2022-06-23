@@ -1,0 +1,6 @@
+*.md
+build
+coverage
+public
+package.json
+package-lock.json
