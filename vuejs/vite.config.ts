@@ -9,4 +9,7 @@ export default defineConfig({
     include: ['./tests/**/*.test.ts'],
     environment: 'jsdom',
   },
+  server: {
+    port: Number(process.env.PORT) || 8000,
+  },
 });
