@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import HelloWorld from './components/HelloWorld.vue';
 </script>
 
 <template>
-  <img alt="Aeternity logo" src="./assets/logo.png" :style="{width: '100px'}" />
+  <img
+    alt="Aeternity logo"
+    src="./assets/logo.png"
+    :style="{ width: '100px' }"
+  />
   <HelloWorld msg="State Channel Demo Front" />
 </template>
 
