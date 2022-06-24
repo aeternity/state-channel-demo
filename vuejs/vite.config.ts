@@ -9,4 +9,10 @@ export default defineConfig({
     include: ['./tests/**/*.test.ts'],
     environment: 'jsdom',
   },
+  server: {
+    watch: {
+      usePolling: true,
+    },
+    port: Number(process.env.PORT) || 8000,
+  },
 });
