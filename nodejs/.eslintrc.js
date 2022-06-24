@@ -22,6 +22,9 @@ module.exports = {
       }
     }
   },
+  env: {
+    jest: true
+  },
   "rules": {
     "import/extensions": [
       "error",
@@ -33,6 +36,7 @@ module.exports = {
     ],
     "import/prefer-default-export": 0,
     "@typescript-eslint/no-shadow": 0,
+    "@typescript-eslint/no-explicit-any": 0,
     "no-shadow": 0,
     "no-void": 0,
     "no-console": 0,
