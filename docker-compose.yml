@@ -51,7 +51,7 @@ services:
       target: development
     volumes:
       - .:/app
-    command: npm run "dev:host"
+    command: sh -c "npm rebuild esbuild && npm run dev:host"
     depends_on:
       - bot_service
     ports:
