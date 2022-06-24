@@ -10,6 +10,9 @@ export default defineConfig({
     environment: 'jsdom',
   },
   server: {
+    watch: {
+      usePolling: true,
+    },
     port: Number(process.env.PORT) || 8000,
   },
 });
