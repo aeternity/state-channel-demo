@@ -24,7 +24,7 @@ services:
     depends_on:
       - node
     
-  api:
+  bot_service:
     build:
       context: ./nodejs
       dockerfile: ./Dockerfile
@@ -43,6 +43,25 @@ services:
     links:
       - node
       - compiler
+  
+  client:
+    build:
+      context: ./vuejs
+      dockerfile: ./Dockerfile
+      target: development
+    volumes:
+      - .:/app
+    command: sh -c "npm rebuild esbuild && npm run dev:host"
+    depends_on:
+      - bot_service
+    ports:
+      - "8000:8000"
+    environment: 
+      NODE_ENV: development
+      BOT_SERVICE_URL: http://bot_service:3000
+      PORT: 8000
+    networks:      
+      - game_network
     
 networks:
   game_network: 
