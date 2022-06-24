@@ -1,0 +1,8 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+cd vuejs
+npm run lint-frontend
+
+cd ../nodejs
+npm run lint-backend
