@@ -69,3 +69,12 @@ export async function generateGameSession(playerKey: EncodedData<'ak'>) {
   await Promise.all([waitForChannel(channel)]);
   return channel;
 }
+
+export default {
+  generateGameSession,
+  removeChannel,
+  addChannel,
+  channelPool,
+  registerEvents,
+  fundAccount,
+};
