@@ -1,9 +1,9 @@
 import {
-  AeSdk,
-  Node,
-  MemoryAccount,
-  generateKeyPair,
   AccountBase,
+  AeSdk,
+  generateKeyPair,
+  MemoryAccount,
+  Node,
 } from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 

@@ -1,12 +1,12 @@
+import { Channel } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
-import { MemoryAccount, generateKeyPair, Channel } from '@aeternity/aepp-sdk';
-import { getSdk, BaseAe, networkId } from '../sdk/sdk.service.development';
+import { BaseAe, getSdk, networkId } from '../sdk/sdk.service.development';
 
 const channelPool = new WeakSet<Channel>();
 
-const baseChannelConfig = {
+export const baseChannelConfig = {
   url: process.env.WS_URL ?? 'ws://localhost:3014/channel',
   pushAmount: 3,
   initiatorAmount: new BigNumber('1e2'),
@@ -25,8 +25,8 @@ function addChannel(channel: Channel) {
 }
 
 async function fundAccount(account: EncodedData<'ak'>) {
-  const sdk = await getSdk();
-  return sdk.spend(1e18, account);
+  const genesis = await BaseAe({ networkId });
+  await genesis.spend(1e18, account, { confirm: true });
 }
 
 function registerEvents(channel: Channel) {
@@ -46,10 +46,7 @@ export async function generateGameSession(
   playerNodeHost: string,
   playerNodePort: number,
 ) {
-  const bot = await BaseAe({
-    accounts: [new MemoryAccount({ keypair: generateKeyPair() })],
-    networkId,
-  });
+  const bot = await getSdk();
 
   const initiatorId = await bot.address();
   const responderId = playerAddress;

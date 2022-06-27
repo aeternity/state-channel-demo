@@ -21,6 +21,7 @@ router.post('/open', (async (req, res) => {
     const config = await generateGameSession(address, host, port);
     return res.send(config);
   } catch (e) {
+    console.log(e);
     return res.status(500).json({ error: (e as Error).message });
   }
 }) as express.RequestHandler);

@@ -1,17 +1,14 @@
-import express from 'express';
-import cors from 'cors';
-import Controller from './controller';
+import { app } from './app';
 
-const app = express();
+const start = (port: string | number) => {
+  try {
+    app.listen(port, () => {
+      console.log(`Api running at port ${port}`);
+    });
+  } catch (err) {
+    console.error(err);
+    process.exit();
+  }
+};
 
-app.use(cors());
-app.use(express.json());
-app.use('/', Controller);
-
-function start() {
-  console.log('Started!');
-}
-
-app.listen(process.env.BOT_SERVICE_PORT || 3000, () => {
-  void start();
-});
+start(process.env.BOT_SERVICE_PORT || 3000);
