@@ -11,7 +11,7 @@
     "coverage": "vitest run --coverage",
     "lint": "eslint --ext .js,.vue,.ts --ignore-path .gitignore --fix src tests",
     "format": "prettier .  --write",
-    "prepare": "cd .. && husky install vuejs/.husky",
+    "prepare": "cd .. && husky install .husky",
     "lint-frontend": "lint-staged",
     "test-prepush": "vitest run"
   },

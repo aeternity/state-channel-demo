@@ -11,7 +11,7 @@
     "test": "jest --detectOpenHandles",
     "test:cov": "jest --detectOpenHandles --coverage",
     "test:watch": "jest --detectOpenHandles --watch",
-    "prepare": "cd .. && husky install nodejs/.husky",
+    "prepare": "cd .. && husky install .husky",
     "lint-backend": "lint-staged",
     "test-prepush": "npm run test"
   },
