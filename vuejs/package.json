@@ -10,26 +10,41 @@
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "eslint --ext .js,.vue,.ts --ignore-path .gitignore --fix src tests",
-    "format": "prettier .  --write"
+    "format": "prettier .  --write",
+    "prepare": "cd .. && husky install .husky",
+    "lint-frontend": "lint-staged",
+    "test-prepush": "vitest run"
+  },
+  "lint-staged": {
+    "*.{js,ts,vue}": [
+      "eslint --quiet --fix"
+    ],
+    "*.{json,md,html,js,vue,ts}": [
+      "npm run format"
+    ]
   },
   "dependencies": {
     "@aeternity/aepp-sdk": "^12.0.0",
+    "@vitejs/plugin-vue": "^2.3.3",
     "@vue/eslint-config-airbnb": "^6.0.0",
     "@vue/eslint-config-typescript": "^11.0.0",
     "@vue/test-utils": "^2.0.0",
     "pinia": "^2.0.14",
-    "vitest": "^0.15.2",
     "vite": "^2.9.9",
-    "@vitejs/plugin-vue": "^2.3.3",
+    "vitest": "^0.15.2",
     "vue": "^3.2.25"
   },
   "devDependencies": {
+    "@commitlint/cli": "^17.0.2",
+    "@commitlint/config-conventional": "^17.0.2",
     "c8": "^7.11.3",
     "eslint": "^8.18.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-vue": "^9.1.1",
+    "husky": "^8.0.1",
     "jsdom": "^20.0.0",
+    "lint-staged": "^13.0.2",
     "prettier": "2.7.1",
     "sass": "^1.52.3",
     "typescript": "^4.5.4",
