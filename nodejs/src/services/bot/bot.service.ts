@@ -1,23 +1,20 @@
+import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import { MemoryAccount, generateKeyPair, Channel } from '@aeternity/aepp-sdk';
 import { getSdk, BaseAe, networkId } from '../sdk/sdk.service.development';
-import { waitForChannel } from '../sdk/sdk.service';
 
 const channelPool = new WeakSet<Channel>();
 
-const channelConfig = {
+const baseChannelConfig = {
   url: process.env.WS_URL ?? 'ws://localhost:3014/channel',
   pushAmount: 3,
   initiatorAmount: new BigNumber('1e2'),
   responderAmount: new BigNumber('1e2'),
   channelReserve: 0,
   ttl: 10000,
-  host: 'localhost',
-  port: 3001,
   lockPeriod: 1,
   debug: false,
-  role: 'initiator',
 };
 
 function removeChannel(channel: Channel) {
@@ -44,30 +41,38 @@ function registerEvents(channel: Channel) {
   });
 }
 
-export async function generateGameSession(playerKey: EncodedData<'ak'>) {
+export async function generateGameSession(
+  playerAddress: EncodedData<'ak'>,
+  playerNodeHost: string,
+  playerNodePort: number,
+) {
   const bot = await BaseAe({
     accounts: [new MemoryAccount({ keypair: generateKeyPair() })],
     networkId,
   });
 
   const initiatorId = await bot.address();
-  const responderId = playerKey;
+  const responderId = playerAddress;
 
   await fundAccount(initiatorId);
   await fundAccount(responderId);
 
-  const channel = await Channel.initialize({
-    ...channelConfig,
+  const channelConfig: ChannelOptions = {
+    ...baseChannelConfig,
     initiatorId,
+    port: playerNodePort,
+    host: playerNodeHost,
     responderId,
     role: 'initiator',
-    sign: (_tag, tx) => bot.signTransaction(tx),
-  });
+    sign: (_tag: string, tx: EncodedData<'tx'>) => bot.signTransaction(tx),
+  };
+
+  const channel = await Channel.initialize(channelConfig);
 
   registerEvents(channel);
 
-  await Promise.all([waitForChannel(channel)]);
-  return channel;
+  const { role, sign, ...responderConfig } = channelConfig;
+  return responderConfig;
 }
 
 export default {

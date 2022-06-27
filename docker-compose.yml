@@ -38,6 +38,7 @@ services:
       - NODE_URL=http://node:3013
       - WS_URL=ws://node:3014/channel
       - COMPILER_URL=http://compiler:3080
+      - BOT_SERVICE_PORT=3000
     networks:      
       - game_network
     links:
@@ -58,7 +59,7 @@ services:
       - "8000:8000"
     environment: 
       NODE_ENV: development
-      BOT_SERVICE_URL: http://bot_service:3000
+      VITE_BOT_SERVICE_URL: http://localhost:3000
       PORT: 8000
     networks:      
       - game_network
