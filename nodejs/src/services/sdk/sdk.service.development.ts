@@ -46,7 +46,7 @@ export const BaseAe = async (
   return sdk;
 };
 
-export const spendPromise = (async () => {
+export const spendPromise = () => (async () => {
   const ae = await BaseAe({ networkId, withoutGenesisAccount: false });
   await ae.awaitHeight(2);
   await ae.spend(1e26, account.publicKey);
@@ -55,7 +55,7 @@ export const spendPromise = (async () => {
 export async function getSdk({
   withoutAccount,
 }: { withoutAccount?: boolean } = {}): Promise<AeSdk> {
-  await spendPromise;
+  await spendPromise();
 
   return BaseAe({
     ...(withoutAccount === true
