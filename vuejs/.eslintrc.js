@@ -15,6 +15,7 @@ module.exports = {
     '@vue/eslint-config-airbnb',
   ],
   rules: {
-    'prettier/prettier': ['error', { endOfLine: 'auto' }],
+    'prettier/prettier': ['error', { endOfLine: 'lf' }],
+    'linebreak-style': ['error', 'unix'],
   },
 };
