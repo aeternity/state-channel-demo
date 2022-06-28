@@ -1,3 +1,5 @@
+require('@rushstack/eslint-patch/modern-module-resolution');
+
 module.exports = {
   env: {
     node: true,
@@ -9,10 +11,10 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:vue/vue3-essential',
+    '@vue/typescript/recommended',
+    '@vue/eslint-config-typescript',
     'plugin:prettier/recommended',
     'prettier',
-    '@vue/typescript/recommended',
-    '@vue/eslint-config-airbnb',
   ],
   rules: {
     'prettier/prettier': ['error', { endOfLine: 'lf' }],

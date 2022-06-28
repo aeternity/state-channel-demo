@@ -58,8 +58,11 @@ services:
     ports:
       - "8000:8000"
     environment: 
-      NODE_ENV: development
+      VITE_NODE_ENV: development
       VITE_BOT_SERVICE_URL: http://localhost:3000
+      VITE_NODE_PORT: 3013
+      VITE_NODE_URL: http://localhost
+      VITE_COMPILER_URL: http://localhost:3080
       PORT: 8000
     networks:      
       - game_network

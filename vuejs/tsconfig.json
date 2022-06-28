@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2020",
     "useDefineForClassFields": true,
-    "module": "es6",
+    "module": "es2020",
     "moduleResolution": "node",
     "strict": true,
     "jsx": "preserve",
@@ -10,7 +10,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "lib": ["es2020", "dom"],
+    "lib": ["es2020", "esnext", "dom"],
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
