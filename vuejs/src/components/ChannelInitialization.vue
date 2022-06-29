@@ -69,7 +69,7 @@ function completeChannelConfig(channelConf: ChannelOptions) {
     sign: (_tag: string, tx: EncodedData<'tx'>) => account.signTransaction(tx),
     url:
       import.meta.env.VITE_NODE_ENV == 'development'
-        ? 'ws://localhost:3014/channel'
+        ? import.meta.env.VITE_WS_URL
         : channelConf.url,
   });
 }

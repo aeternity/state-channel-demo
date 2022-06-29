@@ -55,7 +55,9 @@ export const spendPromise = () => (async () => {
 export async function getSdk({
   withoutAccount,
 }: { withoutAccount?: boolean } = {}): Promise<AeSdk> {
-  await spendPromise();
+  if (!process.env.NODE_URL.includes('testnet.aeternity.io')) {
+    await spendPromise();
+  }
 
   return BaseAe({
     ...(withoutAccount === true

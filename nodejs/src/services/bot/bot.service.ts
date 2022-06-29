@@ -2,6 +2,7 @@ import { Channel } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
+import axios from 'axios';
 import { BaseAe, getSdk, networkId } from '../sdk/sdk.service.development';
 
 const channelPool = new WeakSet<Channel>();
@@ -24,9 +25,25 @@ function addChannel(channel: Channel) {
   channelPool.add(channel);
 }
 
+async function fundThroughFaucet(account: EncodedData<'ak'>) {
+  const FAUCET_URL = 'https://faucet.aepps.com/';
+  try {
+    await axios.post(`${FAUCET_URL}/account/${account}`, {});
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
 async function fundAccount(account: EncodedData<'ak'>) {
-  const genesis = await BaseAe({ networkId });
-  await genesis.spend(1e18, account, { confirm: true });
+  if (process?.env?.NODE_URL?.includes('testnet.aeternity.io')) {
+    await fundThroughFaucet(account);
+  } else {
+    console.log('using local node');
+    // when using a local node, fund account using genesis account
+    const genesis = await BaseAe({ networkId });
+    await genesis.spend(1e18, account, { confirm: true });
+  }
 }
 
 function registerEvents(channel: Channel) {

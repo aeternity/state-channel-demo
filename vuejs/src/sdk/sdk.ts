@@ -6,9 +6,7 @@ import {
   MemoryAccount,
 } from '@aeternity/aepp-sdk';
 
-export const url =
-  `${import.meta.env.VITE_NODE_URL}:${import.meta.env.VITE_NODE_PORT}` ??
-  'http://localhost:3013';
+export const url = import.meta.env.VITE_NODE_URL ?? 'http://localhost:3013';
 export const compilerUrl =
   import.meta.env.VITE_COMPILER_URL ?? 'http://localhost:3080';
 export const networkId = import.meta.env.VITE_NETWORK_ID ?? 'ae_devnet';
