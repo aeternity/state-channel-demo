@@ -15,4 +15,7 @@ export default defineConfig({
     },
     port: Number(process.env.PORT) || 8000,
   },
+  build: {
+    target: 'es2020',
+  },
 });

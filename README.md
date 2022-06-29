@@ -5,7 +5,7 @@
 ```bash
 cd vuejs && npm install
 cd ../nodejs && npm install
-cd .. && docker-compose up
+cd .. && docker-compose --env-file .env.dev up
 ```
 
 ## Services

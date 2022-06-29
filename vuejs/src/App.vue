@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue';
+import ChannelInitialization from './components/ChannelInitialization.vue';
 </script>
 
 <template>
@@ -8,7 +8,9 @@ import HelloWorld from './components/HelloWorld.vue';
     src="./assets/logo.png"
     :style="{ width: '100px' }"
   />
-  <HelloWorld msg="State Channel Demo Front" />
+  <Suspense>
+    <ChannelInitialization />
+  </Suspense>
 </template>
 
 <style>

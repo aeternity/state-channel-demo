@@ -3,12 +3,13 @@ import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { Channel } from '@aeternity/aepp-sdk';
 import BigNumber from 'bignumber.js';
 import botService from './bot.service';
+import { mockChannel } from '../../tests';
 
 interface ChannelMock {
-  listeners:{
-    [eventName:string]: (...args:any[]) => void
-  }
-  on: (eventName:string, listener: (...args:any[]) => void) => void
+  listeners: {
+    [eventName: string]: (...args: any[]) => void;
+  };
+  on: (eventName: string, listener: (...args: any[]) => void) => void;
 }
 
 describe('botService', () => {
@@ -29,12 +30,7 @@ describe('botService', () => {
     sign: () => Promise.resolve('tx_txdata'),
   };
 
-  Channel.initialize = jest.fn().mockImplementation(() => ({
-    listeners: {},
-    on(event: string, _callback: (...args: any[]) => void) {
-      if (this !== undefined) this.listeners[event] = _callback;
-    },
-  } as ChannelMock));
+  mockChannel();
 
   it('should be defined', () => {
     expect(botService).toBeDefined();
@@ -65,10 +61,10 @@ describe('botService', () => {
     const channel = await Channel.initialize(channelConfig);
     botService.registerEvents(channel);
     const channelMock: ChannelMock = channel as unknown as ChannelMock;
-    expect((channelMock).listeners.statusChanged).toBeDefined();
-    (channelMock).listeners.statusChanged('open');
+    expect(channelMock.listeners.statusChanged).toBeDefined();
+    channelMock.listeners.statusChanged('open');
     expect(botService.channelPool.has(channel)).toBe(true);
-    (channelMock).listeners.statusChanged('disconnected');
+    channelMock.listeners.statusChanged('disconnected');
     expect(botService.channelPool.has(channel)).toBe(false);
   });
 });
