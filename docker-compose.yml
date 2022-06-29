@@ -8,8 +8,6 @@ services:
     volumes:
       - ./docker/aeternity_node_mean16.yaml:/home/aeternity/node/aeternity.yaml
       - ./docker/accounts_test.json:/home/aeternity/node/data/aecore/.genesis/accounts_test.json
-    logging:
-      driver: none
     networks:      
       - game_network
 
@@ -33,12 +31,12 @@ services:
       - .:/app
     command: npm run dev
     ports:
-      - "3000:3000"
+      - ${BOT_SERVICE_PORT}:${BOT_SERVICE_PORT}
     environment:
-      - NODE_URL=http://node:3013
-      - WS_URL=ws://node:3014/channel
-      - COMPILER_URL=http://compiler:3080
-      - BOT_SERVICE_PORT=3000
+      - NODE_URL=${NODE_URL}
+      - WS_URL=${WS_URL}
+      - COMPILER_URL=${COMPILER_URL}
+      - BOT_SERVICE_PORT=${BOT_SERVICE_PORT}
     networks:      
       - game_network
     links:
@@ -56,14 +54,14 @@ services:
     depends_on:
       - bot_service
     ports:
-      - "8000:8000"
+      - ${VITE_CLIENT_PORT}:${VITE_CLIENT_PORT}
     environment: 
-      VITE_NODE_ENV: development
-      VITE_BOT_SERVICE_URL: http://localhost:3000
-      VITE_NODE_PORT: 3013
-      VITE_NODE_URL: http://localhost
-      VITE_COMPILER_URL: http://localhost:3080
-      PORT: 8000
+      VITE_NODE_ENV: ${VITE_NODE_ENV}
+      VITE_BOT_SERVICE_URL: ${VITE_BOT_SERVICE_URL}
+      VITE_NODE_URL: ${VITE_NODE_URL}
+      VITE_COMPILER_URL: ${VITE_COMPILER_URL}
+      VITE_CLIENT_PORT: ${VITE_CLIENT_PORT}
+      VITE_WS_URL: ${VITE_WS_URL}
     networks:      
       - game_network
     
