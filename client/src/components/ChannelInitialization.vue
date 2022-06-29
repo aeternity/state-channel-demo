@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { Channel } from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { createAccount } from '../sdk/sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
+import { default as Button } from './GenericButton.vue';
 
 const account = await createAccount();
 
@@ -11,6 +12,7 @@ const channelConfig = ref<ChannelOptions>();
 const loading = ref(true);
 const error = ref<{ message?: string }>({});
 const channelStatus = ref('Initializing');
+const openChannelInitiated = ref(false);
 
 function registerEvents(channel: Channel) {
   channel.on('statusChanged', (status) => {
@@ -74,23 +76,32 @@ function completeChannelConfig(channelConf: ChannelOptions) {
   });
 }
 
-onMounted(async () => {
+async function openStateChannel(): Promise<void> {
+  openChannelInitiated.value = true;
   await getChannelConfig();
-  if (channelConfig.value == null) return;
+  if (channelConfig.value == null) {
+    error.value = { message: 'No channel config found' };
+    throw new Error('Channel config is null');
+  }
   const responderCh = await Channel.initialize(channelConfig.value);
   registerEvents(responderCh);
-});
+}
 </script>
 
 <template>
-  <h1>Create channel</h1>
-  <div>Status: {{ channelStatus }}</div>
+  <br />
+  <Button
+    :disabled="openChannelInitiated"
+    @click="openStateChannel()"
+    text="Open State Channel"
+  />
+  <div v-if="openChannelInitiated">Channel Status: {{ channelStatus }}</div>
   <div v-if="!loading && channelConfig">
     <pre>{{ JSON.stringify(channelConfig, null, 2) }}</pre>
   </div>
 
-  <p v-if="loading">Still loading..</p>
-  <p v-if="error"></p>
+  <p v-if="loading && openChannelInitiated">Loading...</p>
+  <p v-if="error && openChannelInitiated">{{ error.message }}</p>
 </template>
 
 <style scoped></style>
