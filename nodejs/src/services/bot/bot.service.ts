@@ -1,8 +1,10 @@
-import { Channel } from '@aeternity/aepp-sdk';
+import { Channel, generateKeyPair } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
-import { BaseAe, getSdk, networkId } from '../sdk/sdk.service.development';
+import axios from 'axios';
+import { BaseAe, getSdk } from '../sdk/sdk.service';
+import { NETWORK_ID } from '../sdk/sdk.service.constants';
 
 const channelPool = new WeakSet<Channel>();
 
@@ -24,9 +26,30 @@ function addChannel(channel: Channel) {
   channelPool.add(channel);
 }
 
+async function fundThroughFaucet(account: EncodedData<'ak'>) {
+  const FAUCET_URL = 'https://faucet.aepps.com/';
+  try {
+    await axios.post(`${FAUCET_URL}/account/${account}`, {});
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
 async function fundAccount(account: EncodedData<'ak'>) {
-  const genesis = await BaseAe({ networkId });
-  await genesis.spend(1e18, account, { confirm: true });
+  if (process?.env?.NODE_URL?.includes('testnet.aeternity.io')) {
+    await fundThroughFaucet(account);
+  } else {
+    // when using a local node, fund account using genesis account
+    const genesis = await BaseAe({ networkId: NETWORK_ID });
+    const { nextNonce } = await genesis.api.getAccountNextNonce(
+      await genesis.address(),
+    );
+    await genesis.spend(1e18, account, {
+      confirm: true,
+      nonce: nextNonce,
+    });
+  }
 }
 
 function registerEvents(channel: Channel) {
@@ -46,7 +69,8 @@ export async function generateGameSession(
   playerNodeHost: string,
   playerNodePort: number,
 ) {
-  const bot = await getSdk();
+  const botKeyPair = generateKeyPair();
+  const bot = await getSdk(botKeyPair);
 
   const initiatorId = await bot.address();
   const responderId = playerAddress;
