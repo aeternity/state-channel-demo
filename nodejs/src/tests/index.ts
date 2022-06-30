@@ -1,13 +1,2 @@
-import { Channel } from '@aeternity/aepp-sdk';
-import { ChannelMock } from './interfaces';
-
-export const mockChannel = () => {
-  Channel.initialize = jest.fn().mockImplementation(
-    () => ({
-      listeners: {},
-      on(event: string, _callback: (...args: any[]) => void) {
-        if (this !== undefined) this.listeners[event] = _callback;
-      },
-    } as ChannelMock),
-  );
-};
+export * from './tests.mocks';
+export * from './tests.interface';

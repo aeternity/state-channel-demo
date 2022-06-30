@@ -1,9 +1,10 @@
 import { app } from './app';
+import logger from './logger';
 
 const start = (port: string | number) => {
   try {
     app.listen(port, () => {
-      console.log(`Bot service running at port ${port}`);
+      logger.info(`Bot service running at port ${port}`);
     });
   } catch (err) {
     console.error(err);

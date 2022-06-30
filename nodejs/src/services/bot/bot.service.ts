@@ -3,12 +3,14 @@ import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import axios from 'axios';
-import { BaseAe, getSdk } from '../sdk/sdk.service';
-import { NETWORK_ID } from '../sdk/sdk.service.constants';
+import {
+  BaseAe, getSdk, IS_USING_LOCAL_NODE, NETWORK_ID,
+} from '../sdk';
+import logger from '../../logger';
 
 const channelPool = new WeakSet<Channel>();
 
-export const baseChannelConfig = {
+export const mutualChannelConfiguration = {
   url: process.env.WS_URL ?? 'ws://localhost:3014/channel',
   pushAmount: 3,
   initiatorAmount: new BigNumber('1e2'),
@@ -19,25 +21,30 @@ export const baseChannelConfig = {
   debug: false,
 };
 
-function removeChannel(channel: Channel) {
-  channelPool.delete(channel);
-}
 function addChannel(channel: Channel) {
   channelPool.add(channel);
+  logger.info(`Added to pool channel with ID: ${channel.id()}`);
+}
+
+function removeChannel(channel: Channel) {
+  const channelId = channel.id();
+  channelPool.delete(channel);
+  logger.info(`Removed from pool channel with ID: ${channelId}`);
 }
 
 async function fundThroughFaucet(account: EncodedData<'ak'>) {
   const FAUCET_URL = 'https://faucet.aepps.com/';
   try {
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
-  } catch (e) {
-    console.log(e);
-    throw e;
+    logger.info(`Funded account ${account} through Faucet`);
+  } catch (error) {
+    logger.error({ error }, 'failed to fund account through faucet');
+    throw error;
   }
 }
 
 async function fundAccount(account: EncodedData<'ak'>) {
-  if (process?.env?.NODE_URL?.includes('testnet.aeternity.io')) {
+  if (!IS_USING_LOCAL_NODE) {
     await fundThroughFaucet(account);
   } else {
     // when using a local node, fund account using genesis account
@@ -79,7 +86,7 @@ export async function generateGameSession(
   await fundAccount(responderId);
 
   const channelConfig: ChannelOptions = {
-    ...baseChannelConfig,
+    ...mutualChannelConfiguration,
     initiatorId,
     port: playerNodePort,
     host: playerNodeHost,

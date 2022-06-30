@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npx tsc",
     "start": "node ./dist/index.js",
-    "dev": "tsc-watch --onSuccess \"sh -c 'node ./dist/index.js | ./node_modules/.bin/pino-pretty -t'\"",
+    "dev": "tsc-watch --onSuccess \"sh -c 'node ./dist/index.js | ./node_modules/.bin/pino-pretty -c -t'\"",
     "lint": "eslint --ext .ts --ignore-path .gitignore --fix src",
     "test": "jest",
     "test:cov": "jest --coverage",
