@@ -1,6 +1,6 @@
 import express from 'express';
 import logger from '../logger';
-import { generateGameSession } from '../services/bot/bot.service';
+import botService from '../services/bot';
 import { ResponderBaseChannelConfig } from './route.interface';
 
 export const route = express.Router();
@@ -19,7 +19,7 @@ route.post('/open', (async (req, res) => {
       return res.status(400).json({ error: 'host is required.' });
     }
 
-    const config = await generateGameSession(address, host, port);
+    const config = await botService.generateGameSession(address, host, port);
     logger.info({ config, reqBody }, 'channel initializated');
     return res.send(config);
   } catch (e) {

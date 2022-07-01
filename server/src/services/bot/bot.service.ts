@@ -1,38 +1,42 @@
-import { Channel, generateKeyPair } from '@aeternity/aepp-sdk';
+import { AeSdk, Channel, generateKeyPair } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import axios from 'axios';
 import {
-  BaseAe, getSdk, IS_USING_LOCAL_NODE, NETWORK_ID,
+  BaseAe,
+  getSdk,
+  IS_USING_LOCAL_NODE,
+  NETWORK_ID,
+  FAUCET_PUBLIC_KEY,
 } from '../sdk';
 import logger from '../../logger';
 
-const channelPool = new WeakSet<Channel>();
+export const channelPool = new WeakSet<Channel>();
 
 export const mutualChannelConfiguration = {
   url: process.env.WS_URL ?? 'ws://localhost:3014/channel',
   pushAmount: 3,
-  initiatorAmount: new BigNumber('1e2'),
-  responderAmount: new BigNumber('1e2'),
+  initiatorAmount: new BigNumber('100e18'),
+  responderAmount: new BigNumber('100e18'),
   channelReserve: 0,
   ttl: 10000,
   lockPeriod: 1,
   debug: false,
 };
 
-function addChannel(channel: Channel) {
+export function addChannel(channel: Channel) {
   channelPool.add(channel);
   logger.info(`Added to pool channel with ID: ${channel.id()}`);
 }
 
-function removeChannel(channel: Channel) {
+export function removeChannel(channel: Channel) {
   const channelId = channel.id();
   channelPool.delete(channel);
   logger.info(`Removed from pool channel with ID: ${channelId}`);
 }
 
-async function fundThroughFaucet(account: EncodedData<'ak'>) {
+export async function fundThroughFaucet(account: EncodedData<'ak'>) {
   const FAUCET_URL = 'https://faucet.aepps.com';
   try {
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
@@ -43,26 +47,36 @@ async function fundThroughFaucet(account: EncodedData<'ak'>) {
   }
 }
 
-async function fundAccount(account: EncodedData<'ak'>) {
+export async function fundAccount(account: EncodedData<'ak'>) {
   if (!IS_USING_LOCAL_NODE) {
     await fundThroughFaucet(account);
   } else {
-    // when using a local node, fund account using genesis account
-    const genesis = await BaseAe({ networkId: NETWORK_ID });
-    const { nextNonce } = await genesis.api.getAccountNextNonce(
-      await genesis.address(),
+    // when using a local node, fund account using local faucet account
+    const localFaucet = await BaseAe({ networkId: NETWORK_ID });
+    const { nextNonce } = await localFaucet.api.getAccountNextNonce(
+      await localFaucet.address(),
     );
-    await genesis.spend(1e18, account, {
-      confirm: true,
+
+    await localFaucet.spend(1e25, account, {
       nonce: nextNonce,
     });
   }
 }
 
-function registerEvents(channel: Channel) {
+export async function handleChannelClose(channel: Channel, sdk: AeSdk) {
+  try {
+    await sdk.transferFunds(1, FAUCET_PUBLIC_KEY);
+    logger.info(`${sdk.selectedAddress} has returned funds to faucet`);
+  } catch (e) {
+    logger.error({ e }, 'failed to return funds to faucet');
+  }
+  removeChannel(channel);
+}
+
+export async function registerEvents(channel: Channel, sdk: AeSdk) {
   channel.on('statusChanged', (status) => {
-    if (status === 'disconnected') {
-      removeChannel(channel);
+    if (status === 'closed') {
+      void handleChannelClose(channel, sdk);
     }
 
     if (status === 'open') {
@@ -97,17 +111,8 @@ export async function generateGameSession(
 
   const channel = await Channel.initialize(channelConfig);
 
-  registerEvents(channel);
+  await registerEvents(channel, bot);
 
   const { role, sign, ...responderConfig } = channelConfig;
   return responderConfig;
 }
-
-export default {
-  generateGameSession,
-  removeChannel,
-  addChannel,
-  channelPool,
-  registerEvents,
-  fundAccount,
-};

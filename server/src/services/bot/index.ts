@@ -1,1 +1,3 @@
-export * from './bot.service';
+import * as botService from './bot.service';
+
+export default botService;

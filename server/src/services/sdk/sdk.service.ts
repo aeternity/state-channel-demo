@@ -4,7 +4,7 @@ import {
 import { Keypair } from '@aeternity/aepp-sdk/es/account/Memory';
 import {
   COMPILER_URL,
-  GENESIS_ACCOUNT,
+  FAUCET_ACCOUNT,
   IGNORE_NODE_VERSION,
   IS_USING_LOCAL_NODE,
   NETWORK_ID,
@@ -14,13 +14,13 @@ import {
 /**
  * @param params.accounts - array of accounts to be used by the sdk
  * @param params.networkId - network id
- * @param params.withoutGenesisAccount - false only on development
+ * @param params.withoutFaucetAccount - false only on development
  * @returns sdk instance
  */
 export const BaseAe = async (
   params: {
     accounts?: AccountBase[];
-    withoutGenesisAccount?: boolean;
+    withoutFaucetAccount?: boolean;
     networkId?: string;
   } = {},
 ): Promise<AeSdk> => {
@@ -37,8 +37,8 @@ export const BaseAe = async (
   });
 
   const accounts = params.accounts ?? [];
-  if (!params.withoutGenesisAccount) {
-    accounts.push(GENESIS_ACCOUNT);
+  if (!params.withoutFaucetAccount) {
+    accounts.push(FAUCET_ACCOUNT);
   }
 
   await Promise.all(
@@ -57,7 +57,7 @@ export const BaseAe = async (
 const genesisFund = async (account: Keypair) => {
   const ae = await BaseAe({
     networkId: NETWORK_ID,
-    withoutGenesisAccount: false,
+    withoutFaucetAccount: false,
   });
   await ae.awaitHeight(2);
   await ae.spend(1e26, account.publicKey);
@@ -75,6 +75,6 @@ export async function getSdk(keyPair: Keypair): Promise<AeSdk> {
   return BaseAe({
     accounts: [new MemoryAccount({ keypair: keyPair })],
     networkId: NETWORK_ID,
-    withoutGenesisAccount: true,
+    withoutFaucetAccount: true,
   });
 }

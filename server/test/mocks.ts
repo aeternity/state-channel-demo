@@ -1,6 +1,6 @@
 import { Channel } from '@aeternity/aepp-sdk';
 import { randomUUID } from 'crypto';
-import { ChannelMock } from './tests.interface';
+import { ChannelMock } from './interfaces';
 
 export const mockChannel = () => {
   Channel.initialize = jest.fn().mockImplementation(
