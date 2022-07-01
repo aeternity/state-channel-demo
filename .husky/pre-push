@@ -1,8 +1,8 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-cd vuejs
+cd client
 npm run test-prepush
 
-cd ../nodejs
+cd ../server
 npm run test-prepush

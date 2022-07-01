@@ -1,6 +1,6 @@
-FROM node:16.15.1 AS development
+FROM node:16.15.1 AS development  
 
-WORKDIR /app/nodejs
+WORKDIR /app/server
 
 COPY package*.json ./
 RUN ls -al
