@@ -8,9 +8,7 @@ import ChannelInitialization from './components/ChannelInitialization.vue';
     src="./assets/logo.png"
     :style="{ width: '100px' }"
   />
-  <Suspense>
-    <ChannelInitialization />
-  </Suspense>
+  <ChannelInitialization />
 </template>
 
 <style>
