@@ -1,13 +1,14 @@
 import express from 'express';
+import logger from '../logger';
 import { generateGameSession } from '../services/bot/bot.service';
-import { ResponderBaseChannelConfig } from './interface';
+import { ResponderBaseChannelConfig } from './route.interface';
 
-const router = express.Router();
+export const route = express.Router();
 
-router.post('/open', (async (req, res) => {
+route.post('/open', (async (req, res) => {
+  const reqBody = req.body as Partial<ResponderBaseChannelConfig>;
+  const { address, port, host } = reqBody;
   try {
-    const { address, port, host } = req.body as Partial<ResponderBaseChannelConfig>;
-
     if (!address) {
       return res.status(400).json({ error: 'address is required.' });
     }
@@ -19,11 +20,12 @@ router.post('/open', (async (req, res) => {
     }
 
     const config = await generateGameSession(address, host, port);
+    logger.info({ config, reqBody }, 'channel initializated');
     return res.send(config);
   } catch (e) {
-    console.log(e);
+    logger.error({ e, reqBody }, 'failed to open channel');
     return res.status(500).json({ error: (e as Error).message });
   }
 }) as express.RequestHandler);
 
-export default router;
+export default route;

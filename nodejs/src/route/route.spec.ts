@@ -1,7 +1,7 @@
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import supertest from 'supertest';
 import { app } from '../app';
-import { baseChannelConfig } from '../services/bot/bot.service';
+import { mutualChannelConfiguration } from '../services/bot';
 import { mockChannel } from '../tests';
 
 describe('/open', () => {
@@ -22,12 +22,12 @@ describe('/open', () => {
     expect(res.status).toBe(200);
     const { initiatorId, ...rest } = res.body as ChannelOptions;
     expect(rest).toEqual({
-      ...baseChannelConfig,
+      ...mutualChannelConfiguration,
       port: config.port,
       host: config.host,
       responderId: config.address,
-      responderAmount: baseChannelConfig.responderAmount.toString(),
-      initiatorAmount: baseChannelConfig.initiatorAmount.toString(),
+      responderAmount: mutualChannelConfiguration.responderAmount.toString(),
+      initiatorAmount: mutualChannelConfiguration.initiatorAmount.toString(),
     });
   });
 

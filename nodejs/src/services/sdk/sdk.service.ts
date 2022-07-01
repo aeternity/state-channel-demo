@@ -6,6 +6,7 @@ import {
   COMPILER_URL,
   GENESIS_ACCOUNT,
   IGNORE_NODE_VERSION,
+  IS_USING_LOCAL_NODE,
   NETWORK_ID,
   NODE_URL,
 } from './sdk.service.constants';
@@ -50,25 +51,25 @@ export const BaseAe = async (
 };
 
 /**
- * ! DEVELOPMENT ONLY
+ * ! LOCAL NODE USAGE ONLY
  * a helper function to fund account
  */
-const spendPromise = (account: Keypair) => (async () => {
+const genesisFund = async (account: Keypair) => {
   const ae = await BaseAe({
     networkId: NETWORK_ID,
     withoutGenesisAccount: false,
   });
   await ae.awaitHeight(2);
   await ae.spend(1e26, account.publicKey);
-})();
+};
 
 /**
  * @param keyPair Keypair of the account which will be the default of the sdk
  * @returns sdk instance
  */
 export async function getSdk(keyPair: Keypair): Promise<AeSdk> {
-  if (!process?.env?.NODE_URL?.includes('testnet.aeternity.io')) {
-    await spendPromise(keyPair);
+  if (IS_USING_LOCAL_NODE) {
+    await genesisFund(keyPair);
   }
 
   return BaseAe({

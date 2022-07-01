@@ -5,8 +5,11 @@ export const NODE_URL = process.env.NODE_URL ?? 'http://localhost:3013';
 export const COMPILER_URL = process.env.COMPILER_URL ?? 'http://localhost:3080';
 export const NETWORK_ID = process.env.NETWORK_ID ?? 'ae_devnet';
 export const IGNORE_NODE_VERSION = process.env.IGNORE_VERSION === 'true';
+export const IS_USING_LOCAL_NODE = !process?.env?.NODE_URL?.includes(
+  'testnet.aeternity.io',
+);
 
-// ! DEVELOPMENT ONLY: when using a local node
+// ! LOCAL NODE USAGE ONLY
 const GENESIS_PUBLIC_KEY = (process.env.PUBLIC_KEY as EncodedData<'ak'>)
   ?? 'ak_2dATVcZ9KJU5a8hdsVtTv21pYiGWiPbmVcU1Pz72FFqpk9pSRR';
 const GENESIS_SECRET_KEY = process.env.SECRET_KEY
