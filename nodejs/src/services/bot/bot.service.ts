@@ -33,7 +33,7 @@ function removeChannel(channel: Channel) {
 }
 
 async function fundThroughFaucet(account: EncodedData<'ak'>) {
-  const FAUCET_URL = 'https://faucet.aepps.com/';
+  const FAUCET_URL = 'https://faucet.aepps.com';
   try {
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
     logger.info(`Funded account ${account} through Faucet`);
