@@ -24,7 +24,7 @@ services:
     
   bot_service:
     build:
-      context: ./nodejs
+      context: ./server
       dockerfile: ./Dockerfile
       target: development
     volumes:
@@ -45,7 +45,7 @@ services:
   
   client:
     build:
-      context: ./vuejs
+      context: ./client
       dockerfile: ./Dockerfile
       target: development
     volumes:

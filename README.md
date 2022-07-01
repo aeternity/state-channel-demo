@@ -3,8 +3,8 @@
 ## How to run
 
 ```bash
-cd vuejs && npm install
-cd ../nodejs && npm install
+cd client && npm install
+cd ../server && npm install
 cd .. && docker-compose --env-file .env.dev up
 ```
 
