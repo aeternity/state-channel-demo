@@ -8,7 +8,7 @@ import {
   getSdk,
   IS_USING_LOCAL_NODE,
   NETWORK_ID,
-  FAUCET_PUBLIC_KEY,
+  FAUCET_PUBLIC_ADDRESS,
 } from '../sdk';
 import logger from '../../logger';
 
@@ -16,12 +16,11 @@ export const channelPool = new WeakSet<Channel>();
 
 export const mutualChannelConfiguration = {
   url: process.env.WS_URL ?? 'ws://localhost:3014/channel',
-  pushAmount: 3,
-  initiatorAmount: new BigNumber('100e18'),
-  responderAmount: new BigNumber('100e18'),
-  channelReserve: 0,
-  ttl: 10000,
-  lockPeriod: 1,
+  pushAmount: 1,
+  initiatorAmount: new BigNumber('3e18'),
+  responderAmount: new BigNumber('3e18'),
+  channelReserve: 2,
+  lockPeriod: 10,
   debug: false,
 };
 
@@ -65,7 +64,7 @@ export async function fundAccount(account: EncodedData<'ak'>) {
 
 export async function handleChannelClose(channel: Channel, sdk: AeSdk) {
   try {
-    await sdk.transferFunds(1, FAUCET_PUBLIC_KEY);
+    await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS);
     logger.info(`${sdk.selectedAddress} has returned funds to faucet`);
   } catch (e) {
     logger.error({ e }, 'failed to return funds to faucet');

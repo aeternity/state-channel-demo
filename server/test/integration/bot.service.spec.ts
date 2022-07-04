@@ -1,7 +1,7 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { Channel, generateKeyPair } from '@aeternity/aepp-sdk';
 import BigNumber from 'bignumber.js';
-import { FAUCET_PUBLIC_KEY } from '../../src/services/sdk/sdk.service.constants';
+import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.service.constants';
 import botService from '../../src/services/bot';
 import { getSdk } from '../../src/services/sdk/sdk.service';
 import { timeout } from '../utils';
@@ -44,7 +44,7 @@ describe('botService', () => {
     const initiatorFundedBalance = await playerSdk.getBalance(
       responderConfig.initiatorId,
     );
-    const faucetBalance = await playerSdk.getBalance(FAUCET_PUBLIC_KEY);
+    const faucetBalance = await playerSdk.getBalance(FAUCET_PUBLIC_ADDRESS);
 
     const playerChannel = await Channel.initialize({
       ...responderConfig,
@@ -58,7 +58,7 @@ describe('botService', () => {
       responderConfig.initiatorId,
     );
     const faucetNewBalance = new BigNumber(
-      await playerSdk.getBalance(FAUCET_PUBLIC_KEY),
+      await playerSdk.getBalance(FAUCET_PUBLIC_ADDRESS),
     );
 
     expect(faucetNewBalance.isGreaterThan(faucetBalance)).toBe(true);
