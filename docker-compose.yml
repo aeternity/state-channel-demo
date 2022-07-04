@@ -37,6 +37,9 @@ services:
       - WS_URL=${WS_URL}
       - COMPILER_URL=${COMPILER_URL}
       - BOT_SERVICE_PORT=${BOT_SERVICE_PORT}
+      - FAUCET_PUBLIC_ADDRESS=${FAUCET_PUBLIC_ADDRESS}
+      - FAUCET_SECRET_KEY=${FAUCET_SECRET_KEY}
+      - NETWORK_ID=${NETWORK_ID}
     networks:      
       - game_network
     links:

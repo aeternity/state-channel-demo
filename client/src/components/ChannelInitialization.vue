@@ -26,8 +26,8 @@ async function getChannelConfig(sdk: AeSdk): Promise<ChannelOptions> {
     },
     body: JSON.stringify({
       address: sdk.selectedAddress,
-      port: '3001',
-      host: 'node',
+      port: '3333',
+      host: 'localhost',
     }),
   });
   const data = await res.json();

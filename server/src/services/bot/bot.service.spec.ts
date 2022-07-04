@@ -1,9 +1,10 @@
+import { AeSdk, Channel, generateKeyPair } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { Channel } from '@aeternity/aepp-sdk';
 import BigNumber from 'bignumber.js';
-import botService from './bot.service';
-import { mockChannel } from '../../tests';
+import botService from './index';
+import { mockChannel, timeout } from '../../../test';
+import { getSdk } from '../sdk/sdk.service';
 
 interface ChannelMock {
   listeners: {
@@ -11,7 +12,6 @@ interface ChannelMock {
   };
   on: (eventName: string, listener: (...args: any[]) => void) => void;
 }
-
 describe('botService', () => {
   const channelConfig: ChannelOptions = {
     url: process.env.WS_URL ?? 'ws://localhost:3014/channel',
@@ -58,13 +58,26 @@ describe('botService', () => {
   });
 
   it('registers events on channel', async () => {
+    const sdk = await getSdk(generateKeyPair());
+    const { transferFunds, ...mockedSdk } = sdk;
+    Object.assign(mockedSdk, {
+      transferFunds: jest.fn(
+        (
+          amount: number | string,
+          address: EncodedData<'ak'>,
+          options: unknown,
+        ) => Promise.resolve({ amount, address, options }),
+      ),
+    });
     const channel = await Channel.initialize(channelConfig);
-    botService.registerEvents(channel);
+    await botService.registerEvents(channel, mockedSdk as AeSdk);
     const channelMock: ChannelMock = channel as unknown as ChannelMock;
     expect(channelMock.listeners.statusChanged).toBeDefined();
     channelMock.listeners.statusChanged('open');
     expect(botService.channelPool.has(channel)).toBe(true);
-    channelMock.listeners.statusChanged('disconnected');
-    expect(botService.channelPool.has(channel)).toBe(false);
+    channelMock.listeners.statusChanged('closed');
+    await timeout(100);
+    const channelRemoved = !botService.channelPool.has(channel);
+    expect(channelRemoved).toBe(true);
   });
 });
