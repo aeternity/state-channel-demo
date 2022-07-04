@@ -33,13 +33,13 @@ services:
     ports:
       - ${BOT_SERVICE_PORT}:${BOT_SERVICE_PORT}
     environment:
-      - NODE_URL=${NODE_URL}
-      - WS_URL=${WS_URL}
-      - COMPILER_URL=${COMPILER_URL}
-      - BOT_SERVICE_PORT=${BOT_SERVICE_PORT}
-      - FAUCET_PUBLIC_ADDRESS=${FAUCET_PUBLIC_ADDRESS}
-      - FAUCET_SECRET_KEY=${FAUCET_SECRET_KEY}
-      - NETWORK_ID=${NETWORK_ID}
+      NODE_URL: ${NODE_URL}
+      WS_URL: ${WS_URL}
+      COMPILER_URL: ${COMPILER_URL}
+      BOT_SERVICE_PORT: ${BOT_SERVICE_PORT}
+      FAUCET_PUBLIC_ADDRESS: ${FAUCET_PUBLIC_ADDRESS}
+      FAUCET_SECRET_KEY: ${FAUCET_SECRET_KEY}
+      NETWORK_ID: ${NETWORK_ID}
     networks:      
       - game_network
     links:
@@ -65,6 +65,8 @@ services:
       VITE_COMPILER_URL: ${VITE_COMPILER_URL}
       VITE_CLIENT_PORT: ${VITE_CLIENT_PORT}
       VITE_WS_URL: ${VITE_WS_URL}
+      VITE_RESPONDER_HOST: ${VITE_RESPONDER_HOST}
+      VITE_RESPONDER_PORT: ${VITE_RESPONDER_PORT}
     networks:      
       - game_network
     
