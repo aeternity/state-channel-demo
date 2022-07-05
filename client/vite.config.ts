@@ -19,6 +19,10 @@ export default defineConfig({
       VITE_NODE_URL: 'http://localhost:3013',
       VITE_COMPILER_URL: 'http://localhost:3080',
       VITE_WS_URL: 'ws://localhost:3014/channel',
+      VITE_FAUCET_PUBLIC_ADDRESS:
+        'ak_2dATVcZ9KJU5a8hdsVtTv21pYiGWiPbmVcU1Pz72FFqpk9pSRR',
+      VITE_RESPONDER_HOST: 'localhost',
+      VITE_RESPONDER_PORT: '3333',
     },
   },
   server: {
