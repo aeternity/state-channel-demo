@@ -22,6 +22,8 @@ export const mutualChannelConfiguration = {
   channelReserve: 2,
   lockPeriod: 10,
   debug: false,
+  minimumDepthStrategy: 'plain',
+  minimumDepth: 0,
 };
 
 export function addChannel(channel: Channel) {
