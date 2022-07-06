@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import { AeSdk, Channel } from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { getSdk } from '../sdk/sdk';
+import { getSdk, returnCoinsToFaucet } from '../sdk/sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { default as Button } from './GenericButton.vue';
 
@@ -11,10 +11,19 @@ const loading = ref(false);
 const error = ref<string>();
 const channelStatus = ref<string>();
 const openChannelInitiated = ref(false);
+let sdk: AeSdk;
 
-function registerEvents(channel: Channel) {
+onBeforeUnmount(async () => {
+  if (!sdk) return;
+  await returnCoinsToFaucet(sdk);
+});
+
+async function registerEvents(channel: Channel, sdk: AeSdk) {
   channel.on('statusChanged', (status) => {
     channelStatus.value = status;
+    if (status === 'closed') {
+      void returnCoinsToFaucet(sdk);
+    }
   });
 }
 
@@ -54,7 +63,7 @@ async function openStateChannel(): Promise<void> {
   openChannelInitiated.value = true;
   loading.value = true;
   channelStatus.value = 'getting channel config';
-  const sdk = await getSdk();
+  sdk = await getSdk();
   try {
     channelConfig.value = await getChannelConfig(sdk);
     completeChannelConfig(channelConfig.value, sdk);
@@ -64,7 +73,7 @@ async function openStateChannel(): Promise<void> {
     }
     channelStatus.value = 'initializing ws';
     const responderCh = await Channel.initialize(channelConfig.value);
-    registerEvents(responderCh);
+    registerEvents(responderCh, sdk);
   } catch (e) {
     console.error(e);
   } finally {
