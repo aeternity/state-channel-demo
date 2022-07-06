@@ -13,6 +13,8 @@ export const COMPILER_URL =
 export const IS_USING_LOCAL_NODE = !import.meta.env.VITE_NODE_URL.includes(
   'testnet.aeternity.io'
 );
+const FAUCET_PUBLIC_ADDRESS = import.meta.env
+  .VITE_FAUCET_PUBLIC_ADDRESS as EncodedData<'ak'>;
 
 export async function getSdk() {
   const account = new MemoryAccount({ keypair: generateKeyPair() });
@@ -25,26 +27,19 @@ export async function getSdk() {
 }
 
 export async function returnCoinsToFaucet(aeSdk: AeSdk) {
-  const recipient: EncodedData<'ak'> = FAUCET_PUBLIC_KEY;
   try {
-    await aeSdk.transferFunds(1, recipient);
+    await aeSdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS);
   } catch (e) {
     console.error({ e }, 'failed to return funds to faucet');
   }
 }
 
 // ! LOCAL NODE USAGE ONLY
-const FAUCET_SECRET_KEY =
-  import.meta.env.VITE_FAUCET_SECRET_KEY ??
-  'bf66e1c256931870908a649572ed0257876bb84e3cdf71efb12f56c7335fad54d5cf08400e988222f26eb4b02c8f89077457467211a6e6d955edb70749c6a33b';
-const FAUCET_PUBLIC_KEY = import.meta.env
-  .VITE_FAUCET_PUBLIC_ADDRESS as EncodedData<'ak'>;
-
 export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
   ? new MemoryAccount({
       keypair: {
-        publicKey: FAUCET_PUBLIC_KEY,
-        secretKey: FAUCET_SECRET_KEY,
+        publicKey: FAUCET_PUBLIC_ADDRESS,
+        secretKey: import.meta.env.VITE_FAUCET_SECRET_KEY,
       },
     })
   : null;

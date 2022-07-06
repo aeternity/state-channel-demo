@@ -14,7 +14,6 @@ describe('SDK', () => {
     const client = await getSdk();
     const ae = await getSdk();
 
-    // ! LOCAL NODE USAGE ONLY
     if (FAUCET_ACCOUNT) {
       await ae.addAccount(FAUCET_ACCOUNT, { select: true });
       await ae.spend(1e26, client.selectedAddress as EncodedData<'ak'>);
