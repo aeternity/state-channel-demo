@@ -34,7 +34,7 @@ const withFee = async( f ) => {
     return gasPrice * BigInt( gasUsed ) + fee
 }
 
-const initContract = async ( options = {} ) => {
+const initContract = async ( opts = {} ) => {
     aeSdk = await utils.getSdk()
 
     // a filesystem object must be passed to the compiler if the contract uses custom includes
@@ -46,9 +46,9 @@ const initContract = async ( options = {} ) => {
     // initialize the contract instance
     contract = await aeSdk.getContractInstance( { source, fileSystem } )
     await contract.deploy(
-        [ options.p0 || p0, options.p1 || p1, 1 ], {
-            amount: options.amount || 0,
-            ...( options.onAccount ? { onAccount: options.onAccount } : {} ),
+        [ opts.p0 || p0, opts.p1 || p1, opts.reactionTime || 10, opts.debugTimestamp ], {
+            amount: opts.amount || 0,
+            ...( opts.onAccount ? { onAccount: opts.onAccount } : {} ),
         }
     )
 
@@ -76,6 +76,14 @@ let hash
 const mkh = ( m, k ) => {
     [ move, key, hash ] = [ m, k, createHash( k, m ) ]
 }
+const dummyHash = createHash( "a", "eternity" )
+const amount = 10
+const giveContractExtraMoney = async( _extraMoney ) => {
+    const extraMoney = _extraMoney || 20000n
+    const contractAddress = getAK( contract )
+    await aeSdk.spend( extraMoney, contractAddress, withP2() ) // we pay from p2
+    return extraMoney
+}
 describe( 'GameContract', () => {
 
     describe( "deployment", () => {
@@ -87,7 +95,7 @@ describe( 'GameContract', () => {
             try {
                 await initContract( { p0, p1: p0 } )
             } catch ( err ) {
-                assert.include( err.message, "use different address" )
+                assert.include( err.message, "use_different_address" )
                 return
             }
             assert.fail( "it should have failed" )
@@ -97,7 +105,7 @@ describe( 'GameContract', () => {
             try {
                 await initContract( withP0( { p0, p1, amount: 10 } ) )
             } catch ( err ) {
-                assert.include( err.message, "use different address" )
+                assert.include( err.message, "use_different_address" )
                 return
             }
             assert.fail( "it should have failed" )
@@ -105,9 +113,6 @@ describe( 'GameContract', () => {
     } )
     describe( "normal game", () => {
         before( initContract )
-
-        const dummyHash = createHash( "a", "eternity" )
-        const amount = 10
 
         describe( "provide_hash", () => {
 
@@ -260,8 +265,8 @@ describe( 'GameContract', () => {
             } )
             it( 'succeeds to reveal the move with a Draw', async () => {
                 mkh( 'rock', "the-key" )
-                const p0OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p0 ) ) 
-                const p1OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p1 ) ) 
+                const p0OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p0 ) )
+                const p1OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p1 ) )
                 const p0_fee1 = await withFee( () => contract.methods.provide_hash( hash, withP0( { amount } ) ) )
                 const p1_fee = await withFee( () => contract.methods.player1_move( move, withP1( { amount } ) ) )
                 const ret = await contract.methods.reveal( key, move, withP0() )
@@ -292,7 +297,7 @@ describe( 'GameContract', () => {
 
             it( 'succeeds to reveal the move with a Player0Won', async () => {
                 mkh( 'rock', "the-key" )
-                const p0OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p0 ) ) 
+                const p0OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p0 ) )
                 const fee1 = await withFee( () => contract.methods.provide_hash( hash, withP0( { amount } ) ) )
                 await contract.methods.player1_move( "scissors", withP1( { amount } ) )
                 const ret = await contract.methods.reveal( key, move, withP0() )
@@ -315,7 +320,7 @@ describe( 'GameContract', () => {
 
             it( 'succeeds to reveal the move with a Player1Won', async () => {
                 mkh( 'rock', "the-key" )
-                const p1OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p1 ) ) 
+                const p1OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p1 ) )
 
                 await contract.methods.provide_hash( hash, withP0( { amount } ) )
                 const fee = await withFee( () => contract.methods.player1_move( "paper", withP1( { amount } ) ) )
@@ -329,17 +334,15 @@ describe( 'GameContract', () => {
                 assert.deepEqual( ret.decodedEvents[0].args[1], BigInt( amount * 2 ) )
 
                 const p1ActualBalance = BigInt( await aeSdk.getBalance( p1 ) )
-                assert.equal( 
+                assert.equal(
                     p1ActualBalance,
                     p1OriginalMoveBalance + BigInt( amount  ) - fee,
                 )
             } )
             it( 'p0 gets extra money if contract has balance > 0 ', async () => {
-                const extraMoney = 20000n
-                const contractAddress = getAK( contract )
-                await aeSdk.spend( extraMoney, contractAddress, withP2() ) // we pay from p2
+                const extraMoney = await giveContractExtraMoney()
 
-                const p0OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p0 ) ) 
+                const p0OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p0 ) )
 
                 mkh( 'rock', "the-key" )
                 const p0_fee1 = await withFee( () => contract.methods.provide_hash( hash, withP0( { amount } ) ) )
@@ -363,11 +366,9 @@ describe( 'GameContract', () => {
             } )
 
             it( 'p1 gets extra money if contract has balance > 0 ', async () => {
-                const extraMoney = 20000n
-                const contractAddress = getAK( contract )
-                await aeSdk.spend( extraMoney, contractAddress, withP2() ) // we pay from p2
+                const extraMoney = await giveContractExtraMoney()
 
-                const p1OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p1 ) ) 
+                const p1OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p1 ) )
 
                 mkh( 'paper', "the-key" )
                 await contract.methods.provide_hash( hash, withP0( { amount } ) )
@@ -384,7 +385,7 @@ describe( 'GameContract', () => {
                 const p1ActualBalance = BigInt( await aeSdk.getBalance( p1 ) )
                 assert.equal(
                     p1ActualBalance,
-                    p1OriginalMoveBalance + extraMoney + BigInt( amount ) - p1_fee, 
+                    p1OriginalMoveBalance + extraMoney + BigInt( amount ) - p1_fee,
                     "p1 should have the p0's stake and extraMoney"
                 )
             } )
@@ -395,8 +396,8 @@ describe( 'GameContract', () => {
                 const contractAddress = getAK( contract )
                 await aeSdk.spend( extraMoney, contractAddress, withP2() ) // we pay from p2
 
-                const p0OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p0 ) ) 
-                const p1OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p1 ) ) 
+                const p0OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p0 ) )
+                const p1OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p1 ) )
 
                 const p0_fee1 = await withFee( () => contract.methods.provide_hash( hash, withP0( { amount } ) ) )
                 const p1_fee = await withFee( () => contract.methods.player1_move( move, withP1( { amount } ) ) )
@@ -447,8 +448,8 @@ describe( 'GameContract', () => {
                 const p0ShouldWin = expect < 0
                 const p1ShouldWin = expect > 0
                 const prefix = p0ShouldWin
-                    ? 'p0 should win' 
-                    : p1ShouldWin 
+                    ? 'p0 should win'
+                    : p1ShouldWin
                         ? 'p1 should win'
                         : 'should be a draw'
 
@@ -476,13 +477,228 @@ describe( 'GameContract', () => {
             } )
 
         } )
-        describe( "disputes", () => {
-            it.skip( "p0 dispute fails because we are still in time" )
-            it.skip( "p1 dispute fails because we are still in time" )
-            it.skip( "p0 dispute fails because we are still in time" )
-            it.skip( "p1 dispute fails because we are still in time" )
+    } )
+    describe( "disputes", () => {
+        it( "set_timestamp fails if not in debug mode", async () => {
+            await initContract()
+            await failsWith(
+                () => contract.methods.set_timestamp( 10, withP1() ),
+                "not_debug_mode"
+            )
         } )
-        it.skip( "multiple rounds", () => {
+        describe( "in debug time mode", () => {
+            before( () => initContract( { reactionTime: 10, debugTimestamp: 0 } ) )
+            let ts
+            const refreshTs = async () => {
+                ( { decodedResult: { debug_timestamp: ts } }  = await contract.methods.get_state() )
+            }
+
+            it( "set_timestamp fails because of negative value", async () => {
+                await failsWith(
+                    () => contract.methods.set_timestamp( -1, withP1() ),
+                    "not_positive"
+                )
+            } )
+            it( "set_timestamp succeeds with zero timestamp", async () => {
+                await contract.methods.set_timestamp( 0, withP1() )
+                const { decodedResult: { debug_timestamp } } = await contract.methods.get_state()
+                assert.equal( debug_timestamp, 0 )
+            } )
+            it( "set_timestamp succeeds with positive timestamp", async () => {
+                const timestamp = 10
+                await contract.methods.set_timestamp( timestamp )
+                const { decodedResult: { debug_timestamp } } = await contract.methods.get_state()
+                assert.equal( debug_timestamp, timestamp )
+            } )
+
+            //------------------------------------------------------------------------------
+            //  player 0 dispute
+            //------------------------------------------------------------------------------
+
+            it( "p0 dispute fails because not_player0", async () => {
+                await failsWith(
+                    () => contract.methods.player0_dispute_no_move( withP1() ),
+                    'not_player0'
+                )
+            } )
+            it( "p0 dispute fails because player0 didn't move", async () => {
+                await failsWith(
+                    () => contract.methods.player0_dispute_no_move( withP0() ),
+                    'no_hash'
+                )
+            } )
+            it( "p0 dispute fails because player1 didn't move", async () => {
+                await contract.methods.provide_hash( dummyHash, withP0( { amount } ) )
+                await failsWith(
+                    () => contract.methods.player0_dispute_no_move( withP0() ),
+                    'not_yet_allowed'
+                )
+            } )
+            it( "p0 dispute fails because we are still in time", async () => {
+                await contract.methods.provide_hash( dummyHash, withP0( { amount } ) ); await refreshTs()
+                await contract.methods.set_timestamp( 9 ); await refreshTs()
+                assert.equal( ts, 9 )
+                await failsWith(
+                    () => contract.methods.player0_dispute_no_move( withP0() ),
+                    'not_yet_allowed'
+                )
+            } )
+            it( "p0 dispute fails because p1 moved already", async () => {
+                // player make his move at
+                await contract.methods.provide_hash( dummyHash, withP0( { amount } ) )
+                await contract.methods.player1_move( "rock", withP1( { amount } ) )
+                await failsWith(
+                    () => contract.methods.player0_dispute_no_move( withP0() ),
+                    'there_is_a_move_already'
+                )
+            } )
+            it( "p0 dispute succeeds after the reactionTime reached its limit", async () => {
+                const extraMoney = await giveContractExtraMoney()
+
+                const p0OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p0 ) )
+                const p0_fee1 = await withFee( () =>
+                    contract.methods.provide_hash( dummyHash, withP0( { amount } ) )
+                )
+                await contract.methods.set_timestamp( 11, withP2() )
+                const ret = await contract.methods.player0_dispute_no_move( withP0() )
+
+                assert.equal( ret.decodedEvents[0].name, 'Player0WonDispute' )
+                assert.deepEqual( ret.decodedEvents[0].args[0], p0 )
+                assert.deepEqual( ret.decodedEvents[0].args[1], extraMoney + BigInt( amount ) )
+
+                const p0_fee2 = await withFee( () => ret )
+                const p0ActualBalance = BigInt( await aeSdk.getBalance( p0 ) )
+
+                //gets his money back + extraMoney - the fees
+                assert.equal(
+                    p0OriginalMoveBalance - p0_fee1 - p0_fee2 + extraMoney,
+                    p0ActualBalance,
+                    "all stake should be refund"
+                )
+            } )
+
+            //------------------------------------------------------------------------------
+            //  player 1 dispute
+            //------------------------------------------------------------------------------
+            it( "p1 dispute fails because not_player1", async () => {
+                await failsWith(
+                    () => contract.methods.player1_dispute_no_reveal( withP0() ),
+                    'not_player1'
+                )
+            } )
+            it( "p1 dispute fails because player0 didn't provide has", async () => {
+                await failsWith(
+                    () => contract.methods.player1_dispute_no_reveal( withP1() ),
+                    'there_is_no_move'
+                )
+            } )
+            it( "p1 dispute fails because player1 didn't move", async () => {
+                await contract.methods.provide_hash( dummyHash, withP0( { amount } ) )
+                await failsWith(
+                    () => contract.methods.player1_dispute_no_reveal( withP1() ),
+                    'there_is_no_move'
+                )
+            } )
+            it( "p1 dispute fails because we are still in time", async () => {
+                await contract.methods.provide_hash( dummyHash, withP0( { amount } ) ); await refreshTs()
+                await contract.methods.player1_move( "rock", withP1( { amount } ) )
+                await contract.methods.set_timestamp( 9 ); await refreshTs()
+                await failsWith(
+                    () => contract.methods.player1_dispute_no_reveal( withP1() ),
+                    'not_yet_allowed'
+                )
+            } )
+            it( "p1 dispute succeeds after the reactionTime reached its limit", async () => {
+                const extraMoney = await giveContractExtraMoney()
+
+                const p1OriginalMoveBalance = BigInt ( await aeSdk.getBalance( p1 ) )
+                await contract.methods.provide_hash( dummyHash, withP0( { amount } ) )
+                const p1_fee1 = await withFee( () =>  contract.methods.player1_move( "rock", withP1( { amount } ) ) )
+                await contract.methods.set_timestamp( 11, withP2() )
+                const ret = await contract.methods.player1_dispute_no_reveal( withP1() )
+
+                assert.equal( ret.decodedEvents[0].name, 'Player1WonDispute' )
+                assert.deepEqual( ret.decodedEvents[0].args[0], p1 )
+                assert.deepEqual( ret.decodedEvents[0].args[1], extraMoney + BigInt( amount * 2 ) )
+
+                const p1_fee2 = await withFee( () => ret )
+                const p1ActualBalance = BigInt( await aeSdk.getBalance( p1 ) )
+
+                //gets his money back , the stake of p0 and extraMoney - the fees
+                assert.equal(
+                    p1OriginalMoveBalance - p1_fee1 - p1_fee2 + extraMoney + BigInt( amount ),
+                    p1ActualBalance,
+                    "all stake should be refund and extraMoney"
+                )
+            } )
+        } )
+    } )
+    describe( "multiple rounds", () => {
+        before( () => initContract( { reactionTime: 10, debugTimestamp: 0 } ) )
+
+        const hasBeenReset = async (  ) => {
+            const {
+                decodedResult: { hash, last_move_timestamp, player1_move, stake }
+            } = await contract.methods.get_state()
+
+            assert.isUndefined( hash, "hash should be undefined" )
+            assert.isUndefined( player1_move, "player1_move should be undefined"  )
+            assert.equal( last_move_timestamp, 0, "last_move_timestamp should be zero" )
+            assert.equal( stake, 0, "stake should be zero" )
+            assert.equal(
+                await aeSdk.getBalance( getAK( contract ) ), 0,
+                "contract balance should be zero "
+            )
+        }
+
+        it( 'resets the state after player0 won', async () => {
+            await giveContractExtraMoney()
+            mkh( 'rock', "the-key" )
+
+            await contract.methods.provide_hash( hash, withP0( { amount } ) )
+            await contract.methods.player1_move( "scissors", withP1( { amount } ) )
+            await contract.methods.reveal( key, move, withP0() )
+
+            await hasBeenReset()
+        } )
+        it( 'resets the state after player1 won', async () => {
+            await giveContractExtraMoney()
+            mkh( 'rock', "the-key" )
+
+            await contract.methods.provide_hash( hash, withP0( { amount } ) )
+            await contract.methods.player1_move( "paper", withP1( { amount } ) )
+            await contract.methods.reveal( key, move, withP0() )
+
+            await hasBeenReset()
+        } )
+        it( 'resets the state after a draw', async () => {
+            await giveContractExtraMoney()
+            mkh( 'rock', "the-key" )
+
+            await contract.methods.provide_hash( hash, withP0( { amount } ) )
+            await contract.methods.player1_move( "rock", withP1( { amount } ) )
+            await contract.methods.reveal( key, move, withP0() )
+
+            await hasBeenReset()
+        } )
+        it( 'resets the state after p0 dispute', async () => {
+            await giveContractExtraMoney()
+
+            await contract.methods.provide_hash( dummyHash, withP0( { amount } ) )
+            await contract.methods.set_timestamp( 11, withP2() )
+            await contract.methods.player0_dispute_no_move( withP0() )
+
+            await hasBeenReset()
+        } )
+        it( 'resets the state after p1 dispute', async () => {
+            await giveContractExtraMoney()
+
+            await contract.methods.provide_hash( dummyHash, withP0( { amount } ) )
+            await contract.methods.player1_move( "rock", withP1( { amount } ) )
+            await contract.methods.set_timestamp( 11, withP2() )
+            await contract.methods.player1_dispute_no_reveal( withP1() )
+
+            await hasBeenReset()
         } )
     } )
 } )
