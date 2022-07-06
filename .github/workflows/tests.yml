@@ -1,0 +1,46 @@
+name: State Channel Demo Tests Pipeline
+
+on:
+  push:
+    branches: 
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, develop ]
+    types: [ opened ]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    name: State Channel Demo tests
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 100
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+      
+      - name: Npm install client
+        run: cd client && npm ci
+
+      - name: Npm install server
+        run: cd server && npm ci
+
+      - name: Start containers
+        run: docker-compose --env-file .env.dev up -d --build
+
+      - name: List running containers
+        run: docker ps
+
+      - name: Sleep for a minute
+        run: sleep 60
+
+      - name: Run client tests
+        run: cd client && npm run test
+
+      - name: Run server tests
+        run: cd server && npm run test
