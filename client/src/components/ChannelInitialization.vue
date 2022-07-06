@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue';
+import { useChannelStore } from '../stores/channel';
 import { AeSdk, Channel } from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { getSdk, returnCoinsToFaucet } from '../sdk/sdk';
@@ -12,6 +13,7 @@ const error = ref<string>();
 const channelStatus = ref<string>();
 const openChannelInitiated = ref(false);
 let sdk: AeSdk;
+const channelStore = useChannelStore();
 
 onBeforeUnmount(async () => {
   if (!sdk) return;
@@ -23,6 +25,9 @@ async function registerEvents(channel: Channel, sdk: AeSdk) {
     channelStatus.value = status;
     if (status === 'closed') {
       void returnCoinsToFaucet(sdk);
+    }
+    if (status === 'open') {
+      channelStore.channelIsOpen = true;
     }
   });
 }
@@ -83,22 +88,70 @@ async function openStateChannel(): Promise<void> {
 </script>
 
 <template>
-  <div>
-    <Button
-      :disabled="openChannelInitiated"
-      @click="openStateChannel()"
-      text="Open State Channel"
-    />
-    <div v-if="openChannelInitiated && !error">
+  <div class="open-channel">
+    <div class="title">Start the game by open state channel</div>
+    <div class="info-wrapper" v-if="!openChannelInitiated">
+      <p class="info">
+        State channels refer to the process in which users transact with one
+        another directly outside of the blockchain, or ‘off-chain,’ and greatly
+        minimize their use of ‘on-chain’ operations.
+      </p>
+      <p class="info">
+        By clicking start game you are initiating state channel with our bot and
+        you make the possibilities of the game practically endless. After the
+        game is over, you can see every action recorded on the blockchain by
+        checking our explorer.
+      </p>
+      <Button
+        :disabled="openChannelInitiated"
+        @click="openStateChannel()"
+        text="Start game"
+      />
+    </div>
+    <div v-if="openChannelInitiated">
+      <!-- Loader will be rendered here -->
       Channel Status: {{ channelStatus }}
+      <span v-if="error">Error: {{ error }}</span>
     </div>
-    <div v-if="!loading && channelConfig">
-      <pre>{{ JSON.stringify(channelConfig, null, 2) }}</pre>
-    </div>
-
-    <p v-if="loading && openChannelInitiated">Loading...</p>
-    <p v-if="error && openChannelInitiated">Error: {{ error }}</p>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+@import '../mediaqueries.scss';
+
+.open-channel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: var(--padding);
+  height: 60%;
+}
+.title {
+  min-width: 400px;
+  max-width: 40%;
+  font-size: 40px;
+  font-weight: 500;
+  text-align: center;
+  @include for-phone-only {
+    font-size: 28px;
+    min-width: 100%;
+    max-width: 100%;
+    margin: 20px;
+  }
+}
+.info-wrapper {
+  display: contents;
+}
+.info {
+  min-width: 400px;
+  max-width: 40%;
+  font-size: 16px;
+  font-weight: 400;
+  @include for-phone-only {
+    min-width: 100%;
+    max-width: 100%;
+    margin: 20px;
+  }
+}
+</style>

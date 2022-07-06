@@ -23,8 +23,8 @@ export default defineConfig({
   test: {
     include: ['./tests/**/*.test.ts'],
     globals: true,
-    threads: false,
     environment: 'happy-dom',
+    silent: true,
     env: {
       VITE_NODE_ENV: 'development',
       VITE_BOT_SERVICE_URL: 'http://localhost:3000',

@@ -1,15 +1,22 @@
 import { render, fireEvent } from '@testing-library/vue';
 import { describe, it, expect, vi } from 'vitest';
 import ChannelInitialization from '../src/components/ChannelInitialization.vue';
+import { createTestingPinia } from '@pinia/testing';
 
 describe('Open State Channel Button', () => {
   expect(ChannelInitialization).toBeTruthy();
-  it('should disable button after clicking it and open channel', async () => {
-    const channelComp = render(ChannelInitialization);
-    const button = channelComp.getByText('Open State Channel');
+  it('should hide button after clicking it and open channel', async () => {
+    const channelComp = render(ChannelInitialization, {
+      global: {
+        plugins: [createTestingPinia()],
+      },
+    });
+    const button = channelComp.getByText('Start game');
     await fireEvent.click(button);
-    // button is disabled after clicking it
-    expect(button.getAttribute('disabled')).toBe('true');
+    // button is hiden after clicking it
+    expect(() => {
+      channelComp.getByText('Start game');
+    }).toThrowError();
 
     // Channel Status is shown after clicking button
     channelComp.getByText('Channel Status: getting channel config');
@@ -30,8 +37,12 @@ describe('Open State Channel Button', () => {
       })
     );
 
-    const channelComp = render(ChannelInitialization);
-    const button = channelComp.getByText('Open State Channel');
+    const channelComp = render(ChannelInitialization, {
+      global: {
+        plugins: [createTestingPinia()],
+      },
+    });
+    const button = channelComp.getByText('Start game');
     await fireEvent.click(button);
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(
