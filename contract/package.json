@@ -1,13 +1,16 @@
 {
-  "name": "rock-paper-scissors",
+  "name": "@aeternity/rock-paper-scissors",
   "version": "1.0.0",
   "description": "This is the default package.json generated for your project",
+  "main": "build/RockPaperScissors.aes.js",
+
   "scripts": {
     "lint": "eslint",
     "test": "mocha ./test/**/*.test.js --timeout 0 --exit",
     "test:bail": "mocha ./test/**/*.test.js --timeout 0 --exit -b --failed-first",
     "test:debug": "node --inspect-brk node_modules/.bin/mocha ./test/**/*.test.js --timeout 0 --exit -b --failed-first",
-    "deploy": "node test/deploy.js"
+    "deploy": "node test/deploy.js",
+    "postinstall": "node ./scripts/postinstall.js"
   },
   "dependencies": {
     "@aeternity/aepp-sdk": "^12.0.0"

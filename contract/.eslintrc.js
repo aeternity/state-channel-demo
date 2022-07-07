@@ -47,4 +47,7 @@ module.exports = {
         'prefer-const'            : 'warn',
         'require-await'           : 'error'
     },
+    "globals": { 
+        "__dirname": true,
+    }
 }

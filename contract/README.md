@@ -48,3 +48,13 @@ $ npm run deploy:testnet
 $ npm run deploy:mainnet
 ```
 
+## Using it in JS projects
+
+```bash
+import * as RockPaperScissors from '@aeternity/rock-paper-scissors'
+
+# or
+
+const RockPaperScissors = require('@aeternity/rock-paper-scissors')
+
+```
