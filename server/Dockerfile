@@ -1,12 +1,15 @@
-FROM node:16.15.1 AS development  
+FROM node:16.15.1 as builder 
 
-WORKDIR /app/server
+RUN mkdir -p /home/node/app
+WORKDIR /home/node/app
+COPY package*.json /home/node/app/
+RUN chown -R node:node /home/node/
 
-COPY package*.json ./
-RUN ls -al
-RUN npm install
+USER node
 
+RUN npm ci
 COPY . .
 
+COPY --chown=node:node . /home/node/app
 RUN npm run build
-CMD [ "node", "dist/index.js" ]
+CMD [ "node", "dist/src/index.js" ]
