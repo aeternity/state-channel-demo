@@ -1,4 +1,4 @@
-name: Production State Channel Demo Backend Pipeline
+name: Backend Pipeline Production State Channel Demo
 
 on:
   push:
@@ -72,10 +72,10 @@ jobs:
         if: |
           github.event_name == 'push' ||
           startsWith(github.ref, 'refs/tags/v')
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: ./server
-          file: Dockerfile
+          file: ./server/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
