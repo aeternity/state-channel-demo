@@ -106,6 +106,15 @@ jobs:
           env: ${{ env.ENV }}
           app: ${{ env.APP }}
 
+      - name: Latest Main Deploy on Push
+        if: github.event_name == 'push'
+        uses: aeternity/ae-github-actions/argocd-pr-sync@v4
+        with:
+          git-sha: ${{ steps.git-sha.outputs.git-sha }}
+          url-prefix: main
+          env: ${{ env.ENV }}
+          app: ${{ env.APP }}
+
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
