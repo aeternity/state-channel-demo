@@ -1,10 +1,22 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import replace from '@rollup/plugin-replace';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  optimizeDeps: {
+    include: ['@aeternity/aepp-sdk', 'bignumber.js', 'json-bigint'],
+  },
+  plugins: [
+    vue(),
+    replace({
+      'getAugmentedNamespace(bignumber)':
+        'getAugmentedNamespace(bignumber).BigNumber',
+      preventAssignment: false,
+      delimiters: ['', ''],
+    }),
+  ],
   resolve: {
     dedupe: ['vue'],
   },
