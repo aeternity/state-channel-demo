@@ -1,4 +1,4 @@
-name: Backend Pipeline Production State Channel Demo
+name: Frontend Production Pipeline
 
 on:
   push:
@@ -9,14 +9,14 @@ on:
 
 env:
   ENV: "prd"
-  APP: "state-channel-demo-backend"
+  APP: "state-channel-demo-frontend"
 
-concurrency: dex_backend_production_environment
+concurrency: state_channel_demo_production_environment
 
 jobs:
   main:
     runs-on: ubuntu-latest
-    name: State channel demo backend build docker
+    name: State channel demo frontend build docker
     steps:
       - uses: actions/checkout@v2
         with:
@@ -61,7 +61,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: aeternitybot/state-channel-demo-backend
+          images: aeternitybot/state-channel-demo-frontend
           tags: |
             type=raw,value=latest,enable=${{ endsWith(GitHub.ref, 'main') }}
             type=raw,value=${{ steps.release.outputs.tag_name }},enable=${{ endsWith(GitHub.ref, 'main') }}
@@ -74,11 +74,22 @@ jobs:
           startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v3
         with:
-          context: ./server
-          file: ./server/Dockerfile
+          context: ./client
+          file: ./client/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_NODE_ENV=staging
+            VITE_BOT_SERVICE_URL=https://state-channel-demo-backend.dev.aepps.com/
+            VITE_CLIENT_PORT=8000 
+            VITE_NODE_URL=https://testnet.aeternity.io
+            VITE_COMPILER_URL= https://compiler.aepps.com
+            VITE_WS_URL= wss://sdk-testnet.aepps.com/channel
+            VITE_FAUCET_PUBLIC_ADDRESS = ak_2iBPH7HUz3cSDVEUWiHg76MZJ6tZooVNBmmxcgVK6VV8KAE688
+            VITE_NETWORK_ID = ae_uat
+            VITE_RESPONDER_HOST = localhost
+            VITE_RESPONDER_PORT = 3333
           cache-from: type=local,src=/tmp/.buildx-cache
           # Note the mode=max here
           # More: https://github.com/moby/buildkit#--export-cache-options
@@ -105,7 +116,7 @@ jobs:
           url-prefix: ${{ steps.release.outputs.tag_name }}
           env: ${{ env.ENV }}
           app: ${{ env.APP }}
-
+      
       - name: Latest Main Deploy on Push
         if: github.event_name == 'push'
         uses: aeternity/ae-github-actions/argocd-pr-sync@v4
