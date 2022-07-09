@@ -2,9 +2,12 @@ import { AeSdk, Channel, generateKeyPair } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
+import axios, { AxiosError } from 'axios';
 import botService from './index';
 import { mockChannel, timeout } from '../../../test';
 import { getSdk } from '../sdk/sdk.service';
+
+const axiosSpy = jest.spyOn(axios, 'post');
 
 interface ChannelMock {
   listeners: {
@@ -79,5 +82,67 @@ describe('botService', () => {
     await timeout(100);
     const channelRemoved = !botService.channelPool.has(channel);
     expect(channelRemoved).toBe(true);
+  });
+
+  describe('botService.fundThroughFaucet()', () => {
+    const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+    const accountMock = 'ak_test';
+
+    afterEach(() => {
+      mockedAxios.post.mockClear();
+    });
+
+    it('should run without errors', async () => {
+      mockedAxios.post.mockReturnValue(Promise.resolve());
+      await botService.fundThroughFaucet(accountMock);
+    });
+
+    it('should throw an error if faucet greylisted account', async () => {
+      mockedAxios.post.mockRejectedValueOnce(
+        new AxiosError('Greylisted', '425', null, null, {
+          status: 425,
+          statusText: 'Greylisted',
+          headers: {},
+          config: {},
+          request: {},
+          data: [],
+        }),
+      );
+      await expect(botService.fundThroughFaucet(accountMock)).rejects.toThrow();
+      expect(axiosSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should retry by default 10 times when error code is different than 425', async () => {
+      mockedAxios.post.mockRejectedValue(
+        new AxiosError('Unavailable', '500', null, null, {
+          status: 500,
+          statusText: 'Unavailable',
+          headers: {},
+          config: {},
+          request: {},
+          data: [],
+        }),
+      );
+      await expect(botService.fundThroughFaucet(accountMock)).rejects.toThrow();
+      expect(axiosSpy).toHaveBeenCalledTimes(11);
+    });
+
+    it('should retry 5 times when given a 5 as the second parameter', async () => {
+      mockedAxios.post.mockRejectedValue(
+        new AxiosError('Unavailable', '500', null, null, {
+          status: 500,
+          statusText: 'Unavailable',
+          headers: {},
+          config: {},
+          request: {},
+          data: [],
+        }),
+      );
+      await expect(
+        botService.fundThroughFaucet(accountMock, 5),
+      ).rejects.toThrow();
+      expect(axiosSpy).toHaveBeenCalledTimes(6);
+    });
   });
 });

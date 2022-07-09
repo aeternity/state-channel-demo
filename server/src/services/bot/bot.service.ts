@@ -2,7 +2,7 @@ import { AeSdk, Channel, generateKeyPair } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import {
   BaseAe,
   getSdk,
@@ -37,12 +37,25 @@ export function removeChannel(channel: Channel) {
   logger.info(`Removed from pool channel with ID: ${channelId}`);
 }
 
-export async function fundThroughFaucet(account: EncodedData<'ak'>) {
+export async function fundThroughFaucet(
+  account: EncodedData<'ak'>,
+  maxRetries = 10,
+): Promise<void> {
   const FAUCET_URL = 'https://faucet.aepps.com';
   try {
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
-    logger.info(`Funded account ${account} through Faucet`);
+    return logger.info(`Funded account ${account} through Faucet`);
   } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response.status === 425) {
+        logger.error(`account ${account} is greylisted.`);
+      } else if (maxRetries > 0) {
+        logger.warn(
+          `Faucet is currently unavailable. Retrying at maximum ${maxRetries} more times`,
+        );
+        return fundThroughFaucet(account, maxRetries - 1);
+      }
+    }
     logger.error({ error }, 'failed to fund account through faucet');
     throw error;
   }
