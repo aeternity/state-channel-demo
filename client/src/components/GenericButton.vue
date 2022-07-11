@@ -9,8 +9,11 @@ defineProps<{
 </template>
 
 <style scoped lang="scss">
+@import '../mediaqueries.scss';
+
 button {
   font-family: unset;
+  font-size: 16px;
   border: none;
   user-select: none;
   cursor: pointer;
@@ -23,11 +26,14 @@ button {
   transition: background-color 200ms ease-in-out;
 
   &:hover {
-    background-color: green;
+    background-color: var(--green);
   }
   &:disabled {
     background-color: gray;
     cursor: not-allowed;
+  }
+  @include for-phone-only {
+    font-size: 30px;
   }
 }
 </style>

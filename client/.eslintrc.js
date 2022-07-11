@@ -19,5 +19,11 @@ module.exports = {
   rules: {
     'prettier/prettier': ['error', { endOfLine: 'lf' }],
     'linebreak-style': ['error', 'unix'],
+    'vue/multi-word-component-names': [
+      'error',
+      {
+        ignores: ['Header'],
+      },
+    ],
   },
 };
