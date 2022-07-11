@@ -53,6 +53,10 @@ export async function fundThroughFaucet(
         logger.warn(
           `Faucet is currently unavailable. Retrying at maximum ${maxRetries} more times`,
         );
+        // wait .5s before retrying
+        await new Promise((resolve) => {
+          setTimeout(resolve, 500);
+        });
         return fundThroughFaucet(account, maxRetries - 1);
       }
     }

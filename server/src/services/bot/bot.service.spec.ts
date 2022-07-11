@@ -8,6 +8,7 @@ import { mockChannel, timeout } from '../../../test';
 import { getSdk } from '../sdk/sdk.service';
 
 const axiosSpy = jest.spyOn(axios, 'post');
+jest.setTimeout(10000);
 
 interface ChannelMock {
   listeners: {
