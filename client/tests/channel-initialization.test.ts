@@ -13,7 +13,7 @@ describe('Open State Channel Button', () => {
     });
     const button = channelComp.getByText('Start game');
     await fireEvent.click(button);
-    // button is hiden after clicking it
+    // button is hidden after clicking it
     expect(() => {
       channelComp.getByText('Start game');
     }).toThrowError();

@@ -18,7 +18,7 @@ const botBalance = undefined;
   display: flex;
   justify-content: space-between;
   padding: var(--padding);
-  padding-bottom: 0;
+  padding-bottom: 5px;
   height: 10%;
 }
 

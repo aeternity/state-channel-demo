@@ -2,11 +2,18 @@
 import ChannelInitialization from './components/ChannelInitialization.vue';
 import TransactionsList from './components/TransactionsList.vue';
 import Header from './components/Header.vue';
+import RockPaperScissor from './components/RockPaperScissor.vue';
+import PopUp from './components/PopUp.vue';
+import { useChannelStore } from './stores/channel';
+
+const channelStore = useChannelStore();
 </script>
 
 <template>
+  <PopUp />
   <Header />
-  <ChannelInitialization />
+  <ChannelInitialization v-if="!channelStore.channelIsOpen" />
+  <RockPaperScissor v-if="channelStore.channelIsOpen" />
   <TransactionsList />
 </template>
 
