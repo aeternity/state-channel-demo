@@ -14,6 +14,7 @@ defineProps<{
 button {
   font-family: unset;
   font-size: 16px;
+  font-weight: 100;
   border: none;
   user-select: none;
   cursor: pointer;
