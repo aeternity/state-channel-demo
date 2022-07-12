@@ -39,7 +39,13 @@ export function removeChannel(channel: Channel) {
 
 export async function fundThroughFaucet(
   account: EncodedData<'ak'>,
-  maxRetries = 10,
+  options: {
+    maxRetries?: number;
+    retryDelay?: number;
+  } = {
+    maxRetries: 1,
+    retryDelay: 1000,
+  },
 ): Promise<void> {
   const FAUCET_URL = 'https://faucet.aepps.com';
   try {
@@ -49,15 +55,18 @@ export async function fundThroughFaucet(
     if (error instanceof AxiosError) {
       if (error.response.status === 425) {
         logger.error(`account ${account} is greylisted.`);
-      } else if (maxRetries > 0) {
+      } else if (options.maxRetries > 0) {
         logger.warn(
-          `Faucet is currently unavailable. Retrying at maximum ${maxRetries} more times`,
+          `Faucet is currently unavailable. Retrying at maximum ${options.maxRetries} more times`,
         );
         // wait .5s before retrying
         await new Promise((resolve) => {
-          setTimeout(resolve, 500);
+          setTimeout(resolve, options.retryDelay);
         });
-        return fundThroughFaucet(account, maxRetries - 1);
+        return fundThroughFaucet(account, {
+          maxRetries: options.maxRetries - 1,
+          retryDelay: options.retryDelay + 1000,
+        });
       }
     }
     logger.error({ error }, 'failed to fund account through faucet');
@@ -67,7 +76,9 @@ export async function fundThroughFaucet(
 
 export async function fundAccount(account: EncodedData<'ak'>) {
   if (!IS_USING_LOCAL_NODE) {
-    await fundThroughFaucet(account);
+    await fundThroughFaucet(account, {
+      maxRetries: 20,
+    });
   } else {
     // when using a local node, fund account using local faucet account
     const localFaucet = await BaseAe({ networkId: NETWORK_ID });
