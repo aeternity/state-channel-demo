@@ -8,7 +8,7 @@
     "start": "node ./dist/src/index.js",
     "dev": "tsc-watch --onSuccess \"sh -c 'node ./dist/src/index.js | ./node_modules/.bin/pino-pretty -c -t'\"",
     "lint": "eslint --ext .ts --ignore-path .gitignore --fix src",
-    "test": "jest",
+    "test": "jest --verbose",
     "test:cov": "jest --coverage",
     "test:watch": "jest --watch",
     "prepare": "cd .. && husky install .husky",
