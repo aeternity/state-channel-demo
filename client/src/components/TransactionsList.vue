@@ -48,7 +48,7 @@ const isMinimized = computed(() => !channelStore.channelIsOpen);
   background-color: #f4f4f4;
   padding: var(--padding);
   height: 30%;
-  transition: height 200ms ease-in-out;
+  transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
   &.minimized {
     height: 4%;
     padding: 20px var(--padding);

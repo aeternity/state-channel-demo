@@ -1,19 +1,25 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 import { useChannelStore } from '../stores/channel';
 import { AeSdk, Channel } from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { getSdk, returnCoinsToFaucet } from '../sdk/sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { default as Button } from './GenericButton.vue';
+import LoadingAnimation from './LoadingAnimation.vue';
 
 const channelConfig = ref<ChannelOptions>();
-const loading = ref(false);
 const error = ref<string>();
 const channelStatus = ref<string>();
 const openChannelInitiated = ref(false);
 let sdk: AeSdk;
 const channelStore = useChannelStore();
+
+const title = computed(() =>
+  !openChannelInitiated.value
+    ? 'Start the game by open state channel'
+    : 'Setting ‘on-chain’ operations...'
+);
 
 onBeforeUnmount(async () => {
   if (!sdk) return;
@@ -66,7 +72,6 @@ function completeChannelConfig(channelConf: ChannelOptions, sdk: AeSdk) {
 
 async function openStateChannel(): Promise<void> {
   openChannelInitiated.value = true;
-  loading.value = true;
   channelStatus.value = 'getting channel config';
   sdk = await getSdk();
   try {
@@ -81,15 +86,20 @@ async function openStateChannel(): Promise<void> {
     registerEvents(responderCh, sdk);
   } catch (e) {
     console.error(e);
-  } finally {
-    loading.value = false;
   }
 }
 </script>
 
 <template>
   <div class="open-channel">
-    <div class="title">Start the game by open state channel</div>
+    <div
+      class="title"
+      :style="{
+        'max-width': openChannelInitiated ? '100%' : '',
+      }"
+    >
+      {{ title }}
+    </div>
     <div class="info-wrapper" v-if="!openChannelInitiated">
       <p class="info">
         State channels refer to the process in which users transact with one
@@ -108,11 +118,8 @@ async function openStateChannel(): Promise<void> {
         text="Start game"
       />
     </div>
-    <div v-if="openChannelInitiated">
-      <!-- Loader will be rendered here -->
-      Channel Status: {{ channelStatus }}
-      <span v-if="error">Error: {{ error }}</span>
-    </div>
+    <LoadingAnimation v-else-if="!error" />
+    <div v-else>Error: {{ error }}</div>
   </div>
 </template>
 
