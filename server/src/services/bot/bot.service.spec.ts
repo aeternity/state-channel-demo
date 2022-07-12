@@ -114,7 +114,7 @@ describe('botService', () => {
       expect(axiosSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should retry by default 10 times when error code is different than 425', async () => {
+    it('should retry by default 1 time when error code is different than 425', async () => {
       mockedAxios.post.mockRejectedValue(
         new AxiosError('Unavailable', '500', null, null, {
           status: 500,
@@ -126,10 +126,10 @@ describe('botService', () => {
         }),
       );
       await expect(botService.fundThroughFaucet(accountMock)).rejects.toThrow();
-      expect(axiosSpy).toHaveBeenCalledTimes(11);
+      expect(axiosSpy).toHaveBeenCalledTimes(2);
     });
 
-    it('should retry 5 times when given a 5 as the second parameter', async () => {
+    it('should retry 3 times with a total delay of 4.5 seconds when given maxRetries:2 and retryDelay:500', async () => {
       mockedAxios.post.mockRejectedValue(
         new AxiosError('Unavailable', '500', null, null, {
           status: 500,
@@ -140,10 +140,21 @@ describe('botService', () => {
           data: [],
         }),
       );
+
+      const startTime = performance.now();
+
       await expect(
-        botService.fundThroughFaucet(accountMock, 5),
+        botService.fundThroughFaucet(accountMock, {
+          maxRetries: 3,
+          retryDelay: 500,
+        }),
       ).rejects.toThrow();
-      expect(axiosSpy).toHaveBeenCalledTimes(6);
+      expect(axiosSpy).toHaveBeenCalledTimes(4);
+      const endTime = performance.now();
+
+      const totalDelay = endTime - startTime;
+      expect(totalDelay).toBeGreaterThanOrEqual(4500);
+      expect(totalDelay).toBeLessThanOrEqual(6500);
     });
   });
 });
