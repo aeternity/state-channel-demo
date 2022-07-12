@@ -1,15 +1,21 @@
 import {
-  AccountBase, AeSdk, MemoryAccount, Node,
+  AccountBase,
+  AeSdk,
+  Channel,
+  MemoryAccount,
+  Node,
 } from '@aeternity/aepp-sdk';
 import { Keypair } from '@aeternity/aepp-sdk/es/account/Memory';
 import {
   COMPILER_URL,
+  CONTRACT_CONFIGURATION,
+  CONTRACT_SOURCE,
   FAUCET_ACCOUNT,
   IGNORE_NODE_VERSION,
   IS_USING_LOCAL_NODE,
   NETWORK_ID,
   NODE_URL,
-} from './sdk.service.constants';
+} from './sdk.constants';
 
 /**
  * @param params.accounts - array of accounts to be used by the sdk
@@ -77,4 +83,18 @@ export async function getSdk(keyPair: Keypair): Promise<AeSdk> {
     networkId: NETWORK_ID,
     withoutFaucetAccount: true,
   });
+}
+
+export async function deployContract(sdk: AeSdk, channel: Channel) {
+  const contract = await sdk.getContractInstance({ source: CONTRACT_SOURCE });
+  await contract.compile();
+  return channel.createContract(
+    {
+      ...CONTRACT_CONFIGURATION,
+      code: contract.bytecode,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      callData: contract.calldata.encode('Identity', 'init', []) as string,
+    },
+    async (tx) => sdk.signTransaction(tx),
+  );
 }

@@ -10,6 +10,7 @@ import {
   IS_USING_LOCAL_NODE,
   NETWORK_ID,
   FAUCET_PUBLIC_ADDRESS,
+  deployContract,
 } from '../sdk';
 import logger from '../../logger';
 
@@ -112,6 +113,7 @@ export async function registerEvents(channel: Channel, sdk: AeSdk) {
     if (status === 'open') {
       if (!channelPool.has(channel)) {
         addChannel(channel);
+        void deployContract(sdk, channel);
       }
     }
   });

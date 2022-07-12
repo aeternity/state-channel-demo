@@ -65,6 +65,12 @@ describe('botService', () => {
     const sdk = await getSdk(generateKeyPair());
     const { transferFunds, ...mockedSdk } = sdk;
     Object.assign(mockedSdk, {
+      getContractInstance: jest.fn(() => ({
+        compile: jest.fn(() => ({})),
+        calldata: {
+          encode: jest.fn(() => ''),
+        },
+      })),
       transferFunds: jest.fn(
         (
           amount: number | string,

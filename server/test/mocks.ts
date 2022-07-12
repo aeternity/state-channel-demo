@@ -12,6 +12,7 @@ export const mockChannel = () => {
       id() {
         return `ch_${randomUUID()}`;
       },
+      createContract: jest.fn(),
     } as ChannelMock),
   );
 };

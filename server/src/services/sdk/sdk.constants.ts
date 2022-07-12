@@ -22,3 +22,15 @@ export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
     },
   })
   : null;
+
+export const CONTRACT_CONFIGURATION = {
+  deposit: 1000,
+  vmVersion: 5,
+  abiVersion: 3,
+};
+
+// TODO: Remove me
+export const CONTRACT_SOURCE = `
+contract Identity =
+  entrypoint getArg(x : int) : int = x
+`;

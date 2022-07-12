@@ -1,7 +1,7 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { Channel, generateKeyPair } from '@aeternity/aepp-sdk';
 import BigNumber from 'bignumber.js';
-import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.service.constants';
+import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
 import botService from '../../src/services/bot';
 import { getSdk } from '../../src/services/sdk/sdk.service';
 import { timeout } from '../utils';
@@ -28,7 +28,9 @@ describe('botService', () => {
       role: 'responder',
       sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
     });
-    expect(playerChannel.status()).toBe('connected');
+
+    await timeout(1000);
+    expect(playerChannel.status()).toBe('open');
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
   });
 
@@ -51,6 +53,7 @@ describe('botService', () => {
       role: 'responder',
       sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
     });
+    await timeout(1000);
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
     await timeout(1000);
 
