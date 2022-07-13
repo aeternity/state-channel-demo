@@ -18,9 +18,7 @@ const channelStore = useChannelStore();
 </template>
 
 <style lang="scss">
-@import url('http://fonts.cdnfonts.com/css/clash-display');
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono&display=swap');
-
+@import './fonts.scss';
 @import './mediaqueries.scss';
 
 #app {
