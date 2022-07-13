@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useChannelStore } from '../stores/channel';
-import { AeSdk, Channel } from '@aeternity/aepp-sdk';
+import {
+  AeSdk,
+  AeSdkWallet,
+  BrowserRuntimeConnection,
+  BrowserWindowMessageConnection,
+  Channel,
+  unpackTx,
+} from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { getSdk, returnCoinsToFaucet } from '../sdk/sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
@@ -12,7 +19,8 @@ const channelConfig = ref<ChannelOptions>();
 const error = ref<string>();
 const channelStatus = ref<string>();
 const openChannelInitiated = ref(false);
-let sdk: AeSdk;
+let sdk: AeSdkWallet;
+let channel: Channel;
 const channelStore = useChannelStore();
 
 const title = computed(() =>
@@ -27,8 +35,17 @@ onBeforeUnmount(async () => {
 });
 
 async function registerEvents(channel: Channel, sdk: AeSdk) {
-  channel.on('statusChanged', (status) => {
+  channel.on('onChainTx', (message, info) =>
+    console.log('-------------', { message, info })
+  );
+  channel.on('update', (message) => console.log({ message }));
+  channel.on('statusChanged', (status, info) => {
+    console.log({ info });
     channelStatus.value = status;
+
+    if (status === 'update') {
+      console.log('AAAAAAAAAAAA');
+    }
     if (status === 'closed') {
       void returnCoinsToFaucet(sdk);
     }
@@ -62,7 +79,10 @@ async function getChannelConfig(sdk: AeSdk): Promise<ChannelOptions> {
 function completeChannelConfig(channelConf: ChannelOptions, sdk: AeSdk) {
   Object.assign(channelConf, {
     role: 'responder',
-    sign: (_tag: string, tx: EncodedData<'tx'>) => sdk.signTransaction(tx),
+    sign: async (_tag: string, tx: EncodedData<'tx'>) => {
+      console.log(_tag, tx);
+      return sdk.signTransaction(tx);
+    },
     url:
       import.meta.env.VITE_NODE_ENV == 'development'
         ? import.meta.env.VITE_WS_URL
@@ -82,8 +102,8 @@ async function openStateChannel(): Promise<void> {
       throw new Error('Channel config is null');
     }
     channelStatus.value = 'initializing ws';
-    const responderCh = await Channel.initialize(channelConfig.value);
-    registerEvents(responderCh, sdk);
+    channel = await Channel.initialize(channelConfig.value);
+    registerEvents(channel, sdk);
   } catch (e) {
     console.error(e);
   }
