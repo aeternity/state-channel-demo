@@ -24,7 +24,7 @@ button {
   margin: 10px;
   background-color: black;
   color: white;
-  transition: background-color 200ms ease-in-out;
+  transition: background-color 50ms ease-in-out;
 
   &:hover {
     background-color: var(--green);

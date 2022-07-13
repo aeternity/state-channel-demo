@@ -46,7 +46,6 @@ const store = usePopUpStore();
   filter: drop-shadow(3px 2px 15px rgba(0, 0, 0, 0.25));
   z-index: 1200;
   &__wrapper {
-    backdrop-filter: blur(2px);
     background-color: rgba(0, 0, 0, 0.25);
     width: 100vw;
     height: 100vh;

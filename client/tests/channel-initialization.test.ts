@@ -5,7 +5,7 @@ import { createTestingPinia } from '@pinia/testing';
 
 describe('Open State Channel Button', () => {
   expect(ChannelInitialization).toBeTruthy();
-  it('should hide button after clicking it and open channel', async () => {
+  it('should hide button after clicking it and show loader', async () => {
     const channelComp = render(ChannelInitialization, {
       global: {
         plugins: [createTestingPinia()],
@@ -18,13 +18,8 @@ describe('Open State Channel Button', () => {
       channelComp.getByText('Start game');
     }).toThrowError();
 
-    // Channel Status is shown after clicking button
-    channelComp.getByText('Channel Status: getting channel config');
-
-    // Channel Status becomes "open" after initialization is complete
-    await new Promise((resolve) => setTimeout(resolve, 22000));
-    channelComp.getByText('Channel Status: open');
-  }, 23000);
+    channelComp.getByText('Setting ‘on-chain’ operations...');
+  });
 
   it('shows error message on error', async () => {
     vi.stubGlobal('fetch', () =>
