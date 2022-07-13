@@ -68,7 +68,11 @@ export async function fundThroughFaucet(
       });
     }
     logger.error({ error }, 'failed to fund account through faucet');
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(
+        `failed to fund account through faucet. details: ${error.message}`,
+      );
+    } else throw error;
   }
 }
 
