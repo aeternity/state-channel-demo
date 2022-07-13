@@ -52,22 +52,20 @@ export async function fundThroughFaucet(
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
     return logger.info(`Funded account ${account} through Faucet`);
   } catch (error) {
-    if (error instanceof AxiosError) {
-      if (error.response.status === 425) {
-        logger.error(`account ${account} is greylisted.`);
-      } else if (options.maxRetries > 0) {
-        logger.warn(
-          `Faucet is currently unavailable. Retrying at maximum ${options.maxRetries} more times`,
-        );
-        // wait .5s before retrying
-        await new Promise((resolve) => {
-          setTimeout(resolve, options.retryDelay);
-        });
-        return fundThroughFaucet(account, {
-          maxRetries: options.maxRetries - 1,
-          retryDelay: options.retryDelay + 1000,
-        });
-      }
+    if (error instanceof AxiosError && error.response.status === 425) {
+      logger.error(`account ${account} is greylisted.`);
+    } else if (options.maxRetries > 0) {
+      logger.warn(
+        `Faucet is currently unavailable. Retrying at maximum ${options.maxRetries} more times`,
+      );
+      // wait .5s before retrying
+      await new Promise((resolve) => {
+        setTimeout(resolve, options.retryDelay);
+      });
+      return fundThroughFaucet(account, {
+        maxRetries: options.maxRetries - 1,
+        retryDelay: options.retryDelay + 1000,
+      });
     }
     logger.error({ error }, 'failed to fund account through faucet');
     throw error;
@@ -109,7 +107,9 @@ export async function registerEvents(channel: Channel, sdk: AeSdk) {
     }
 
     if (status === 'open') {
-      addChannel(channel);
+      if (!channelPool.has(channel)) {
+        addChannel(channel);
+      }
     }
   });
 }
