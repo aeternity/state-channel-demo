@@ -3,6 +3,7 @@ import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import axios, { AxiosError } from 'axios';
+import { setTimeout } from 'timers/promises';
 import {
   BaseAe,
   getSdk,
@@ -48,6 +49,7 @@ export async function fundThroughFaucet(
   },
 ): Promise<void> {
   const FAUCET_URL = 'https://faucet.aepps.com';
+  if (Number.isNaN(options.retryDelay)) options.retryDelay = 1000;
   try {
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
     return logger.info(`Funded account ${account} through Faucet`);
@@ -58,10 +60,7 @@ export async function fundThroughFaucet(
       logger.warn(
         `Faucet is currently unavailable. Retrying at maximum ${options.maxRetries} more times`,
       );
-      // wait .5s before retrying
-      await new Promise((resolve) => {
-        setTimeout(resolve, options.retryDelay);
-      });
+      await setTimeout(options.retryDelay);
       return fundThroughFaucet(account, {
         maxRetries: options.maxRetries - 1,
         retryDelay: options.retryDelay + 1000,
