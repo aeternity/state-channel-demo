@@ -5,14 +5,31 @@ import Header from './components/Header.vue';
 import RockPaperScissor from './components/RockPaperScissor.vue';
 import PopUp from './components/PopUp.vue';
 import { useChannelStore } from './stores/channel';
+import { onBeforeUnmount, shallowRef } from 'vue';
+import { returnCoinsToFaucet } from './sdk/sdk';
+import { SdkService } from './sdk/sdkService';
 
 const channelStore = useChannelStore();
+const sdkService = shallowRef(new SdkService());
+
+async function initChannel() {
+  await sdkService.value.initializeChannel();
+}
+
+onBeforeUnmount(async () => {
+  if (sdkService.value.sdk) {
+    await returnCoinsToFaucet(sdkService.value.sdk);
+  }
+});
 </script>
 
 <template>
   <PopUp />
   <Header />
-  <ChannelInitialization v-if="!channelStore.channelIsOpen" />
+  <ChannelInitialization
+    v-if="!channelStore.channelIsOpen"
+    @initializeChannel="initChannel()"
+  />
   <RockPaperScissor v-if="channelStore.channelIsOpen" />
   <TransactionsList />
 </template>
