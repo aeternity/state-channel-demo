@@ -5,6 +5,12 @@ import { ResponderBaseChannelConfig } from './route.interface';
 
 export const route = express.Router();
 
+route.get('/', (_req, res) => {
+  res.send(
+    'Hello Aeternal World! This is the backend service of the state channel demo.',
+  );
+});
+
 route.post('/open', (async (req, res) => {
   const reqBody = req.body as Partial<ResponderBaseChannelConfig>;
   const { address, port, host } = reqBody;
