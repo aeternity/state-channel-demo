@@ -7,12 +7,14 @@ import { getSdk, returnCoinsToFaucet } from '../sdk/sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { default as Button } from './GenericButton.vue';
 import LoadingAnimation from './LoadingAnimation.vue';
+import BigNumber from 'bignumber.js';
 
 const channelConfig = ref<ChannelOptions>();
 const error = ref<string>();
 const channelStatus = ref<string>();
 const openChannelInitiated = ref(false);
 let sdk: AeSdk;
+let channel: Channel;
 const channelStore = useChannelStore();
 
 const title = computed(() =>
@@ -33,6 +35,7 @@ async function registerEvents(channel: Channel, sdk: AeSdk) {
       void returnCoinsToFaucet(sdk);
     }
     if (status === 'open') {
+      updateBalances();
       channelStore.channelIsOpen = true;
     }
   });
@@ -70,6 +73,18 @@ function completeChannelConfig(channelConf: ChannelOptions, sdk: AeSdk) {
   });
 }
 
+async function updateBalances() {
+  if (!(channelConfig.value?.initiatorId && channelConfig.value?.responderId))
+    throw new Error(
+      'Channel configuration is missing initiator or responder id'
+    );
+
+  const { initiatorId, responderId } = channelConfig.value;
+  const balances = await channel.balances([initiatorId, responderId]);
+  channelStore.balances.user = new BigNumber(balances[responderId]);
+  channelStore.balances.bot = new BigNumber(balances[initiatorId]);
+}
+
 async function openStateChannel(): Promise<void> {
   openChannelInitiated.value = true;
   channelStatus.value = 'getting channel config';
@@ -83,6 +98,7 @@ async function openStateChannel(): Promise<void> {
     }
     channelStatus.value = 'initializing ws';
     const responderCh = await Channel.initialize(channelConfig.value);
+    channel = responderCh;
     registerEvents(responderCh, sdk);
   } catch (e) {
     console.error(e);

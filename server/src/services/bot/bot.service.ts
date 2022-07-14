@@ -17,9 +17,9 @@ export const channelPool = new WeakSet<Channel>();
 
 export const mutualChannelConfiguration = {
   url: process.env.WS_URL ?? 'ws://localhost:3014/channel',
-  pushAmount: 1,
-  initiatorAmount: new BigNumber('3e18'),
-  responderAmount: new BigNumber('3e18'),
+  pushAmount: 0,
+  initiatorAmount: new BigNumber('4.5e18'),
+  responderAmount: new BigNumber('4.5e18'),
   channelReserve: 2,
   lockPeriod: 10,
   debug: false,
