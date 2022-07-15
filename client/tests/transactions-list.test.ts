@@ -21,7 +21,7 @@ describe('Render Transactions List', () => {
         plugins: [
           createTestingPinia({
             initialState: {
-              channel: { channelIsOpen: true },
+              channel: { channel: { isOpen: true } },
             },
           }),
         ],

@@ -1,8 +1,8 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { describe, it, expect } from 'vitest';
-import { getSdk, FAUCET_ACCOUNT } from '../src/sdk/sdk';
+import { getSdk, FAUCET_ACCOUNT } from '../src/sdk/sdkService';
 import { createTestingPinia } from '@pinia/testing';
-import { SdkService } from '../src/sdk/sdkService';
+import { GameChannel } from '../src/sdk/GameChannel';
 import { AeSdk } from '@aeternity/aepp-sdk';
 
 describe('SDK', () => {
@@ -13,15 +13,15 @@ describe('SDK', () => {
     expect(sdk.selectedAddress).toBeTruthy();
   });
 
-  it('creates sdkService instance, initializes Channel and returns coins to faucet on channel closing', async () => {
+  it('creates game channel instance, initializes Channel and returns coins to faucet on channel closing', async () => {
     createTestingPinia();
-    const sdkService = new SdkService();
-    await sdkService.initializeChannel();
-    const client = sdkService.sdk as AeSdk;
+    const gameChannel = new GameChannel(await getSdk());
+    await gameChannel.initializeChannel();
+    const client = gameChannel.sdk as AeSdk;
     const ae = await getSdk();
 
     expect(client?.selectedAddress).toBeTruthy();
-    expect(sdkService.channel?.getStatus()).toBe('connected');
+    expect(gameChannel.channelInstance?.status()).toBe('connected');
 
     if (FAUCET_ACCOUNT) {
       await ae.addAccount(FAUCET_ACCOUNT, { select: true });
@@ -35,7 +35,7 @@ describe('SDK', () => {
       ae.selectedAddress as EncodedData<'ak'>
     );
 
-    await sdkService.channel?.closeChannel();
+    await gameChannel.closeChannel();
     await new Promise((resolve) => setTimeout(resolve, 2500));
 
     const balance_after = await client.getBalance(
