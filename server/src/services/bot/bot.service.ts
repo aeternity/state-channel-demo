@@ -71,7 +71,9 @@ export async function fundThroughFaucet(
     return logger.info(`Funded account ${account} through Faucet`);
   } catch (error) {
     if (error instanceof AxiosError && error.response.status === 425) {
-      logger.error(`account ${account} is greylisted.`);
+      const errorMessage = `account ${account} is greylisted.`;
+      logger.error(errorMessage);
+      throw new Error(errorMessage);
     } else if (options.maxRetries > 0) {
       logger.warn(
         `Faucet is currently unavailable. Retrying at maximum ${options.maxRetries} more times`,
@@ -83,19 +85,29 @@ export async function fundThroughFaucet(
       });
     }
     logger.error({ error }, 'failed to fund account through faucet');
-    if (error instanceof Error) {
-      throw new Error(
-        `failed to fund account through faucet. details: ${error.message}`,
-      );
-    } else throw error;
+    throw new Error(
+      `failed to fund account through faucet. details: ${error.toString()}`,
+    );
   }
 }
 
 export async function fundAccount(account: EncodedData<'ak'>) {
   if (!IS_USING_LOCAL_NODE) {
-    await fundThroughFaucet(account, {
-      maxRetries: 20,
-    });
+    try {
+      await fundThroughFaucet(account, {
+        maxRetries: 20,
+      });
+    } catch (error) {
+      if (
+        new BigNumber(await sdk.getBalance(account)).gt(
+          mutualChannelConfiguration.responderAmount,
+        )
+      ) {
+        logger.warn(
+          `Got an error but Account ${account} already has sufficient balance.`,
+        );
+      } else throw error;
+    }
   } else {
     await genesisFund(account);
   }
@@ -108,7 +120,9 @@ export async function handleChannelClose(sdk: AeSdk) {
   } catch (e) {
     logger.error({ e }, 'failed to return funds to faucet');
   }
-  removeChannel(sdk.selectedAddress);
+  const { selectedAddress } = sdk;
+  removeChannel(selectedAddress);
+  sdk.removeAccount(selectedAddress);
 }
 
 export async function registerEvents(
@@ -116,7 +130,7 @@ export async function registerEvents(
   configuration: ChannelOptions,
 ) {
   channel.on('statusChanged', (status) => {
-    if (status === 'closed') {
+    if (status === 'closed' || status === 'died') {
       sdk.selectAccount(configuration.initiatorId);
       void handleChannelClose(sdk);
     }

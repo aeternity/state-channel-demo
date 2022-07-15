@@ -1,7 +1,7 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { Channel } from '@aeternity/aepp-sdk';
 import BigNumber from 'bignumber.js';
-import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.service.constants';
+import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
 import botService from '../../src/services/bot';
 import { getSdk, timeout } from '../utils';
 

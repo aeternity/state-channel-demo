@@ -39,6 +39,7 @@ module.exports = {
       "error",
       { devDependencies: ["**/*.test.ts", "**/*.spec.ts"] },
     ],
+    "@typescript-eslint/no-unsafe-return": 0,
     "@typescript-eslint/no-shadow": 0,
     "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/no-unsafe-member-access": 0,

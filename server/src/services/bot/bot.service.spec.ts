@@ -5,10 +5,14 @@ import BigNumber from 'bignumber.js';
 import axios, { AxiosError } from 'axios';
 import botService from './index';
 import { mockChannel, timeout } from '../../../test';
-import { sdk } from '../sdk';
+import { genesisFund, sdk } from '../sdk';
 
 const axiosSpy = jest.spyOn(axios, 'post');
 jest.setTimeout(10000);
+jest.mock('../sdk', () => ({
+  ...jest.requireActual('../sdk'),
+  IS_USING_LOCAL_NODE: false,
+}));
 
 interface ChannelMock {
   listeners: {
@@ -84,8 +88,7 @@ describe('botService', () => {
 
   describe('botService.fundThroughFaucet()', () => {
     const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-    const accountMock = 'ak_test';
+    const accountMock = generateKeyPair().publicKey;
 
     afterEach(() => {
       mockedAxios.post.mockClear();
@@ -152,6 +155,23 @@ describe('botService', () => {
       const totalDelay = endTime - startTime;
       expect(totalDelay).toBeGreaterThanOrEqual(4500);
       expect(totalDelay).toBeLessThanOrEqual(6500);
+    });
+
+    it('should not throw an error if account has enough coins', async () => {
+      mockedAxios.post.mockRejectedValue(
+        new AxiosError('Greylist', '425', null, null, {
+          status: 425,
+          statusText: 'Greylist',
+          headers: {},
+          config: {},
+          request: {},
+          data: [],
+        }),
+      );
+
+      await genesisFund(accountMock);
+      await botService.fundAccount(accountMock);
+      expect(axiosSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
