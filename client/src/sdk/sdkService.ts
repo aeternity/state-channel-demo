@@ -1,15 +1,40 @@
+import { BigNumber } from 'bignumber.js';
 import { AeSdk, Channel } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { useChannelStore } from '../stores/channel';
-import { getSdk, returnCoinsToFaucet } from './sdk';
+import { returnCoinsToFaucet } from './sdk';
+import { toRaw } from 'vue';
 
-export class SdkService {
-  sdk?: AeSdk;
-  channel?: ChannelInstance;
+export class ChannelService {
+  readonly sdk: AeSdk;
+  channelConfig?: ChannelOptions;
+  channel?: Channel;
+  isOpen = false;
+  error?: {
+    status: number;
+    statusText: string;
+    message: string;
+  } = undefined;
+  balances: {
+    user?: BigNumber;
+    bot?: BigNumber;
+  } = {
+    user: undefined,
+    bot: undefined,
+  };
 
-  async getChannelConfig(): Promise<ChannelOptions> {
-    const channelStore = useChannelStore();
+  constructor(sdk: AeSdk) {
+    this.sdk = sdk;
+  }
+
+  getChannelWithoutProxy() {
+    if (!this.channel) {
+      throw new Error('Channel is not initialized');
+    }
+    return toRaw(this.channel);
+  }
+
+  async fetchChannelConfig(): Promise<ChannelOptions> {
     if (!this.sdk) throw new Error('SDK is not set');
     const res = await fetch(import.meta.env.VITE_BOT_SERVICE_URL + '/open', {
       method: 'POST',
@@ -25,7 +50,7 @@ export class SdkService {
     const data = await res.json();
 
     if (res.status != 200) {
-      channelStore.error = {
+      this.error = {
         status: res.status,
         statusText: res.statusText,
         message: data.error || 'Error while fetching channel config',
@@ -36,36 +61,21 @@ export class SdkService {
   }
 
   async initializeChannel() {
-    this.sdk = await getSdk();
-    const channelStore = useChannelStore();
-
     try {
-      channelStore.channelStatus = 'getting channel config...';
-      const channelConfig = await this.getChannelConfig();
-      if (channelConfig == null) {
+      this.channelConfig = await this.fetchChannelConfig();
+      if (this.channelConfig == null) {
         throw new Error('Channel config is null');
       }
 
-      channelStore.channelStatus = 'initializing channel...';
-      this.channel = new ChannelInstance(channelConfig, this.sdk);
-      await this.channel.openChannel();
+      await this.openChannel();
     } catch (e) {
       console.error(e);
     }
   }
-}
-
-export class ChannelInstance {
-  private channelConfig: ChannelOptions;
-  private channel: Channel | undefined;
-  private sdk: AeSdk;
-
-  constructor(channelConfig: ChannelOptions, sdk: AeSdk) {
-    this.channelConfig = channelConfig;
-    this.sdk = sdk;
-  }
 
   async openChannel() {
+    if (!this.channelConfig) throw new Error('Channel config is not set');
+
     this.channel = await Channel.initialize({
       ...this.channelConfig,
       role: 'responder',
@@ -89,30 +99,39 @@ export class ChannelInstance {
     if (!this.channel) {
       throw new Error('Channel is not open');
     }
-    return this.channel.status();
+    return this.getChannelWithoutProxy().status();
   }
 
   async signTx(tag: string, tx: EncodedData<'tx'>): Promise<EncodedData<'tx'>> {
     // TODO show in pop up
     return new Promise((resolve, reject) => {
-      resolve(Promise.resolve(this.sdk.signTransaction(tx, {})));
+      resolve(Promise.resolve(toRaw(this.sdk).signTransaction(tx, {})));
       reject(new Error(`Error while signing tx with tag ${tag}`));
     });
   }
 
   private registerEvents() {
     if (this.channel) {
-      const channelStore = useChannelStore();
-
-      this.channel.on('statusChanged', (status) => {
-        channelStore.channelStatus = status;
+      this.getChannelWithoutProxy().on('statusChanged', (status) => {
         if (status === 'disconnected') {
           returnCoinsToFaucet(this.sdk);
         }
         if (status === 'open') {
-          channelStore.channelIsOpen = true;
+          this.isOpen = true;
+          // this.updateBalances();
         }
       });
     }
   }
+
+  // async updateBalances() {
+  //   const { initiatorId, responderId } = this.channelConfig;
+  //   if (!this.channel) throw new Error('Channel is not open');
+  //   const balances = await toRaw(this.channel).balances([
+  //     initiatorId,
+  //     responderId,
+  //   ]);
+  //   this.balances.user = new BigNumber(balances[responderId]);
+  //   this.balances.bot = new BigNumber(balances[initiatorId]);
+  // }
 }

@@ -1,15 +1,20 @@
 <script setup lang="ts">
+import { useChannelStore } from '../stores/channel';
 import PlayerInfo from './PlayerInfo.vue';
-
-const userBalance = undefined;
-const botBalance = undefined;
+const channelStore = useChannelStore();
 </script>
 
 <template>
   <div class="header">
-    <PlayerInfo name="You" :balance="userBalance" />
+    <PlayerInfo
+      name="You"
+      :balance="channelStore.channelService?.balances.user"
+    />
     <div class="center"></div>
-    <PlayerInfo name="Bot" :balance="botBalance" />
+    <PlayerInfo
+      name="Bot"
+      :balance="channelStore.channelService?.balances.bot"
+    />
   </div>
 </template>
 

@@ -2,10 +2,9 @@
 import { computed, ref } from 'vue';
 import { useChannelStore } from '../stores/channel';
 import SingleTransaction, { Transaction } from './SingleTransaction.vue';
-
 const transactions = ref<Transaction[]>([]);
 const channelStore = useChannelStore();
-const isMinimized = computed(() => !channelStore.channelIsOpen);
+const isMinimized = computed(() => !channelStore.channelService?.isOpen);
 </script>
 
 <template>
@@ -15,7 +14,7 @@ const isMinimized = computed(() => !channelStore.channelIsOpen);
       <button
         class="autoplay"
         aria-label="autoplay_button"
-        :disabled="!channelStore.channelIsOpen"
+        :disabled="!channelStore.channelService?.isOpen"
       >
         <img
           class="icon"

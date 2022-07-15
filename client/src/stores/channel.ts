@@ -1,20 +1,12 @@
+import { ChannelService } from './../sdk/sdkService';
 import { defineStore } from 'pinia';
 
 interface ChannelStore {
-  channelIsOpen: boolean;
-  channelStatus: string;
-  error?: {
-    status: number;
-    statusText: string;
-    message: string;
-  };
+  channelService?: ChannelService;
 }
 
-export const useChannelStore = defineStore('channel', {
-  state: () =>
-    ({
-      channelIsOpen: false,
-      channelStatus: '',
-      error: undefined,
-    } as ChannelStore),
+export const useChannelStore = defineStore<'channel', ChannelStore>('channel', {
+  state: () => ({
+    channelService: undefined,
+  }),
 });

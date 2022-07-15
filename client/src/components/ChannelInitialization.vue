@@ -15,8 +15,8 @@ const title = computed(() =>
 );
 
 const errorMessage = computed(() =>
-  channelStore.error
-    ? `Error ${channelStore.error.status}: ${channelStore.error.statusText}, ${channelStore.error.message}`
+  channelStore.channelService?.error
+    ? `Error ${channelStore.channelService?.error.status}: ${channelStore.channelService?.error.statusText}, ${channelStore.channelService?.error.message}`
     : ''
 );
 
@@ -54,7 +54,7 @@ async function openStateChannel(): Promise<void> {
         text="Start game"
       />
     </div>
-    <LoadingAnimation v-else-if="!channelStore.error" />
+    <LoadingAnimation v-else-if="!channelStore.channelService?.error" />
     <p v-else>
       {{ errorMessage }}
     </p>

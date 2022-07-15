@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { BigNumber } from 'bignumber.js';
+
 defineProps<{
   name: string;
-  balance?: number;
+  balance?: Omit<BigNumber, '_isBigNumber'>;
 }>();
 </script>
 
@@ -9,7 +11,7 @@ defineProps<{
   <div class="player-info">
     <span class="name">{{ name }}</span>
     <span class="balance" data-testid="balance" v-if="balance"
-      >{{ balance }} ae</span
+      >{{ balance.dividedBy(1e18) }} ae</span
     >
   </div>
 </template>
@@ -27,8 +29,10 @@ defineProps<{
   }
 
   .balance {
-    font-size: 20px;
-    color: #de3f6b;
+    font-size: 30px;
+    text-align: right;
+    font-weight: 500;
+    color: var(--pink);
   }
 }
 </style>
