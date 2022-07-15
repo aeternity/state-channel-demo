@@ -1,5 +1,5 @@
 import { render, fireEvent } from '@testing-library/vue';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import ChannelInitialization from '../src/components/ChannelInitialization.vue';
 import { createTestingPinia } from '@pinia/testing';
 
@@ -22,26 +22,30 @@ describe('Open State Channel Button', () => {
   });
 
   it('shows error message on error', async () => {
-    vi.stubGlobal('fetch', () =>
-      Promise.resolve({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            error: 'error',
-          }),
-      })
-    );
-
     const channelComp = render(ChannelInitialization, {
       global: {
-        plugins: [createTestingPinia()],
+        plugins: [
+          createTestingPinia({
+            initialState: {
+              channel: {
+                error: {
+                  status: 500,
+                  statusText: 'Internal Server Error',
+                  message: 'Error while fetching channel config',
+                },
+              },
+            },
+          }),
+        ],
       },
     });
     const button = channelComp.getByText('Start game');
     await fireEvent.click(button);
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(
-      channelComp.getByText('Error: Error while fetching channel config')
+      channelComp.getByText(
+        'Error 500: Internal Server Error, Error while fetching channel config'
+      )
     ).toBeTruthy();
-  });
+  }, 6000);
 });

@@ -21,12 +21,17 @@ export async function getSdk() {
   const node = new Node(NODE_URL);
   const aeSdk = new AeSdk({
     nodes: [{ name: 'testnet', instance: node }],
+    compilerUrl: COMPILER_URL,
   });
   await aeSdk.addAccount(account, { select: true });
   return aeSdk;
 }
 
 export async function returnCoinsToFaucet(aeSdk: AeSdk) {
+  const userBalance = await aeSdk.getBalance(
+    aeSdk.selectedAddress as EncodedData<'ak'>
+  );
+  if (BigInt(userBalance) <= 0) return;
   try {
     await aeSdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS);
   } catch (e) {
