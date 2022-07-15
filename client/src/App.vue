@@ -6,26 +6,26 @@ import RockPaperScissor from './components/RockPaperScissor.vue';
 import PopUp from './components/PopUp.vue';
 import { useChannelStore } from './stores/channel';
 import { onBeforeUnmount, onMounted, toRaw } from 'vue';
-import { getSdk, returnCoinsToFaucet } from './sdk/sdk';
-import { ChannelService } from './sdk/sdkService';
+import { getSdk, returnCoinsToFaucet } from './sdk/sdkService';
+import { GameChannel } from './sdk/GameChannel';
 import { AeSdk } from '@aeternity/aepp-sdk';
 
 const channelStore = useChannelStore();
 
 async function initChannel() {
-  if (!channelStore.channelService) {
+  if (!channelStore.channel) {
     throw new Error('SDK is not initialized');
   }
-  await channelStore.channelService.initializeChannel();
+  await channelStore.channel.initializeChannel();
 }
 
 onMounted(async () => {
-  channelStore.channelService = new ChannelService(await getSdk());
+  channelStore.channel = new GameChannel(await getSdk());
 });
 
 onBeforeUnmount(async () => {
-  if (channelStore.channelService?.sdk) {
-    await returnCoinsToFaucet(toRaw(channelStore.channelService.sdk) as AeSdk);
+  if (channelStore.channel?.sdk) {
+    await returnCoinsToFaucet(toRaw(channelStore.channel.sdk) as AeSdk);
   }
 });
 </script>
@@ -34,10 +34,10 @@ onBeforeUnmount(async () => {
   <PopUp />
   <Header />
   <ChannelInitialization
-    v-if="!channelStore.channelService?.isOpen"
+    v-if="!channelStore.channel?.isOpen"
     @initializeChannel="initChannel()"
   />
-  <RockPaperScissor v-if="channelStore.channelService?.isOpen" />
+  <RockPaperScissor v-if="channelStore.channel?.isOpen" />
   <TransactionsList />
 </template>
 

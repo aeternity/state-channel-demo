@@ -6,15 +6,9 @@ const channelStore = useChannelStore();
 
 <template>
   <div class="header">
-    <PlayerInfo
-      name="You"
-      :balance="channelStore.channelService?.balances.user"
-    />
+    <PlayerInfo name="You" :balance="channelStore.channel?.balances.user" />
     <div class="center"></div>
-    <PlayerInfo
-      name="Bot"
-      :balance="channelStore.channelService?.balances.bot"
-    />
+    <PlayerInfo name="Bot" :balance="channelStore.channel?.balances.bot" />
   </div>
 </template>
 

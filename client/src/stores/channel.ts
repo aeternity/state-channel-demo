@@ -1,12 +1,12 @@
-import { ChannelService } from './../sdk/sdkService';
+import { GameChannel } from '../sdk/GameChannel';
 import { defineStore } from 'pinia';
 
 interface ChannelStore {
-  channelService?: ChannelService;
+  channel?: GameChannel;
 }
 
 export const useChannelStore = defineStore<'channel', ChannelStore>('channel', {
   state: () => ({
-    channelService: undefined,
+    channel: undefined,
   }),
 });

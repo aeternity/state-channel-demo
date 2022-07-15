@@ -28,10 +28,12 @@ describe('Open State Channel Button', () => {
           createTestingPinia({
             initialState: {
               channel: {
-                error: {
-                  status: 500,
-                  statusText: 'Internal Server Error',
-                  message: 'Error while fetching channel config',
+                channel: {
+                  error: {
+                    status: 500,
+                    statusText: 'Internal Server Error',
+                    message: 'Error while fetching channel config',
+                  },
                 },
               },
             },
