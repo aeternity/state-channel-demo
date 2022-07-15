@@ -1,15 +1,26 @@
-import {
-  AccountBase, AeSdk, MemoryAccount, Node,
-} from '@aeternity/aepp-sdk';
-import { Keypair } from '@aeternity/aepp-sdk/es/account/Memory';
+import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { AccountBase, AeSdk, Node } from '@aeternity/aepp-sdk';
 import {
   COMPILER_URL,
+  FAUCET_PUBLIC_ADDRESS,
   FAUCET_ACCOUNT,
   IGNORE_NODE_VERSION,
   IS_USING_LOCAL_NODE,
   NETWORK_ID,
   NODE_URL,
 } from './sdk.service.constants';
+
+export const sdk = new AeSdk({
+  networkId: NETWORK_ID,
+  compilerUrl: COMPILER_URL,
+  ignoreVersion: IGNORE_NODE_VERSION,
+  nodes: [
+    {
+      name: 'test',
+      instance: new Node(NODE_URL, { ignoreVersion: IGNORE_NODE_VERSION }),
+    },
+  ],
+});
 
 /**
  * @param params.accounts - array of accounts to be used by the sdk
@@ -24,18 +35,6 @@ export const BaseAe = async (
     networkId?: string;
   } = {},
 ): Promise<AeSdk> => {
-  const sdk = new AeSdk({
-    ...params,
-    compilerUrl: COMPILER_URL,
-    ignoreVersion: IGNORE_NODE_VERSION,
-    nodes: [
-      {
-        name: 'test',
-        instance: new Node(NODE_URL, { ignoreVersion: IGNORE_NODE_VERSION }),
-      },
-    ],
-  });
-
   const accounts = params.accounts ?? [];
   if (!params.withoutFaucetAccount) {
     accounts.push(FAUCET_ACCOUNT);
@@ -54,27 +53,10 @@ export const BaseAe = async (
  * ! LOCAL NODE USAGE ONLY
  * a helper function to fund account
  */
-const genesisFund = async (account: Keypair) => {
-  const ae = await BaseAe({
-    networkId: NETWORK_ID,
-    withoutFaucetAccount: false,
-  });
-  await ae.awaitHeight(2);
-  await ae.spend(1e26, account.publicKey);
+export const genesisFund = async (address: EncodedData<'ak'>) => {
+  if (!IS_USING_LOCAL_NODE) throw new Error('genesis fund is only for local node usage');
+  await sdk.addAccount(FAUCET_ACCOUNT, { select: true });
+  await sdk.awaitHeight(2);
+  await sdk.spend(1e25, address);
+  sdk.removeAccount(FAUCET_PUBLIC_ADDRESS);
 };
-
-/**
- * @param keyPair Keypair of the account which will be the default of the sdk
- * @returns sdk instance
- */
-export async function getSdk(keyPair: Keypair): Promise<AeSdk> {
-  if (IS_USING_LOCAL_NODE) {
-    await genesisFund(keyPair);
-  }
-
-  return BaseAe({
-    accounts: [new MemoryAccount({ keypair: keyPair })],
-    networkId: NETWORK_ID,
-    withoutFaucetAccount: true,
-  });
-}

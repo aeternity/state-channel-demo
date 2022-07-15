@@ -1,19 +1,28 @@
-import { AeSdk, Channel, generateKeyPair } from '@aeternity/aepp-sdk';
+import {
+  AeSdk,
+  Channel,
+  generateKeyPair,
+  MemoryAccount,
+} from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import axios, { AxiosError } from 'axios';
 import { setTimeout } from 'timers/promises';
-import {
-  BaseAe,
-  getSdk,
-  IS_USING_LOCAL_NODE,
-  NETWORK_ID,
-  FAUCET_PUBLIC_ADDRESS,
-} from '../sdk';
+import { genesisFund } from '../sdk/sdk.service';
+import { IS_USING_LOCAL_NODE, FAUCET_PUBLIC_ADDRESS, sdk } from '../sdk';
 import logger from '../../logger';
 
-export const channelPool = new WeakSet<Channel>();
+export const channelPool = new Map<
+string,
+{
+  instance: Channel;
+  participants: {
+    responderId: EncodedData<'ak'>;
+    initiatorId: EncodedData<'ak'>;
+  };
+}
+>();
 
 export const mutualChannelConfiguration = {
   url: process.env.WS_URL ?? 'ws://localhost:3014/channel',
@@ -27,15 +36,22 @@ export const mutualChannelConfiguration = {
   minimumDepth: 0,
 };
 
-export function addChannel(channel: Channel) {
-  channelPool.add(channel);
-  logger.info(`Added to pool channel with ID: ${channel.id()}`);
+export function addChannel(channel: Channel, configuration: ChannelOptions) {
+  channelPool.set(configuration.initiatorId, {
+    instance: channel,
+    participants: {
+      responderId: configuration.responderId,
+      initiatorId: configuration.initiatorId,
+    },
+  });
+  logger.info(
+    `Added to pool channel with bot ID: ${configuration.initiatorId}`,
+  );
 }
 
-export function removeChannel(channel: Channel) {
-  const channelId = channel.id();
-  channelPool.delete(channel);
-  logger.info(`Removed from pool channel with ID: ${channelId}`);
+export function removeChannel(botId: EncodedData<'ak'>) {
+  channelPool.delete(botId);
+  logger.info(`Removed from pool channel with bot ID: ${botId}`);
 }
 
 export async function fundThroughFaucet(
@@ -81,37 +97,33 @@ export async function fundAccount(account: EncodedData<'ak'>) {
       maxRetries: 20,
     });
   } else {
-    // when using a local node, fund account using local faucet account
-    const localFaucet = await BaseAe({ networkId: NETWORK_ID });
-    const { nextNonce } = await localFaucet.api.getAccountNextNonce(
-      await localFaucet.address(),
-    );
-
-    await localFaucet.spend(1e25, account, {
-      nonce: nextNonce,
-    });
+    await genesisFund(account);
   }
 }
 
-export async function handleChannelClose(channel: Channel, sdk: AeSdk) {
+export async function handleChannelClose(sdk: AeSdk) {
   try {
     await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS);
     logger.info(`${sdk.selectedAddress} has returned funds to faucet`);
   } catch (e) {
     logger.error({ e }, 'failed to return funds to faucet');
   }
-  removeChannel(channel);
+  removeChannel(sdk.selectedAddress);
 }
 
-export async function registerEvents(channel: Channel, sdk: AeSdk) {
+export async function registerEvents(
+  channel: Channel,
+  configuration: ChannelOptions,
+) {
   channel.on('statusChanged', (status) => {
     if (status === 'closed') {
-      void handleChannelClose(channel, sdk);
+      sdk.selectAccount(configuration.initiatorId);
+      void handleChannelClose(sdk);
     }
 
     if (status === 'open') {
-      if (!channelPool.has(channel)) {
-        addChannel(channel);
+      if (!channelPool.has(configuration.initiatorId)) {
+        addChannel(channel, configuration);
       }
     }
   });
@@ -123,7 +135,10 @@ export async function generateGameSession(
   playerNodePort: number,
 ) {
   const botKeyPair = generateKeyPair();
-  const bot = await getSdk(botKeyPair);
+  await sdk.addAccount(new MemoryAccount({ keypair: botKeyPair }), {
+    select: true,
+  });
+  const bot = sdk;
 
   const initiatorId = await bot.address();
   const responderId = playerAddress;
@@ -138,12 +153,15 @@ export async function generateGameSession(
     host: playerNodeHost,
     responderId,
     role: 'initiator',
-    sign: (_tag: string, tx: EncodedData<'tx'>) => bot.signTransaction(tx),
+    sign: (_tag: string, tx: EncodedData<'tx'>) => {
+      bot.selectAccount(botKeyPair.publicKey);
+      return bot.signTransaction(tx);
+    },
   };
 
   const channel = await Channel.initialize(channelConfig);
 
-  await registerEvents(channel, bot);
+  await registerEvents(channel, channelConfig);
 
   const { role, sign, ...responderConfig } = channelConfig;
   return responderConfig;
