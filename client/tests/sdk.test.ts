@@ -8,6 +8,7 @@ import {
 import { createTestingPinia } from '@pinia/testing';
 import { GameChannel } from '../src/sdk/GameChannel';
 import { AeSdk } from '@aeternity/aepp-sdk';
+import contractSource from '@aeternity/rock-paper-scissors';
 
 describe('SDK', () => {
   it('creates and returns an SDK instance', async () => {
@@ -55,11 +56,6 @@ describe('SDK', () => {
   }, 6000);
 
   describe('verifyContractBytecode', () => {
-    const source = `
-    contract Identity =
-      entrypoint getArg(x : int) : int = x
-    `;
-
     const wrongSource = `
       contract Remote =
       datatype event = RemoteEvent1(int) | RemoteEvent2(string, int) | Duplicate(int)
@@ -70,19 +66,24 @@ describe('SDK', () => {
         false => ()
     `;
     it('does not throw an error if proposed bytecode is correct', async () => {
+      console.log('CHECK', contractSource);
       const sdk = await getSdk();
-      const contract = await sdk.getContractInstance({ source });
+      const contract = await sdk.getContractInstance({
+        source: contractSource,
+      });
       await contract.compile();
       if (!contract.bytecode)
         throw new Error('Contract bytecode is not defined');
       await expect(
-        verifyContractBytecode(sdk, contract.bytecode, source)
+        verifyContractBytecode(sdk, contract.bytecode, contractSource)
       ).resolves.toBeFalsy();
     });
 
     it('throw an error if proposed bytecode is wrong', async () => {
       const sdk = await getSdk();
-      const contract = await sdk.getContractInstance({ source });
+      const contract = await sdk.getContractInstance({
+        source: contractSource,
+      });
       await contract.compile();
       if (!contract.bytecode)
         throw new Error('Contract bytecode is not defined');

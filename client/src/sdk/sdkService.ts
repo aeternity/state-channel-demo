@@ -5,6 +5,7 @@ import {
   MemoryAccount,
 } from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import contractSource from '@aeternity/rock-paper-scissors';
 
 export const NODE_URL =
   import.meta.env.VITE_NODE_URL ?? 'http://localhost:3013';
@@ -49,16 +50,10 @@ export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
     })
   : null;
 
-// TODO: Remove me
-const CONTRACT_SOURCE = `
-contract Identity =
-  entrypoint getArg(xa : int) : int = xa
-`;
-
 export async function verifyContractBytecode(
   aeSdk: AeSdk,
   bytecode: EncodedData<'cb'>,
-  source = CONTRACT_SOURCE
+  source = contractSource
 ) {
   try {
     await aeSdk.compilerApi.validateByteCode({

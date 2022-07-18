@@ -28,9 +28,3 @@ export const CONTRACT_CONFIGURATION = {
   vmVersion: 5,
   abiVersion: 3,
 };
-
-// TODO: Remove me
-export const CONTRACT_SOURCE = `
-  contract Identity =
-    entrypoint getArg(x : int) : int = x
-  `;

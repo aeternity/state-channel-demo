@@ -1,5 +1,6 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { AeSdk, Channel, Node } from '@aeternity/aepp-sdk';
+import contractSource from '@aeternity/rock-paper-scissors';
 import {
   COMPILER_URL,
   FAUCET_PUBLIC_ADDRESS,
@@ -9,7 +10,6 @@ import {
   NETWORK_ID,
   NODE_URL,
   CONTRACT_CONFIGURATION,
-  CONTRACT_SOURCE,
 } from './sdk.constants';
 
 export const sdk = new AeSdk({
@@ -25,7 +25,7 @@ export const sdk = new AeSdk({
 });
 
 export async function getCompiledContract() {
-  const contract = await sdk.getContractInstance({ source: CONTRACT_SOURCE });
+  const contract = await sdk.getContractInstance({ source: contractSource });
   await contract.compile();
   return contract;
 }
