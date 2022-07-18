@@ -1,6 +1,10 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { describe, it, expect } from 'vitest';
-import { getSdk, FAUCET_ACCOUNT } from '../src/sdk/sdkService';
+import {
+  getSdk,
+  FAUCET_ACCOUNT,
+  verifyContractBytecode,
+} from '../src/sdk/sdkService';
 import { createTestingPinia } from '@pinia/testing';
 import { GameChannel } from '../src/sdk/GameChannel';
 import { AeSdk } from '@aeternity/aepp-sdk';
@@ -49,4 +53,42 @@ describe('SDK', () => {
       BigInt(faucet_balance_before)
     );
   }, 6000);
+
+  describe('verifyContractBytecode', () => {
+    const source = `
+    contract Identity =
+      entrypoint getArg(x : int) : int = x
+    `;
+
+    const wrongSource = `
+      contract Remote =
+      datatype event = RemoteEvent1(int) | RemoteEvent2(string, int) | Duplicate(int)
+      stateful entrypoint emitEvents(duplicate: bool) : unit =
+      Chain.event(RemoteEvent2("test-string", 43))
+      switch(duplicate)
+        true => Chain.event(Duplicate(0))
+        false => ()
+    `;
+    it('does not throw an error if proposed bytecode is correct', async () => {
+      const sdk = await getSdk();
+      const contract = await sdk.getContractInstance({ source });
+      await contract.compile();
+      if (!contract.bytecode)
+        throw new Error('Contract bytecode is not defined');
+      await expect(
+        verifyContractBytecode(sdk, contract.bytecode, source)
+      ).resolves.toBeFalsy();
+    });
+
+    it('throw an error if proposed bytecode is wrong', async () => {
+      const sdk = await getSdk();
+      const contract = await sdk.getContractInstance({ source });
+      await contract.compile();
+      if (!contract.bytecode)
+        throw new Error('Contract bytecode is not defined');
+      expect(
+        verifyContractBytecode(sdk, contract.bytecode, wrongSource)
+      ).rejects.toThrow();
+    });
+  });
 });

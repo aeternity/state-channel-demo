@@ -1,9 +1,9 @@
-import { BigNumber } from 'bignumber.js';
 import { AeSdk, Channel } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { returnCoinsToFaucet } from './sdkService';
+import { BigNumber } from 'bignumber.js';
 import { toRaw } from 'vue';
+import { returnCoinsToFaucet, verifyContractBytecode } from './sdkService';
 
 export class GameChannel {
   readonly sdk: AeSdk;
@@ -102,7 +102,16 @@ export class GameChannel {
     return this.getChannelWithoutProxy().status();
   }
 
-  async signTx(tag: string, tx: EncodedData<'tx'>): Promise<EncodedData<'tx'>> {
+  async signTx(
+    tag: string,
+    tx: EncodedData<'tx'>,
+    options?: any
+  ): Promise<EncodedData<'tx'>> {
+    const update = options?.updates?.[0];
+    if (update?.op === 'OffChainNewContract') {
+      const proposedBytecode = update.code;
+      await verifyContractBytecode(toRaw(this.sdk), proposedBytecode);
+    }
     // TODO show in pop up
     return new Promise((resolve, reject) => {
       resolve(Promise.resolve(toRaw(this.sdk).signTransaction(tx, {})));

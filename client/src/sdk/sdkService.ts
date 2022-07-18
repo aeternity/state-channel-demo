@@ -48,3 +48,25 @@ export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
       },
     })
   : null;
+
+// TODO: Remove me
+const CONTRACT_SOURCE = `
+contract Identity =
+  entrypoint getArg(xa : int) : int = xa
+`;
+
+export async function verifyContractBytecode(
+  aeSdk: AeSdk,
+  bytecode: EncodedData<'cb'>,
+  source = CONTRACT_SOURCE
+) {
+  try {
+    await aeSdk.compilerApi.validateByteCode({
+      bytecode,
+      source,
+      options: {},
+    });
+  } catch (e) {
+    throw new Error('Proposed bytecode is not equal with local bytecode');
+  }
+}
