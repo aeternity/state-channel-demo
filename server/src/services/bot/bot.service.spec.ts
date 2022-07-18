@@ -1,14 +1,18 @@
-import { AeSdk, Channel, generateKeyPair } from '@aeternity/aepp-sdk';
+import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import axios, { AxiosError } from 'axios';
 import botService from './index';
 import { mockChannel, timeout } from '../../../test';
-import { getSdk } from '../sdk/sdk.service';
+import { genesisFund, sdk } from '../sdk';
 
 const axiosSpy = jest.spyOn(axios, 'post');
 jest.setTimeout(10000);
+jest.mock('../sdk', () => ({
+  ...jest.requireActual('../sdk'),
+  IS_USING_LOCAL_NODE: false,
+}));
 
 interface ChannelMock {
   listeners: {
@@ -34,6 +38,12 @@ describe('botService', () => {
     sign: () => Promise.resolve('tx_txdata'),
   };
 
+  beforeAll(async () => {
+    const keypair = generateKeyPair();
+    await sdk.addAccount(new MemoryAccount({ keypair }), { select: true });
+    channelConfig.initiatorId = keypair.publicKey;
+  });
+
   mockChannel();
 
   it('should be defined', () => {
@@ -43,9 +53,9 @@ describe('botService', () => {
   it('should add a channel to botPool', async () => {
     const channel = await Channel.initialize(channelConfig);
 
-    botService.addChannel(channel);
+    botService.addChannel(channel, channelConfig);
 
-    expect(botService.channelPool.has(channel)).toBe(true);
+    expect(botService.channelPool.has(channelConfig.initiatorId)).toBe(true);
   });
 
   it('should remove a channel from botPool', async () => {
@@ -55,40 +65,30 @@ describe('botService', () => {
       sign: () => Promise.resolve('tx_txdata'),
     });
 
-    botService.addChannel(channel);
-    expect(botService.channelPool.has(channel)).toBe(true);
-    botService.removeChannel(channel);
-    expect(botService.channelPool.has(channel)).toBe(false);
+    botService.addChannel(channel, channelConfig);
+    expect(botService.channelPool.has(channelConfig.initiatorId)).toBe(true);
+    botService.removeChannel(channelConfig.initiatorId);
+    expect(botService.channelPool.has(channelConfig.initiatorId)).toBe(false);
   });
 
   it('registers events on channel', async () => {
-    const sdk = await getSdk(generateKeyPair());
-    const { transferFunds, ...mockedSdk } = sdk;
-    Object.assign(mockedSdk, {
-      transferFunds: jest.fn(
-        (
-          amount: number | string,
-          address: EncodedData<'ak'>,
-          options: unknown,
-        ) => Promise.resolve({ amount, address, options }),
-      ),
-    });
     const channel = await Channel.initialize(channelConfig);
-    await botService.registerEvents(channel, mockedSdk as AeSdk);
+    await botService.registerEvents(channel, channelConfig);
     const channelMock: ChannelMock = channel as unknown as ChannelMock;
     expect(channelMock.listeners.statusChanged).toBeDefined();
     channelMock.listeners.statusChanged('open');
-    expect(botService.channelPool.has(channel)).toBe(true);
+    expect(botService.channelPool.has(channelConfig.initiatorId)).toBe(true);
     channelMock.listeners.statusChanged('closed');
     await timeout(100);
-    const channelRemoved = !botService.channelPool.has(channel);
+    const channelRemoved = !botService.channelPool.has(
+      channelConfig.initiatorId,
+    );
     expect(channelRemoved).toBe(true);
   });
 
   describe('botService.fundThroughFaucet()', () => {
     const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-    const accountMock = 'ak_test';
+    const accountMock = generateKeyPair().publicKey;
 
     afterEach(() => {
       mockedAxios.post.mockClear();
@@ -155,6 +155,23 @@ describe('botService', () => {
       const totalDelay = endTime - startTime;
       expect(totalDelay).toBeGreaterThanOrEqual(4500);
       expect(totalDelay).toBeLessThanOrEqual(6500);
+    });
+
+    it('should not throw an error if account has enough coins', async () => {
+      mockedAxios.post.mockRejectedValue(
+        new AxiosError('Greylist', '425', null, null, {
+          status: 425,
+          statusText: 'Greylist',
+          headers: {},
+          config: {},
+          request: {},
+          data: [],
+        }),
+      );
+
+      await genesisFund(accountMock);
+      await botService.fundAccount(accountMock);
+      expect(axiosSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

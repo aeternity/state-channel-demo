@@ -1,10 +1,9 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { Channel, generateKeyPair } from '@aeternity/aepp-sdk';
+import { Channel } from '@aeternity/aepp-sdk';
 import BigNumber from 'bignumber.js';
-import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.service.constants';
+import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
 import botService from '../../src/services/bot';
-import { getSdk } from '../../src/services/sdk/sdk.service';
-import { timeout } from '../utils';
+import { getSdk, timeout } from '../utils';
 
 describe('botService', () => {
   jest.setTimeout(30000);
@@ -14,7 +13,7 @@ describe('botService', () => {
   });
 
   it('generates game session with 2 open channels', async () => {
-    const playerSdk = await getSdk(generateKeyPair());
+    const playerSdk = await getSdk();
     const responderId = await playerSdk.address();
 
     const responderConfig = await botService.generateGameSession(
@@ -33,7 +32,7 @@ describe('botService', () => {
   });
 
   it('bot service returns its balance back to the faucet', async () => {
-    const playerSdk = await getSdk(generateKeyPair());
+    const playerSdk = await getSdk();
     const responderId = await playerSdk.address();
     const responderConfig = await botService.generateGameSession(
       responderId,

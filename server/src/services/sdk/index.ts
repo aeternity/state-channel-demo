@@ -1,2 +1,2 @@
-export * from './sdk.service.constants';
+export * from './sdk.constants';
 export * from './sdk.service';
