@@ -1,5 +1,5 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { Channel } from '@aeternity/aepp-sdk';
+import { buildContractId, Channel, unpackTx } from '@aeternity/aepp-sdk';
 import BigNumber from 'bignumber.js';
 import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
 import botService from '../../src/services/bot';
@@ -22,12 +22,28 @@ describe('botService', () => {
       3001,
     );
 
+    let contractCreationRound = '-1';
     const playerChannel = await Channel.initialize({
       ...responderConfig,
       role: 'responder',
-      sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
+      sign: (_tag: string, tx: EncodedData<'tx'>, options) => {
+        // @ts-expect-error
+        if (options?.updates[0]?.op === 'OffChainNewContract') {
+          // @ts-expect-error
+          contractCreationRound = unpackTx(tx).tx.round as string;
+        }
+        return playerSdk.signTransaction(tx);
+      },
     });
-    expect(playerChannel.status()).toBe('connected');
+
+    await timeout(3000);
+    expect(playerChannel.status()).toBe('open');
+    await timeout(2000);
+    const contractAddress = buildContractId(
+      responderConfig.initiatorId,
+      parseInt(contractCreationRound, 10),
+    );
+    expect(await playerChannel.getContractState(contractAddress)).toBeDefined();
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
   });
 
@@ -50,6 +66,7 @@ describe('botService', () => {
       role: 'responder',
       sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
     });
+    await timeout(1000);
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
     await timeout(1000);
 

@@ -9,7 +9,7 @@ import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import axios, { AxiosError } from 'axios';
 import { setTimeout } from 'timers/promises';
-import { genesisFund } from '../sdk/sdk.service';
+import { deployContract, genesisFund } from '../sdk/sdk.service';
 import { IS_USING_LOCAL_NODE, FAUCET_PUBLIC_ADDRESS, sdk } from '../sdk';
 import logger from '../../logger';
 
@@ -137,6 +137,7 @@ export async function registerEvents(
 
     if (status === 'open') {
       if (!channelPool.has(configuration.initiatorId)) {
+        void deployContract(configuration.initiatorId, channel);
         addChannel(channel, configuration);
       }
     }
