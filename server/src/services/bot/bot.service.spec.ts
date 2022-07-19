@@ -83,7 +83,7 @@ describe('botService', () => {
     channelMock.listeners.statusChanged('open');
     expect(botService.channelPool.has(channelConfig.initiatorId)).toBe(true);
     channelMock.listeners.statusChanged('closed');
-    await timeout(100);
+    await timeout(2000);
     const channelRemoved = !botService.channelPool.has(
       channelConfig.initiatorId,
     );
