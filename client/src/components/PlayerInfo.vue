@@ -11,7 +11,7 @@ defineProps<{
   <div class="player-info">
     <span class="name">{{ name }}</span>
     <span class="balance" data-testid="balance" v-if="balance"
-      >{{ balance.dividedBy(1e18) }} ae</span
+      >{{ balance.dividedBy(1e18).toFormat(2) }} ae</span
     >
   </div>
 </template>

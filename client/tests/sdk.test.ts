@@ -55,7 +55,7 @@ describe('SDK', () => {
     );
   }, 6000);
 
-  describe('verifyContractBytecode', () => {
+  describe('verifyContractBytecode()', () => {
     const wrongSource = `
       contract Remote =
       datatype event = RemoteEvent1(int) | RemoteEvent2(string, int) | Duplicate(int)
@@ -66,7 +66,6 @@ describe('SDK', () => {
         false => ()
     `;
     it('does not throw an error if proposed bytecode is correct', async () => {
-      console.log('CHECK', contractSource);
       const sdk = await getSdk();
       const contract = await sdk.getContractInstance({
         source: contractSource,

@@ -36,7 +36,7 @@ describe('botService', () => {
       },
     });
 
-    await timeout(3000);
+    await timeout(4000);
     expect(playerChannel.status()).toBe('open');
     await timeout(2000);
     const contractAddress = buildContractId(
@@ -66,7 +66,7 @@ describe('botService', () => {
       role: 'responder',
       sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
     });
-    await timeout(1000);
+    await timeout(6000);
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
     await timeout(1000);
 

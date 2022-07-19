@@ -9,6 +9,10 @@ import { genesisFund, sdk } from '../sdk';
 
 const axiosSpy = jest.spyOn(axios, 'post');
 jest.setTimeout(10000);
+jest.mock('../sdk/sdk.service.ts', () => ({
+  ...jest.requireActual('../sdk/sdk.service.ts'),
+  deployContract: jest.fn(),
+}));
 jest.mock('../sdk', () => ({
   ...jest.requireActual('../sdk'),
   IS_USING_LOCAL_NODE: false,

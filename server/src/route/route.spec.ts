@@ -25,6 +25,7 @@ describe('/open', () => {
       ...botService.mutualChannelConfiguration,
       port: config.port,
       host: config.host,
+      gameStake: '10000000000000000',
       responderId: config.address,
       responderAmount:
         botService.mutualChannelConfiguration.responderAmount.toString(),

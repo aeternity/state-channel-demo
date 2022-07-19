@@ -22,6 +22,10 @@ export class GameChannel {
     user: undefined,
     bot: undefined,
   };
+  game?: {
+    stake?: BigNumber;
+    round?: number;
+  };
 
   constructor(sdk: AeSdk) {
     this.sdk = sdk;
@@ -48,7 +52,9 @@ export class GameChannel {
       }),
     });
     const data = await res.json();
-
+    this.game = {
+      stake: new BigNumber(data.gameStake),
+    };
     if (res.status != 200) {
       this.error = {
         status: res.status,

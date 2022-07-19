@@ -31,18 +31,27 @@ export async function getCompiledContract() {
 }
 
 export async function deployContract(
-  address: EncodedData<'ak'>,
+  botAddress: EncodedData<'ak'>,
   channel: Channel,
+  config: {
+    player0: EncodedData<'ak'>;
+    player1: EncodedData<'ak'>;
+    reactionTime: number;
+    debugTimestamp?: number;
+  },
 ) {
   const contract = await getCompiledContract();
+
   return channel.createContract(
     {
       ...CONTRACT_CONFIGURATION,
       code: contract.bytecode,
-      callData: contract.calldata.encode('Identity', 'init', []) as string,
+      callData: contract.calldata.encode('RockPaperScissors', 'init', [
+        ...Object.values(config),
+      ]) as string,
     },
     async (tx) => {
-      sdk.selectAccount(address);
+      sdk.selectAccount(botAddress);
       return sdk.signTransaction(tx);
     },
   );
