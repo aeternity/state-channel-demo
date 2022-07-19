@@ -1,21 +1,14 @@
 import { defineStore } from 'pinia';
-export enum Selections {
-  rock,
-  paper,
-  scissor,
-  none,
+import GameManager from '../game/GameManager';
+
+interface GameStore {
+  gameManager?: GameManager;
 }
 
-export const useGameStore = defineStore('game', {
+export const useGameStore = defineStore<'game', GameStore>('game', {
   state: () => {
     return {
-      userSelection: Selections.none,
-      botSelection: Selections.none,
+      gameManager: undefined,
     };
-  },
-  actions: {
-    userSelect(selection: Selections) {
-      this.userSelection = selection;
-    },
   },
 });

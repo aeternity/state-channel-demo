@@ -1,13 +1,25 @@
 import { render } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
-import RockPaperScissorVue from '../src/components/RockPaperScissor.vue';
+import RockPaperScissor from '../src/components/RockPaperScissor.vue';
+import { Selections } from '../src/game/gameManager';
+import { MockGameManager } from './mocks';
+
+const mockGameManager = new MockGameManager();
 
 describe('Rock Paper Scissor Component', () => {
   it('displays Rock Paper Scissor buttons', async () => {
-    const RockPaperScissorEl = render(RockPaperScissorVue, {
+    const RockPaperScissorEl = render(RockPaperScissor, {
       global: {
-        plugins: [createTestingPinia()],
+        plugins: [
+          createTestingPinia({
+            initialState: {
+              game: {
+                gameManager: mockGameManager,
+              },
+            },
+          }),
+        ],
       },
     });
 
@@ -23,14 +35,16 @@ describe('Rock Paper Scissor Component', () => {
   });
 
   it('displays user and bot selections', async () => {
-    const RockPaperScissorEl = render(RockPaperScissorVue, {
+    await mockGameManager?.setUserSelection(Selections.rock);
+    mockGameManager.botSelection = Selections.paper;
+
+    const RockPaperScissorEl = render(RockPaperScissor, {
       global: {
         plugins: [
           createTestingPinia({
             initialState: {
               game: {
-                userSelection: 0,
-                botSelection: 1,
+                gameManager: mockGameManager,
               },
             },
           }),
