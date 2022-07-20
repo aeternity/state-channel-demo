@@ -1,3 +1,9 @@
+FROM node:16.15.1 AS development
+WORKDIR /app/client
+COPY ./client/package*.json ./
+RUN npm i
+COPY . ./
+
 FROM node:16.15.1 as builder
 
 ARG VITE_NODE_ENV

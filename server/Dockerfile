@@ -1,3 +1,9 @@
+FROM node:16.15.1 AS development
+WORKDIR /app/server
+COPY ./server/package*.json ./
+RUN npm i
+COPY . ./
+
 FROM node:16.15.1 as builder 
 
 RUN mkdir -p /home/node/app
