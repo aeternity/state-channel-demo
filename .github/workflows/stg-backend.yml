@@ -67,7 +67,7 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.action == 'opened' || github.event.action == 'synchronize'
         uses: docker/build-push-action@v3
         with:
-          context: ./server
+          context: .
           file: ./server/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}

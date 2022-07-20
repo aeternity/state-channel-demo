@@ -24,8 +24,8 @@ services:
     
   bot_service:
     build:
-      context: ./server
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./server/Dockerfile
     volumes:
       - .:/app
     command: npm run dev
@@ -47,8 +47,8 @@ services:
   
   client:
     build:
-      context: ./client
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./client/Dockerfile
     volumes:
       - .:/app
     command: sh -c "npm rebuild esbuild && npm run dev:host"
