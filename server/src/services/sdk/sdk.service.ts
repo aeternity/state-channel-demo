@@ -1,6 +1,5 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { AeSdk, Channel, Node } from '@aeternity/aepp-sdk';
-import contractSource from '@aeternity/rock-paper-scissors';
+import { AeSdk, Node } from '@aeternity/aepp-sdk';
 import {
   COMPILER_URL,
   FAUCET_PUBLIC_ADDRESS,
@@ -9,7 +8,6 @@ import {
   IS_USING_LOCAL_NODE,
   NETWORK_ID,
   NODE_URL,
-  CONTRACT_CONFIGURATION,
 } from './sdk.constants';
 
 export const sdk = new AeSdk({
@@ -23,39 +21,6 @@ export const sdk = new AeSdk({
     },
   ],
 });
-
-export async function getCompiledContract() {
-  const contract = await sdk.getContractInstance({ source: contractSource });
-  await contract.compile();
-  return contract;
-}
-
-export async function deployContract(
-  botAddress: EncodedData<'ak'>,
-  channel: Channel,
-  config: {
-    player0: EncodedData<'ak'>;
-    player1: EncodedData<'ak'>;
-    reactionTime: number;
-    debugTimestamp?: number;
-  },
-) {
-  const contract = await getCompiledContract();
-
-  return channel.createContract(
-    {
-      ...CONTRACT_CONFIGURATION,
-      code: contract.bytecode,
-      callData: contract.calldata.encode('RockPaperScissors', 'init', [
-        ...Object.values(config),
-      ]) as string,
-    },
-    async (tx) => {
-      sdk.selectAccount(botAddress);
-      return sdk.signTransaction(tx);
-    },
-  );
-}
 
 /**
  * ! LOCAL NODE USAGE ONLY

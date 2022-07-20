@@ -1,9 +1,11 @@
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { buildContractId, Channel, unpackTx } from '@aeternity/aepp-sdk';
+import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import contractSource from '@aeternity/rock-paper-scissors';
 import BigNumber from 'bignumber.js';
-import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
 import botService from '../../src/services/bot';
-import { waitForChannelReady, getSdk, timeout } from '../utils';
+import { RockPaperScissorsContract } from '../../src/services/contract';
+import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
+import { getSdk, timeout, waitForChannelReady } from '../utils';
 
 describe('botService', () => {
   jest.setTimeout(30000);
@@ -44,8 +46,8 @@ describe('botService', () => {
       parseInt(contractCreationRound, 10),
     );
     expect(await playerChannel.getContractState(contractAddress)).toBeDefined();
-    await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
-    await timeout(4000);
+    void playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
+    await waitForChannelReady(playerChannel, ['closed', 'died', 'disconnected']);
   });
 
   it('bot service returns its balance back to the faucet', async () => {
@@ -83,4 +85,30 @@ describe('botService', () => {
     expect(initiatorFundedBalance !== initiatorNewBalance).toBe(true);
     expect(initiatorNewBalance).toBe('0');
   });
+
+  // it('bot service returns its balance back to the faucet', async () => {
+  // const playerSdk = await getSdk();
+  // const contract = (await playerSdk.getContractInstance({
+  // source: contractSource,
+  // })) as RockPaperScissorsContract;
+  // await contract.compile();
+
+  // const responderId = await playerSdk.address();
+  // const responderConfig = await botService.generateGameSession(
+  //   responderId,
+  //   'localhost',
+  //   3001,
+  // );
+
+  // const playerChannel = await Channel.initialize({
+  //   ...responderConfig,
+  //   role: 'responder',
+  //   sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
+  // });
+
+  // playerChannel.callContract({
+  //   amount: responderConfig.gameStake,
+  //   contract: contractAddress,
+  // });
+  // });
 });

@@ -6,17 +6,16 @@ import axios, { AxiosError } from 'axios';
 import botService from './index';
 import { mockChannel, timeout } from '../../../test';
 import { genesisFund, sdk } from '../sdk';
+import ContractService from '../contract/contract.service';
 
 const axiosSpy = jest.spyOn(axios, 'post');
 jest.setTimeout(10000);
-jest.mock('../sdk/sdk.service.ts', () => ({
-  ...jest.requireActual('../sdk/sdk.service.ts'),
-  deployContract: jest.fn(),
-}));
 jest.mock('../sdk', () => ({
   ...jest.requireActual('../sdk'),
   IS_USING_LOCAL_NODE: false,
 }));
+
+ContractService.deployContract = jest.fn();
 
 interface ChannelMock {
   listeners: {
@@ -83,7 +82,7 @@ describe('botService', () => {
     channelMock.listeners.statusChanged('open');
     expect(botService.channelPool.has(channelConfig.initiatorId)).toBe(true);
     channelMock.listeners.statusChanged('closed');
-    await timeout(2000);
+    await timeout(500);
     const channelRemoved = !botService.channelPool.has(
       channelConfig.initiatorId,
     );

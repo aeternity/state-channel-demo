@@ -10,12 +10,10 @@ import BigNumber from 'bignumber.js';
 import axios, { AxiosError } from 'axios';
 import { deployContract, genesisFund } from '../sdk/sdk.service';
 import {
-  IS_USING_LOCAL_NODE,
-  FAUCET_PUBLIC_ADDRESS,
-  WEBSOCKET_URL,
-  sdk,
+  IS_USING_LOCAL_NODE, FAUCET_PUBLIC_ADDRESS, WEBSOCKET_URL, sdk,
 } from '../sdk';
 import logger from '../../logger';
+import ContractService from '../contract/contract.service';
 
 export const channelPool = new Map<
 string,
@@ -137,11 +135,15 @@ export async function registerEvents(
 
     if (status === 'open') {
       if (!channelPool.has(configuration.initiatorId)) {
-        void deployContract(configuration.initiatorId, channel, {
-          player0: configuration.initiatorId,
-          player1: configuration.responderId,
-          reactionTime: 3000,
-        });
+        void ContractService.deployContract(
+          configuration.initiatorId,
+          channel,
+          {
+            player0: configuration.initiatorId,
+            player1: configuration.responderId,
+            reactionTime: 3000,
+          },
+        );
         addChannel(channel, configuration);
       }
     }
