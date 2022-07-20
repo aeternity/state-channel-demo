@@ -14,14 +14,23 @@ describe('SDK', () => {
   });
 
   it('creates game channel instance, initializes Channel and returns coins to faucet on channel closing', async () => {
-    createTestingPinia();
     const gameChannel = new GameChannel(await getSdk());
+    gameChannel.autoSign = true;
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     await gameChannel.initializeChannel();
+    createTestingPinia({
+      initialState: {
+        channel: {
+          channel: gameChannel,
+        },
+      },
+    });
+    await gameChannel.waitForChannelReady();
     const client = gameChannel.sdk as AeSdk;
     const ae = await getSdk();
 
     expect(client?.selectedAddress).toBeTruthy();
-    expect(gameChannel.channelInstance?.status()).toBe('connected');
+    expect(gameChannel.getStatus()).toBe('open');
 
     if (FAUCET_ACCOUNT) {
       await ae.addAccount(FAUCET_ACCOUNT, { select: true });
@@ -37,6 +46,7 @@ describe('SDK', () => {
 
     await gameChannel.closeChannel();
     await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(gameChannel.getStatus()).toBe('disconnected');
 
     const balance_after = await client.getBalance(
       client.selectedAddress as EncodedData<'ak'>
@@ -48,5 +58,5 @@ describe('SDK', () => {
     expect(BigInt(faucet_balance_after)).toBeGreaterThan(
       BigInt(faucet_balance_before)
     );
-  }, 6000);
+  }, 10000);
 });

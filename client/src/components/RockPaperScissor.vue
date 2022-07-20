@@ -1,21 +1,34 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useGameStore, Selections } from '../stores/game';
-import { usePopUpStore } from '../stores/popup';
+import { useGameStore } from '../stores/game';
+import { Selections } from '../game/GameManager';
 
 const gameStore = useGameStore();
-const popUpStore = usePopUpStore();
 
 const userHasSelected = computed(() => {
-  return gameStore.userSelection != Selections.none ? true : false;
+  return gameStore.gameManager?.getUserSelection() != Selections.none
+    ? true
+    : false;
 });
 const botIsMakingSelection = computed(() => {
-  return gameStore.userSelection != Selections.none
-    ? gameStore.botSelection === Selections.none
+  return gameStore.gameManager?.getUserSelection() != Selections.none
+    ? gameStore.gameManager?.getUserSelection() === Selections.none
       ? true
       : false
     : false;
 });
+
+const userSelection = computed(() =>
+  userHasSelected.value
+    ? Selections[gameStore.gameManager?.getUserSelection() ?? Selections.none]
+    : ''
+);
+
+const botSelection = computed(() =>
+  gameStore.gameManager?.botSelection != Selections.none
+    ? Selections[gameStore.gameManager?.botSelection ?? Selections.none]
+    : ''
+);
 
 const status = computed(() => {
   if (!userHasSelected.value) {
@@ -27,26 +40,19 @@ const status = computed(() => {
   }
 });
 
-function makeSelection(selection: Selections) {
+async function makeSelection(selection: Selections) {
   if (userHasSelected.value) return;
-  popUpStore.showPopUp({
-    title: Selections[selection].toUpperCase(),
-    text: 'Confirm your selection',
-    mainBtnText: 'Confirm',
-    secBtnText: 'Cancel',
-    mainBtnAction: () => {
-      gameStore.userSelect(selection);
-      popUpStore.resetPopUp();
+  await gameStore.gameManager?.setUserSelection(selection);
+  if (gameStore.gameManager?.getUserSelection() === Selections.none) {
+    return;
+  }
 
-      // ! temporary placeholder for bot selection
-      setTimeout(() => {
-        gameStore.botSelection = Math.floor(Math.random() * 3);
-      }, 2000);
-    },
-    secBtnAction: () => {
-      popUpStore.resetPopUp();
-    },
-  });
+  // ! temporary placeholder for bot selection
+  setTimeout(() => {
+    if (gameStore.gameManager) {
+      gameStore.gameManager.botSelection = Math.floor(Math.random() * 3);
+    }
+  }, 2000);
 }
 </script>
 
@@ -54,17 +60,11 @@ function makeSelection(selection: Selections) {
   <div class="rock-paper-scissor">
     <div class="header">
       <div class="finalized-selection" data-testid="userSelection">
-        {{
-          gameStore.userSelection != 3
-            ? Selections[gameStore.userSelection]
-            : ''
-        }}
+        {{ userSelection }}
       </div>
       <h1 class="title">{{ status }}</h1>
       <div class="finalized-selection bot" data-testid="botSelection">
-        {{
-          gameStore.botSelection != 3 ? Selections[gameStore.botSelection] : ''
-        }}
+        {{ botSelection }}
       </div>
     </div>
     <div class="selections">

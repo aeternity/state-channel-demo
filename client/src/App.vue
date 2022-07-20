@@ -5,22 +5,28 @@ import Header from './components/Header.vue';
 import RockPaperScissor from './components/RockPaperScissor.vue';
 import PopUp from './components/PopUp.vue';
 import { useChannelStore } from './stores/channel';
+import { useGameStore } from './stores/game';
 import { onBeforeUnmount, onMounted, toRaw } from 'vue';
 import { getSdk, returnCoinsToFaucet } from './sdk/sdkService';
 import { GameChannel } from './sdk/GameChannel';
+import GameManager from './game/GameManager';
 import { AeSdk } from '@aeternity/aepp-sdk';
 
 const channelStore = useChannelStore();
+const gameStore = useGameStore();
 
 async function initChannel() {
   if (!channelStore.channel) {
     throw new Error('SDK is not initialized');
   }
   await channelStore.channel.initializeChannel();
+  await channelStore.channel.waitForChannelReady();
+  await channelStore.channel.createContract();
 }
 
 onMounted(async () => {
   channelStore.channel = new GameChannel(await getSdk());
+  gameStore.gameManager = new GameManager();
 });
 
 onBeforeUnmount(async () => {
