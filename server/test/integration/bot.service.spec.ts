@@ -38,13 +38,14 @@ describe('botService', () => {
 
     await waitForChannelReady(playerChannel);
     expect(playerChannel.status()).toBe('open');
-    await timeout(2000);
+    await timeout(4000);
     const contractAddress = buildContractId(
       responderConfig.initiatorId,
       parseInt(contractCreationRound, 10),
     );
     expect(await playerChannel.getContractState(contractAddress)).toBeDefined();
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
+    await timeout(4000);
   });
 
   it('bot service returns its balance back to the faucet', async () => {

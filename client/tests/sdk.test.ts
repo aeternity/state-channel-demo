@@ -90,5 +90,5 @@ describe('SDK', () => {
         verifyContractBytecode(sdk, contract.bytecode, wrongSource)
       ).rejects.toThrow();
     });
-  });
+  }, 10000);
 });
