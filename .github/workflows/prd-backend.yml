@@ -74,7 +74,8 @@ jobs:
           startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v3
         with:
-          context: ./server
+          context: .
+          target: builder
           file: ./server/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}

@@ -1,9 +1,9 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { Channel } from '@aeternity/aepp-sdk';
+import { buildContractId, Channel, unpackTx } from '@aeternity/aepp-sdk';
 import BigNumber from 'bignumber.js';
 import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
 import botService from '../../src/services/bot';
-import { getSdk, timeout } from '../utils';
+import { waitForChannelReady, getSdk, timeout } from '../utils';
 
 describe('botService', () => {
   jest.setTimeout(30000);
@@ -22,13 +22,30 @@ describe('botService', () => {
       3001,
     );
 
+    let contractCreationRound = '-1';
     const playerChannel = await Channel.initialize({
       ...responderConfig,
       role: 'responder',
-      sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
+      sign: (_tag: string, tx: EncodedData<'tx'>, options) => {
+        // @ts-expect-error
+        if (options?.updates[0]?.op === 'OffChainNewContract') {
+          // @ts-expect-error
+          contractCreationRound = unpackTx(tx).tx.round as string;
+        }
+        return playerSdk.signTransaction(tx);
+      },
     });
-    expect(playerChannel.status()).toBe('connected');
+
+    await waitForChannelReady(playerChannel);
+    expect(playerChannel.status()).toBe('open');
+    await timeout(4000);
+    const contractAddress = buildContractId(
+      responderConfig.initiatorId,
+      parseInt(contractCreationRound, 10),
+    );
+    expect(await playerChannel.getContractState(contractAddress)).toBeDefined();
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
+    await timeout(4000);
   });
 
   it('bot service returns its balance back to the faucet', async () => {
@@ -50,6 +67,7 @@ describe('botService', () => {
       role: 'responder',
       sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
     });
+    await waitForChannelReady(playerChannel);
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
     await timeout(1000);
 

@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 import PlayerInfo from '../src/components/PlayerInfo.vue';
 
 const mockPlayerInfoNoBalance = { name: 'You' };
-const mockPlayerInfo = { name: 'You', balance: new BigNumber(3) };
+const mockPlayerInfo = { name: 'You', balance: new BigNumber(3e18) };
 
 describe('Show player info', () => {
   expect(PlayerInfo).toBeTruthy();
@@ -28,9 +28,7 @@ describe('Show player info', () => {
     const playerName = playerInfo.getByText(mockPlayerInfo.name);
     expect(playerName).toBeTruthy();
 
-    const playerBalance = playerInfo.getByText(
-      `${mockPlayerInfo.balance.dividedBy(1e18)} ae`
-    );
+    const playerBalance = playerInfo.getByText(`3.00 ae`);
     expect(playerBalance).toBeTruthy();
   });
 });

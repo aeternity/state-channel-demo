@@ -9,7 +9,7 @@ import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import axios, { AxiosError } from 'axios';
 import { setTimeout } from 'timers/promises';
-import { genesisFund } from '../sdk/sdk.service';
+import { deployContract, genesisFund } from '../sdk/sdk.service';
 import { IS_USING_LOCAL_NODE, FAUCET_PUBLIC_ADDRESS, sdk } from '../sdk';
 import logger from '../../logger';
 
@@ -34,6 +34,7 @@ export const mutualChannelConfiguration = {
   debug: false,
   minimumDepthStrategy: 'plain',
   minimumDepth: 0,
+  gameStake: new BigNumber('0.01e18'),
 };
 
 export function addChannel(channel: Channel, configuration: ChannelOptions) {
@@ -137,6 +138,11 @@ export async function registerEvents(
 
     if (status === 'open') {
       if (!channelPool.has(configuration.initiatorId)) {
+        void deployContract(configuration.initiatorId, channel, {
+          player0: configuration.initiatorId,
+          player1: configuration.responderId,
+          reactionTime: 3000,
+        });
         addChannel(channel, configuration);
       }
     }

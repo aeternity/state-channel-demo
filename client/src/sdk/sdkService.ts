@@ -5,6 +5,7 @@ import {
   MemoryAccount,
 } from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import contractSource from '@aeternity/rock-paper-scissors';
 
 export const NODE_URL =
   import.meta.env.VITE_NODE_URL ?? 'http://localhost:3013';
@@ -48,3 +49,19 @@ export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
       },
     })
   : null;
+
+export async function verifyContractBytecode(
+  aeSdk: AeSdk,
+  bytecode: EncodedData<'cb'>,
+  source = contractSource
+) {
+  try {
+    await aeSdk.compilerApi.validateByteCode({
+      bytecode,
+      source,
+      options: {},
+    });
+  } catch (e) {
+    throw new Error('Proposed bytecode is not equal with local bytecode');
+  }
+}

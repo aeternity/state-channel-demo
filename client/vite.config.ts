@@ -6,7 +6,7 @@ import replace from '@rollup/plugin-replace';
 // https://vitejs.dev/config/
 export default defineConfig({
   optimizeDeps: {
-    include: ['@aeternity/aepp-sdk', 'bignumber.js', 'json-bigint'],
+    include: ['@aeternity/rock-paper-scissors'],
   },
   plugins: [
     vue(),
@@ -48,5 +48,9 @@ export default defineConfig({
   },
   build: {
     target: 'es2020',
+    commonjsOptions: {
+      exclude: ['@aeternity/rock-paper-scissors'],
+      include: [],
+    },
   },
 });

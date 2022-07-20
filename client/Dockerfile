@@ -1,3 +1,9 @@
+FROM node:16.15.1 AS development
+WORKDIR /app/client
+COPY ./client/package*.json ./
+RUN npm i
+COPY . ./
+
 FROM node:16.15.1 as builder
 
 ARG VITE_NODE_ENV
@@ -13,17 +19,18 @@ ARG VITE_RESPONDER_PORT
 
 RUN mkdir -p /home/node/app
 WORKDIR /home/node/app
-COPY package*.json /home/node/app/
+COPY ./client/package*.json /home/node/app/
 RUN chown -R node:node /home/node/
 
 USER node
 
-RUN npm ci
-COPY --chown=node:node . /home/node/app
+RUN npm install
+COPY --chown=node:node ./contract /home/node/app/contract/
+COPY --chown=node:node ./client /home/node/app
+RUN cd contract && npm install
 RUN npm run build 
 
 FROM nginx:1.13.7-alpine
-COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
-COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY ./client/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./client/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /home/node/app/dist /usr/share/nginx/html
- 

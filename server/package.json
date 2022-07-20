@@ -1,7 +1,6 @@
 {
   "name": "state-channel-demo-bot-service",
   "version": "1.0.0",
-  "description": "",
   "main": "dist/index.js",
   "scripts": {
     "build": "npx tsc",
@@ -28,6 +27,7 @@
   "license": "ISC",
   "dependencies": {
     "@aeternity/aepp-sdk": "^12.0.0",
+    "@aeternity/rock-paper-scissors": "https://gitpkg.now.sh/aeternity/state-channel-demo/contract?develop",
     "axios": "^0.27.2",
     "bignumber.js": "^9.0.2",
     "cors": "^2.8.5",

@@ -3,6 +3,7 @@ import {
   Node,
   MemoryAccount,
   generateKeyPair,
+  Channel,
 } from '@aeternity/aepp-sdk';
 import {
   NETWORK_ID,
@@ -34,3 +35,13 @@ export const getSdk = async () => {
   });
   return sdk;
 };
+
+export async function waitForChannelReady(channel: Channel): Promise<void> {
+  return new Promise((resolve) => {
+    channel.on('statusChanged', (status: string) => {
+      if (status === 'open') {
+        resolve();
+      }
+    });
+  });
+}

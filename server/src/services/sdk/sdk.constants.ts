@@ -22,3 +22,9 @@ export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
     },
   })
   : null;
+
+export const CONTRACT_CONFIGURATION = {
+  deposit: 0e18,
+  vmVersion: 5,
+  abiVersion: 3,
+};
