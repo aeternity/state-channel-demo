@@ -3,7 +3,7 @@ import { buildContractId, Channel, unpackTx } from '@aeternity/aepp-sdk';
 import BigNumber from 'bignumber.js';
 import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
 import botService from '../../src/services/bot';
-import { getSdk, timeout } from '../utils';
+import { waitForChannelReady, getSdk, timeout } from '../utils';
 
 describe('botService', () => {
   jest.setTimeout(30000);
@@ -36,7 +36,7 @@ describe('botService', () => {
       },
     });
 
-    await timeout(4000);
+    await waitForChannelReady(playerChannel);
     expect(playerChannel.status()).toBe('open');
     await timeout(2000);
     const contractAddress = buildContractId(
@@ -66,7 +66,7 @@ describe('botService', () => {
       role: 'responder',
       sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
     });
-    await timeout(6000);
+    await waitForChannelReady(playerChannel);
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
     await timeout(1000);
 
