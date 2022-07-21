@@ -28,7 +28,7 @@ services:
       dockerfile: ./server/Dockerfile
       target: builder
     volumes:
-      - .:/app
+      - './server:/home/node/app/server'
     command: npm run dev
     ports:
       - ${BOT_SERVICE_PORT}:${BOT_SERVICE_PORT}
@@ -52,7 +52,7 @@ services:
       dockerfile: ./client/Dockerfile
       target: builder
     volumes:
-      - .:/app
+      - './client:/home/node/app/client'
     command: sh -c "npm rebuild esbuild && npm run dev:host"
     depends_on:
       - bot_service
