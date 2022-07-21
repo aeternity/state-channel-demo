@@ -17,11 +17,10 @@ COPY ./client/package*.json /home/node/app/client/
 RUN chown -R node:node /home/node/
 
 USER node
-
-RUN npm install
-COPY --chown=node:node ./contract /home/node/app/contract/
+COPY --chown=node:node ./contract /home/node/app/contract
 COPY --chown=node:node ./client /home/node/app/client
 RUN cd ../contract && npm install
+RUN cd ../client && npm ci
 RUN npm run build
 
 FROM nginx:1.13.7-alpine

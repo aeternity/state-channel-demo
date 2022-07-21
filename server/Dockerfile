@@ -7,10 +7,10 @@ RUN chown -R node:node /home/node/
 
 USER node
 
-RUN npm install
 COPY --chown=node:node ./contract /home/node/app/contract
-COPY --chown=node:node ./server /home/node/app/server/
+COPY --chown=node:node ./server /home/node/app/server
 RUN cd ../contract && npm install
+RUN cd ../server && npm ci
 
 RUN npm run build
 CMD [ "node", "dist/src/index.js" ]
