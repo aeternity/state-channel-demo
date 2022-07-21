@@ -1,7 +1,8 @@
 FROM node:16.15.1 AS development
 WORKDIR /app/client
 COPY ./client/package*.json ./
-RUN npm i
+COPY ./contract ./
+RUN npm ci
 COPY . ./
 
 FROM node:16.15.1 as builder
