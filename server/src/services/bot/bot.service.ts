@@ -10,7 +10,12 @@ import BigNumber from 'bignumber.js';
 import axios, { AxiosError } from 'axios';
 import { setTimeout } from 'timers/promises';
 import { deployContract, genesisFund } from '../sdk/sdk.service';
-import { IS_USING_LOCAL_NODE, FAUCET_PUBLIC_ADDRESS, sdk } from '../sdk';
+import {
+  IS_USING_LOCAL_NODE,
+  FAUCET_PUBLIC_ADDRESS,
+  WEBSOCKET_URL,
+  sdk,
+} from '../sdk';
 import logger from '../../logger';
 
 export const channelPool = new Map<
@@ -25,7 +30,7 @@ string,
 >();
 
 export const mutualChannelConfiguration = {
-  url: process.env.WS_URL ?? 'ws://localhost:3014/channel',
+  url: WEBSOCKET_URL,
   pushAmount: 0,
   initiatorAmount: new BigNumber('4.5e18'),
   responderAmount: new BigNumber('4.5e18'),
