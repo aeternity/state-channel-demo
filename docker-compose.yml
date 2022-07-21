@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: ./server/Dockerfile
-      target: development
+      target: builder
     volumes:
       - .:/app
     command: npm run dev
@@ -50,7 +50,7 @@ services:
     build:
       context: .
       dockerfile: ./client/Dockerfile
-      target: development
+      target: builder
     volumes:
       - .:/app
     command: sh -c "npm rebuild esbuild && npm run dev:host"

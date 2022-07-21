@@ -1,12 +1,3 @@
-FROM node:16.15.1 AS development
-WORKDIR /app/client
-RUN mkdir -p /app/contract
-COPY ./client/package*.json ./
-COPY ./contract ./contract
-RUN npm ci
-COPY . ./
-
-
 FROM node:16.15.1 as builder
 
 ARG VITE_NODE_ENV
@@ -20,20 +11,20 @@ ARG VITE_NETWORK_ID
 ARG VITE_RESPONDER_HOST
 ARG VITE_RESPONDER_PORT
 
-RUN mkdir -p /home/node/app
-WORKDIR /home/node/app
-COPY ./client/package*.json /home/node/app/
+RUN mkdir -p /home/node/app/client
+WORKDIR /home/node/app/client
+COPY ./client/package*.json /home/node/app/client/
 RUN chown -R node:node /home/node/
 
 USER node
 
 RUN npm install
 COPY --chown=node:node ./contract /home/node/app/contract/
-COPY --chown=node:node ./client /home/node/app
-RUN cd contract && npm install
-RUN npm run build 
+COPY --chown=node:node ./client /home/node/app/client
+RUN cd ../contract && npm install
+RUN npm run build
 
 FROM nginx:1.13.7-alpine
 COPY ./client/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY ./client/nginx/default.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /home/node/app/dist /usr/share/nginx/html
+COPY --from=builder /home/node/app/client/dist /usr/share/nginx/html
