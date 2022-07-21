@@ -1,9 +1,11 @@
 FROM node:16.15.1 AS development
 WORKDIR /app/server
+RUN mkdir -p /app/contract
 COPY ./server/package*.json ./
-COPY ./contract ./
+COPY ./contract ./contract
 RUN npm ci
 COPY . ./
+
 
 FROM node:16.15.1 as builder 
 
