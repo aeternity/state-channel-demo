@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
+    "dev:testnet": "vite --mode testnet",
     "dev:host": "vite --host",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
@@ -25,7 +26,7 @@
   },
   "dependencies": {
     "@aeternity/aepp-sdk": "^12.0.0",
-    "@aeternity/rock-paper-scissors": "https://gitpkg.now.sh/aeternity/state-channel-demo/contract?develop",
+    "@aeternity/rock-paper-scissors": "../contract",
     "@rushstack/eslint-patch": "^1.1.4",
     "@vitejs/plugin-vue": "^2.3.3",
     "@vue/eslint-config-typescript": "^11.0.0",

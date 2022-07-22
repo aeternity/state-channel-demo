@@ -5,7 +5,10 @@
   "scripts": {
     "build": "npx tsc",
     "start": "node ./dist/src/index.js",
-    "dev": "tsc-watch --onSuccess \"sh -c 'node ./dist/src/index.js | ./node_modules/.bin/pino-pretty -c -t'\"",
+    "dev:ws": "cross-env NODE_ENV=development tsc-watch --onSuccess \"node ./dist/src/index.js\" | pino-pretty -c -t",
+    "dev:ws-testnet": "cross-env NODE_ENV=testnet tsc-watch --onSuccess \"node ./dist/src/index.js\" | pino-pretty -c -t",
+    "dev": "cross-env NODE_ENV=development tsc-watch --onSuccess \"sh -c 'node ./dist/src/index.js | ./node_modules/.bin/pino-pretty -c -t'\"",
+    "dev:testnet": "cross-env NODE_ENV=testnet tsc-watch --onSuccess \"sh -c 'node ./dist/src/index.js | ./node_modules/.bin/pino-pretty -c -t'\"",
     "lint": "eslint --ext .ts --ignore-path .gitignore --fix src",
     "test": "jest --verbose",
     "test:cov": "jest --coverage",
@@ -27,7 +30,7 @@
   "license": "ISC",
   "dependencies": {
     "@aeternity/aepp-sdk": "^12.0.0",
-    "@aeternity/rock-paper-scissors": "https://gitpkg.now.sh/aeternity/state-channel-demo/contract?develop",
+    "@aeternity/rock-paper-scissors": "../contract",
     "axios": "^0.27.2",
     "bignumber.js": "^9.0.2",
     "cors": "^2.8.5",
@@ -46,6 +49,7 @@
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^5.29.0",
     "@typescript-eslint/parser": "^5.29.0",
+    "cross-env": "^7.0.3",
     "eslint": "^8.18.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",

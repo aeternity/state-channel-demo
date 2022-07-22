@@ -3,6 +3,7 @@ process.env.FAUCET_SECRET_KEY = 'bf66e1c256931870908a649572ed0257876bb84e3cdf71e
 process.env.NETWORK_ID = 'ae_devnet';
 process.env.COMPILER_URL = 'http://localhost:3080';
 process.env.NODE_URL = 'http://localhost:3013';
+process.env.WS_URL = 'ws://localhost:3014/channel';
 
 module.exports = {
   preset: 'ts-jest',

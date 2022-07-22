@@ -21,57 +21,7 @@ services:
       - game_network
     depends_on:
       - node
-    
-  bot_service:
-    build:
-      context: .
-      dockerfile: ./server/Dockerfile
-      target: development
-    volumes:
-      - .:/app
-    command: npm run dev
-    ports:
-      - ${BOT_SERVICE_PORT}:${BOT_SERVICE_PORT}
-    environment:
-      NODE_URL: ${NODE_URL}
-      WS_URL: ${WS_URL}
-      COMPILER_URL: ${COMPILER_URL}
-      BOT_SERVICE_PORT: ${BOT_SERVICE_PORT}
-      FAUCET_PUBLIC_ADDRESS: ${FAUCET_PUBLIC_ADDRESS}
-      FAUCET_SECRET_KEY: ${FAUCET_SECRET_KEY}
-      NETWORK_ID: ${NETWORK_ID}
-    networks:      
-      - game_network
-    links:
-      - node
-      - compiler
-  
-  client:
-    build:
-      context: .
-      dockerfile: ./client/Dockerfile
-      target: development
-    volumes:
-      - .:/app
-    command: sh -c "npm rebuild esbuild && npm run dev:host"
-    depends_on:
-      - bot_service
-    ports:
-      - ${VITE_CLIENT_PORT}:${VITE_CLIENT_PORT}
-    environment: 
-      VITE_NODE_ENV: ${VITE_NODE_ENV}
-      VITE_BOT_SERVICE_URL: ${VITE_BOT_SERVICE_URL}
-      VITE_NODE_URL: ${VITE_NODE_URL}
-      VITE_COMPILER_URL: ${VITE_COMPILER_URL}
-      VITE_CLIENT_PORT: ${VITE_CLIENT_PORT}
-      VITE_WS_URL: ${VITE_WS_URL}
-      VITE_FAUCET_PUBLIC_ADDRESS: ${VITE_FAUCET_PUBLIC_ADDRESS}
-      VITE_FAUCET_SECRET_KEY: ${VITE_FAUCET_SECRET_KEY}
-      VITE_RESPONDER_HOST: ${VITE_RESPONDER_HOST}
-      VITE_RESPONDER_PORT: ${VITE_RESPONDER_PORT}
-    networks:      
-      - game_network
-    
+
 networks:
   game_network: 
     driver: bridge
