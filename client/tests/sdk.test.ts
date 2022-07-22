@@ -1,5 +1,5 @@
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   getSdk,
   FAUCET_ACCOUNT,
@@ -90,5 +90,33 @@ describe('SDK', () => {
         verifyContractBytecode(sdk, contract.bytecode, wrongSource)
       ).rejects.toThrow();
     });
-  }, 10000);
+  }, 20000);
+});
+
+describe('GameChannel', () => {
+  describe('fetchChannelConfig()', () => {
+    it('retries with a different sdk if account is greylisted', async () => {
+      const fetchSpy = vi.spyOn(global, 'fetch');
+      fetchSpy.mockResolvedValueOnce({
+        headers: {} as any,
+        ok: false,
+        redirected: false,
+        status: 500,
+        statusText: 'lalalal',
+        type: 'error',
+        json: () => {
+          return {
+            error: 'account is greylisted',
+          };
+        },
+        url: '',
+      } as unknown as Response);
+
+      const sdk = await getSdk();
+
+      const gameChannel = new GameChannel(sdk);
+      await gameChannel.fetchChannelConfig();
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+    }, 6000);
+  });
 });
