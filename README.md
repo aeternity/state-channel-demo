@@ -1,32 +1,38 @@
 # State Channel Demo
 
+## Installation
+
+```bash
+cd contract && npm install
+cd ../client && npm install
+cd ../server && npm install
+```
+
 ## How to run (Local Node - not on an Aeternity Network)
 ### Terminal 1
 ```bash
-cd contract && npm install
-cd client && npm install && npm run dev
+docker-compose up
 ```  
 
 ### Terminal 2
 ```bash
-cd server && npm install && npm run dev
+cd server && npm run dev
 ```
 
 ### Terminal 3
 ```bash
-docker-compose up
+cd client && npm run dev
 ```
 
 ## How to run (Testnet)
 ### Terminal 1
 ```bash
-cd contract && npm install
-cd client && npm install && npm run dev:testnet
+cd server && npm run dev:testnet
 ```  
 
 ### Terminal 2
 ```bash
-cd server && npm install && npm run dev:testnet
+cd client && npm run dev:testnet
 ```
 
 ## Services
