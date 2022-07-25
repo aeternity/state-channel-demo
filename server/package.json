@@ -30,7 +30,7 @@
   "license": "ISC",
   "dependencies": {
     "@aeternity/aepp-sdk": "^12.0.0",
-    "@aeternity/rock-paper-scissors": "https://gitpkg.now.sh/aeternity/state-channel-demo/contract?develop",
+    "@aeternity/rock-paper-scissors": "../contract",
     "axios": "^0.27.2",
     "bignumber.js": "^9.0.2",
     "cors": "^2.8.5",

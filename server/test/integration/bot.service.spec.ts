@@ -1,11 +1,17 @@
-import { buildContractId, Channel, unpackTx } from '@aeternity/aepp-sdk';
+import {
+  buildContractId, Channel, unpackTx, sha256hash,
+} from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import BigNumber from 'bignumber.js';
 import botService from '../../src/services/bot';
-import { RockPaperScissorsContract } from '../../src/services/contract';
+import { CONTRACT_CONFIGURATION, Moves, RockPaperScissorsContract } from '../../src/services/contract';
 import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
-import { getSdk, timeout, waitForChannelReady } from '../utils';
+import {
+  getSdk, timeout, waitForChannelReady,
+} from '../utils';
+
+const createHash = (move:Moves, key:string) => sha256hash(move + key);
 
 describe('botService', () => {
   jest.setTimeout(30000);
@@ -86,29 +92,59 @@ describe('botService', () => {
     expect(initiatorNewBalance).toBe('0');
   });
 
-  // it('bot service returns its balance back to the faucet', async () => {
-  // const playerSdk = await getSdk();
-  // const contract = (await playerSdk.getContractInstance({
-  // source: contractSource,
-  // })) as RockPaperScissorsContract;
-  // await contract.compile();
+  it('bot services makes a random pick when user has picked', async () => {
+    const playerSdk = await getSdk();
+    const contract = (await playerSdk.getContractInstance({
+      source: contractSource,
+    })) as RockPaperScissorsContract;
+    await contract.compile();
 
-  // const responderId = await playerSdk.address();
-  // const responderConfig = await botService.generateGameSession(
-  //   responderId,
-  //   'localhost',
-  //   3001,
-  // );
+    const responderId = await playerSdk.address();
+    const responderConfig = await botService.generateGameSession(
+      responderId,
+      'localhost',
+      3001,
+    );
 
-  // const playerChannel = await Channel.initialize({
-  //   ...responderConfig,
-  //   role: 'responder',
-  //   sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
-  // });
+    let contractCreationRound = '-1';
+    const playerChannel = await Channel.initialize({
+      ...responderConfig,
+      role: 'responder',
+      sign: (_tag: string, tx: EncodedData<'tx'>, options) => {
+        // @ts-expect-error
+        if (options?.updates[0]?.op === 'OffChainNewContract') {
+          // @ts-expect-error
+          contractCreationRound = unpackTx(tx).tx.round as string;
+        }
+        return playerSdk.signTransaction(tx);
+      },
+    });
 
-  // playerChannel.callContract({
-  //   amount: responderConfig.gameStake,
-  //   contract: contractAddress,
-  // });
-  // });
+    await waitForChannelReady(playerChannel);
+    expect(playerChannel.status()).toBe('open');
+    await timeout(4000);
+    const contractAddress = buildContractId(
+      responderConfig.initiatorId,
+      parseInt(contractCreationRound, 10),
+    );
+
+    const dummyHash = createHash(Moves.paper, 'eternity');
+
+    const callData = contract.calldata.encode(
+      'RockPaperScissors',
+      'provide_hash',
+      [dummyHash],
+    );
+
+    console.log('To play');
+    const res = await playerChannel.callContract(
+      {
+        amount: responderConfig.gameStake,
+        contract: contractAddress,
+        abiVersion: CONTRACT_CONFIGURATION.abiVersion,
+        callData,
+      },
+      async (tx) => playerSdk.signTransaction(tx),
+    );
+  });
 });

@@ -2,18 +2,12 @@ import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
-import axios, { AxiosError } from 'axios';
-import botService from './index';
 import { mockChannel, timeout } from '../../../test';
-import { genesisFund, sdk } from '../sdk';
 import ContractService from '../contract/contract.service';
+import { sdk } from '../sdk';
+import botService from './index';
 
-const axiosSpy = jest.spyOn(axios, 'post');
 jest.setTimeout(10000);
-jest.mock('../sdk', () => ({
-  ...jest.requireActual('../sdk'),
-  IS_USING_LOCAL_NODE: false,
-}));
 
 ContractService.deployContract = jest.fn();
 
@@ -87,86 +81,5 @@ describe('botService', () => {
       channelConfig.initiatorId,
     );
     expect(channelRemoved).toBe(true);
-  });
-
-  describe('botService.fundThroughFaucet()', () => {
-    const mockedAxios = axios as jest.Mocked<typeof axios>;
-    const accountMock = generateKeyPair().publicKey;
-
-    afterEach(() => {
-      mockedAxios.post.mockClear();
-    });
-
-    it('should run without errors', async () => {
-      mockedAxios.post.mockReturnValue(Promise.resolve());
-      await botService.fundThroughFaucet(accountMock);
-    });
-
-    it('should throw an error if faucet greylisted account', async () => {
-      mockedAxios.post.mockRejectedValueOnce(
-        new AxiosError('Greylisted', '425', null, null, {
-          status: 425,
-          statusText: 'Greylisted',
-          headers: {},
-          config: {},
-          request: {},
-          data: [],
-        }),
-      );
-      await expect(botService.fundThroughFaucet(accountMock)).rejects.toThrow();
-      expect(axiosSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should retry by default 200 time when error code is different than 425', async () => {
-      mockedAxios.post.mockRejectedValue(
-        new AxiosError('Unavailable', '500', null, null, {
-          status: 500,
-          statusText: 'Unavailable',
-          headers: {},
-          config: {},
-          request: {},
-          data: [],
-        }),
-      );
-      await expect(botService.fundThroughFaucet(accountMock)).rejects.toThrow();
-      expect(axiosSpy).toHaveBeenCalledTimes(201);
-    });
-
-    it('should retry 3 times with a total delay of 4.5 seconds when given maxRetries:2 and retryDelay:500', async () => {
-      mockedAxios.post.mockRejectedValue(
-        new AxiosError('Unavailable', '500', null, null, {
-          status: 500,
-          statusText: 'Unavailable',
-          headers: {},
-          config: {},
-          request: {},
-          data: [],
-        }),
-      );
-
-      await expect(
-        botService.fundThroughFaucet(accountMock, {
-          maxRetries: 3,
-        }),
-      ).rejects.toThrow();
-      expect(axiosSpy).toHaveBeenCalledTimes(4);
-    });
-
-    it('should not throw an error if account has enough coins', async () => {
-      mockedAxios.post.mockRejectedValue(
-        new AxiosError('Greylist', '425', null, null, {
-          status: 425,
-          statusText: 'Greylist',
-          headers: {},
-          config: {},
-          request: {},
-          data: [],
-        }),
-      );
-
-      await genesisFund(accountMock);
-      await botService.fundAccount(accountMock);
-      expect(axiosSpy).toHaveBeenCalledTimes(1);
-    });
   });
 });

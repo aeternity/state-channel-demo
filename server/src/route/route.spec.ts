@@ -1,8 +1,8 @@
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import supertest from 'supertest';
 import { app } from '../app';
-import botService from '../services/bot';
 import { mockChannel } from '../../test';
+import { MUTUAL_CHANNEL_CONFIGURATION } from '../services/bot';
 
 describe('/open', () => {
   jest.setTimeout(15000);
@@ -22,15 +22,15 @@ describe('/open', () => {
     expect(res.status).toBe(200);
     const { initiatorId, ...rest } = res.body as ChannelOptions;
     expect(rest).toEqual({
-      ...botService.mutualChannelConfiguration,
+      ...MUTUAL_CHANNEL_CONFIGURATION,
       port: config.port,
       host: config.host,
       gameStake: '10000000000000000',
       responderId: config.address,
       responderAmount:
-        botService.mutualChannelConfiguration.responderAmount.toString(),
+      MUTUAL_CHANNEL_CONFIGURATION.responderAmount.toString(),
       initiatorAmount:
-        botService.mutualChannelConfiguration.initiatorAmount.toString(),
+      MUTUAL_CHANNEL_CONFIGURATION.initiatorAmount.toString(),
     });
   });
 

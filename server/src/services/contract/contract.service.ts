@@ -1,14 +1,11 @@
-import { Channel, sha256hash } from '@aeternity/aepp-sdk';
+import { Channel } from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
+import logger from '../../logger';
 import { sdk } from '../sdk';
-import { CONTRACT_CONFIGURATION, Moves } from './contract.constants';
+import { CONTRACT_CONFIGURATION } from './contract.constants';
 
 export default class ContractService {
-  static createHash(move: Moves, key: string) {
-    return sha256hash(move + key);
-  }
-
   static async getCompiledContract() {
     const contract = await sdk.getContractInstance({ source: contractSource });
     await contract.compile();
@@ -28,7 +25,7 @@ export default class ContractService {
     sdk.selectAccount(deployerAddress);
     const contract = await this.getCompiledContract();
 
-    await channel.createContract(
+    const res = await channel.createContract(
       {
         ...CONTRACT_CONFIGURATION,
         code: contract.bytecode,
@@ -42,6 +39,8 @@ export default class ContractService {
         return sdk.signTransaction(tx);
       },
     );
+
+    logger.info(`${deployerAddress} deployed contract: ${res.address}`);
 
     return contract;
   }

@@ -44,6 +44,7 @@ module.exports = {
     "@typescript-eslint/ban-ts-comment": 0,
     "@typescript-eslint/no-shadow": 0,
     "@typescript-eslint/no-explicit-any": 0,
+    "@typescript-eslint/no-unsafe-assignment": 0,
     "@typescript-eslint/no-unsafe-member-access": 0,
     "no-shadow": 0,
     "no-void": 0,
