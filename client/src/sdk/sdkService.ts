@@ -55,13 +55,16 @@ export async function verifyContractBytecode(
   bytecode: EncodedData<'cb'>,
   source = contractSource
 ) {
+  let isEqual = false;
   try {
     await aeSdk.compilerApi.validateByteCode({
       bytecode,
       source,
       options: {},
     });
+    isEqual = true;
   } catch (e) {
-    throw new Error('Proposed bytecode is not equal with local bytecode');
+    isEqual = false;
   }
+  return isEqual;
 }

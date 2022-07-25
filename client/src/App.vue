@@ -2,15 +2,18 @@
 import ChannelInitialization from './components/ChannelInitialization.vue';
 import TransactionsList from './components/TransactionsList.vue';
 import Header from './components/Header.vue';
-import RockPaperScissor from './components/RockPaperScissor.vue';
+import RockPaperScissors from './components/RockPaperScissors.vue';
 import PopUp from './components/PopUp.vue';
 import { useChannelStore } from './stores/channel';
+import { useGameStore } from './stores/game';
 import { onBeforeUnmount, onMounted, toRaw } from 'vue';
 import { getSdk, returnCoinsToFaucet } from './sdk/sdkService';
 import { GameChannel } from './sdk/GameChannel';
+import GameManager from './game/GameManager';
 import { AeSdk } from '@aeternity/aepp-sdk';
 
 const channelStore = useChannelStore();
+const gameStore = useGameStore();
 
 async function initChannel() {
   if (!channelStore.channel) {
@@ -21,6 +24,7 @@ async function initChannel() {
 
 onMounted(async () => {
   channelStore.channel = new GameChannel(await getSdk());
+  gameStore.gameManager = new GameManager();
 });
 
 onBeforeUnmount(async () => {
@@ -34,10 +38,12 @@ onBeforeUnmount(async () => {
   <PopUp />
   <Header />
   <ChannelInitialization
-    v-if="!channelStore.channel?.isOpen"
+    v-if="!channelStore.channel?.isOpen || !channelStore.channel?.contract"
     @initializeChannel="initChannel()"
   />
-  <RockPaperScissor v-if="channelStore.channel?.isOpen" />
+  <RockPaperScissors
+    v-if="channelStore.channel?.isOpen && channelStore.channel.contract"
+  />
   <TransactionsList />
 </template>
 
