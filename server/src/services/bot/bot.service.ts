@@ -1,19 +1,16 @@
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
-import {
-  AeSdk,
-  Channel,
-  generateKeyPair,
-  MemoryAccount,
-  unpackTx,
-} from '@aeternity/aepp-sdk';
+import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
+import { setTimeout } from 'timers/promises';
 import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
 import logger from '../../logger';
 import ContractService from '../contract/contract.service';
 import { FAUCET_PUBLIC_ADDRESS, sdk } from '../sdk';
 import { fundAccount } from '../sdk/sdk.service';
+import { CONTRACT_CONFIGURATION, Methods } from '../contract';
+import { Update } from './bot.instance';
 
 export const channelPool = new Map<
 string,
@@ -32,7 +29,7 @@ export async function addChannel(
   configuration: ChannelOptions,
   contractPromise?: Promise<ContractInstance>,
 ) {
-  const contract = contractPromise != null && await contractPromise;
+  const contract = contractPromise != null && (await contractPromise);
   channelPool.set(configuration.initiatorId, {
     instance: channel,
     contract,
@@ -51,16 +48,62 @@ export function removeChannel(botId: EncodedData<'ak'>) {
   logger.info(`Removed from pool channel with bot ID: ${botId}`);
 }
 
-export async function handleChannelClose(sdk: AeSdk) {
+export async function decodeCallData(
+  calldata: EncodedData<'cb'>,
+  bytecode: string,
+) {
+  return sdk.compilerApi.decodeCalldataBytecode({
+    calldata,
+    bytecode,
+  });
+}
+
+export async function pollForRound(desiredRound: number, channel: Channel) {
+  let currentRound = channel.round();
+  while (currentRound < desiredRound) {
+    await setTimeout(1);
+    currentRound = channel.round();
+  }
+}
+
+export async function handleChannelClose(onAccount: EncodedData<'ak'>) {
   try {
-    await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS);
-    logger.info(`${sdk.selectedAddress} has returned funds to faucet`);
+    await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
+      onAccount,
+    });
+    logger.info(`${onAccount} has returned funds to faucet`);
   } catch (e) {
     logger.error({ e }, 'failed to return funds to faucet');
   }
-  const { selectedAddress } = sdk;
-  removeChannel(selectedAddress);
-  sdk.removeAccount(selectedAddress);
+  removeChannel(onAccount);
+  sdk.removeAccount(onAccount);
+}
+
+export async function handlePlayerCall(
+  update: Update,
+  config: {
+    channel: Channel;
+    contract: ContractInstance;
+    onAccount: EncodedData<'ak'>;
+  },
+) {
+  // wait for the next round where the player's move is sealed
+  await pollForRound(config.channel.round() + 1, config.channel);
+
+  const data = await decodeCallData(update.call_data, config.contract.bytecode);
+  if (data.function === Methods.provide_hash) {
+    await config.channel.callContract(
+      {
+        amount: MUTUAL_CHANNEL_CONFIGURATION.gameStake,
+        contract: update.contract_id,
+        abiVersion: CONTRACT_CONFIGURATION.abiVersion,
+        callData: ContractService.getRandomMoveCallData(config.contract),
+      },
+      async (tx: EncodedData<'tx'>) => sdk.signTransaction(tx, {
+        onAccount: config.onAccount,
+      }),
+    );
+  }
 }
 
 export async function registerEvents(
@@ -69,8 +112,7 @@ export async function registerEvents(
 ) {
   channel.on('statusChanged', (status) => {
     if (status === 'closed' || status === 'died') {
-      sdk.selectAccount(configuration.initiatorId);
-      void handleChannelClose(sdk);
+      void handleChannelClose(configuration.initiatorId);
     }
 
     if (status === 'open') {
@@ -79,8 +121,8 @@ export async function registerEvents(
           configuration.initiatorId,
           channel,
           {
-            player0: configuration.initiatorId,
-            player1: configuration.responderId,
+            player0: configuration.responderId,
+            player1: configuration.initiatorId,
             reactionTime: 3000,
           },
         );
@@ -116,12 +158,26 @@ export async function generateGameSession(
     host: playerNodeHost,
     responderId,
     role: 'initiator',
-    sign: (_tag: string, tx: EncodedData<'tx'>, options:any) => {
+    // @ts-ignore
+    sign: (
+      _tag: string,
+      tx: EncodedData<'tx'>,
+      options: {
+        updates: Update[];
+      },
+    ) => {
       if (options?.updates[0]?.op === 'OffChainCallContract') {
-        console.log(_tag, unpackTx(tx), options);
+        const channel = channelPool.get(initiatorId);
+        const { contract } = channel;
+        void handlePlayerCall(options.updates[0], {
+          onAccount: initiatorId,
+          channel: channel.instance,
+          contract,
+        });
       }
-      bot.selectAccount(botKeyPair.publicKey);
-      return bot.signTransaction(tx);
+      return bot.signTransaction(tx, {
+        onAccount: initiatorId,
+      });
     },
   };
 

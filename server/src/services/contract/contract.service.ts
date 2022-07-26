@@ -1,15 +1,32 @@
 import { Channel } from '@aeternity/aepp-sdk';
+import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import logger from '../../logger';
 import { sdk } from '../sdk';
-import { CONTRACT_CONFIGURATION } from './contract.constants';
+import {
+  CONTRACT_CONFIGURATION,
+  CONTRACT_NAME,
+  Methods,
+  Moves,
+} from './contract.constants';
 
 export default class ContractService {
-  static async getCompiledContract() {
-    const contract = await sdk.getContractInstance({ source: contractSource });
+  static async getCompiledContract(onAccount: EncodedData<'ak'>) {
+    const contract = await sdk.getContractInstance({
+      source: contractSource,
+      onAccount,
+    });
     await contract.compile();
     return contract;
+  }
+
+  static getRandomMoveCallData(contract: ContractInstance) {
+    const randomMove = Math.floor(Math.random() * 3);
+    const move = Object.values(Moves)[randomMove];
+    return contract.calldata.encode(CONTRACT_NAME, Methods.player1_move, [
+      move,
+    ]);
   }
 
   static async deployContract(
@@ -22,22 +39,19 @@ export default class ContractService {
       debugTimestamp?: number;
     },
   ) {
-    sdk.selectAccount(deployerAddress);
-    const contract = await this.getCompiledContract();
+    const contract = await this.getCompiledContract(deployerAddress);
 
     const res = await channel.createContract(
       {
         ...CONTRACT_CONFIGURATION,
         code: contract.bytecode,
-        callData: contract.calldata.encode('RockPaperScissors', 'init', [
+        callData: contract.calldata.encode(CONTRACT_NAME, Methods.init, [
           ...Object.values(config),
         ]) as string,
       },
-      async (tx) => {
-        // select again since this may occur after another bot is selected
-        sdk.selectAccount(deployerAddress);
-        return sdk.signTransaction(tx);
-      },
+      async (tx) => sdk.signTransaction(tx, {
+        onAccount: deployerAddress,
+      }),
     );
 
     logger.info(`${deployerAddress} deployed contract: ${res.address}`);

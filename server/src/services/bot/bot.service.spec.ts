@@ -50,7 +50,7 @@ describe('botService', () => {
   it('should add a channel to botPool', async () => {
     const channel = await Channel.initialize(channelConfig);
 
-    botService.addChannel(channel, channelConfig);
+    await botService.addChannel(channel, channelConfig);
 
     expect(botService.channelPool.has(channelConfig.initiatorId)).toBe(true);
   });
@@ -62,7 +62,7 @@ describe('botService', () => {
       sign: () => Promise.resolve('tx_txdata'),
     });
 
-    botService.addChannel(channel, channelConfig);
+    await botService.addChannel(channel, channelConfig);
     expect(botService.channelPool.has(channelConfig.initiatorId)).toBe(true);
     botService.removeChannel(channelConfig.initiatorId);
     expect(botService.channelPool.has(channelConfig.initiatorId)).toBe(false);

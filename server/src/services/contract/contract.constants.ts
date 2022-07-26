@@ -4,6 +4,8 @@ export const CONTRACT_CONFIGURATION = {
   abiVersion: 3,
 } as const;
 
+export const CONTRACT_NAME = 'RockPaperScissors';
+
 export enum Moves {
   rock = 'rock',
   paper = 'paper',

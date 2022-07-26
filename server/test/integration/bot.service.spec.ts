@@ -1,17 +1,27 @@
 import {
-  buildContractId, Channel, unpackTx, sha256hash,
+  buildContractId,
+  Channel,
+  sha256hash,
+  unpackTx,
 } from '@aeternity/aepp-sdk';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import BigNumber from 'bignumber.js';
-import botService from '../../src/services/bot';
-import { CONTRACT_CONFIGURATION, Moves, RockPaperScissorsContract } from '../../src/services/contract';
-import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
+import botService, { Update } from '../../src/services/bot';
+import { pollForRound } from '../../src/services/bot/bot.service';
 import {
-  getSdk, timeout, waitForChannelReady,
-} from '../utils';
+  CONTRACT_CONFIGURATION,
+  Moves,
+  RockPaperScissorsContract,
+} from '../../src/services/contract';
+import {
+  CONTRACT_NAME,
+  Methods,
+} from '../../src/services/contract/contract.constants';
+import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
+import { getSdk, timeout, waitForChannelReady } from '../utils';
 
-const createHash = (move:Moves, key:string) => sha256hash(move + key);
+const createHash = (move: Moves, key: string) => sha256hash(key + move);
 
 describe('botService', () => {
   jest.setTimeout(30000);
@@ -53,7 +63,11 @@ describe('botService', () => {
     );
     expect(await playerChannel.getContractState(contractAddress)).toBeDefined();
     void playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
-    await waitForChannelReady(playerChannel, ['closed', 'died', 'disconnected']);
+    await waitForChannelReady(playerChannel, [
+      'closed',
+      'died',
+      'disconnected',
+    ]);
   });
 
   it('bot service returns its balance back to the faucet', async () => {
@@ -92,7 +106,7 @@ describe('botService', () => {
     expect(initiatorNewBalance).toBe('0');
   });
 
-  it('bot services makes a random pick when user has picked', async () => {
+  it('bot makes a random pick, player reveals and the game is complete', async () => {
     const playerSdk = await getSdk();
     const contract = (await playerSdk.getContractInstance({
       source: contractSource,
@@ -107,11 +121,18 @@ describe('botService', () => {
     );
 
     let contractCreationRound = '-1';
+
     const playerChannel = await Channel.initialize({
       ...responderConfig,
       role: 'responder',
-      sign: (_tag: string, tx: EncodedData<'tx'>, options) => {
-        // @ts-expect-error
+      // @ts-expect-error
+      sign: async (
+        _tag: string,
+        tx: EncodedData<'tx'>,
+        options: {
+          updates: Update[];
+        },
+      ) => {
         if (options?.updates[0]?.op === 'OffChainNewContract') {
           // @ts-expect-error
           contractCreationRound = unpackTx(tx).tx.round as string;
@@ -128,16 +149,17 @@ describe('botService', () => {
       parseInt(contractCreationRound, 10),
     );
 
-    const dummyHash = createHash(Moves.paper, 'eternity');
+    const hashKey = 'Aeternity';
+    const pick = Moves.paper;
+    const dummyHash = createHash(pick, hashKey);
 
     const callData = contract.calldata.encode(
-      'RockPaperScissors',
-      'provide_hash',
+      CONTRACT_NAME,
+      Methods.provide_hash,
       [dummyHash],
     );
 
-    console.log('To play');
-    const res = await playerChannel.callContract(
+    await playerChannel.callContract(
       {
         amount: responderConfig.gameStake,
         contract: contractAddress,
@@ -146,5 +168,55 @@ describe('botService', () => {
       },
       async (tx) => playerSdk.signTransaction(tx),
     );
+
+    await pollForRound(playerChannel.round() + 1, playerChannel);
+
+    const nextRound = playerChannel.round() + 1;
+    await playerChannel.callContract(
+      {
+        amount: 0,
+        contract: contractAddress,
+        abiVersion: CONTRACT_CONFIGURATION.abiVersion,
+        callData: contract.calldata.encode(CONTRACT_NAME, Methods.reveal, [
+          hashKey,
+          pick,
+        ]),
+      },
+      async (tx) => playerSdk.signTransaction(tx),
+    );
+
+    await pollForRound(nextRound, playerChannel);
+
+    const result = await playerChannel.getContractCall({
+      caller: responderConfig.responderId,
+      contract: contractAddress,
+      round: playerChannel.round(),
+    });
+
+    const winner = contract.calldata.decode(
+      CONTRACT_NAME,
+      Methods.reveal,
+      result.returnValue,
+    );
+    const balances = await Promise.all([
+      playerChannel.balances([responderId, responderConfig.initiatorId]),
+    ]);
+
+    const playerBalance = new BigNumber(balances[0][responderId]);
+    const botBalance = new BigNumber(balances[0][responderConfig.initiatorId]);
+
+    if (winner === responderId) {
+      // player wins
+      expect(playerBalance.gt(botBalance)).toBe(true);
+    } else if (winner === responderConfig.initiatorId) {
+      // bot wins
+      expect(playerBalance.lt(botBalance)).toBe(true);
+    } else {
+      // draw
+      expect(botBalance.eq(playerBalance));
+    }
+
+    await playerChannel.leave();
+    await timeout(1500);
   });
 });

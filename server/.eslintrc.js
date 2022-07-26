@@ -48,6 +48,7 @@ module.exports = {
     "@typescript-eslint/no-unsafe-member-access": 0,
     "no-shadow": 0,
     "no-void": 0,
+    "no-await-in-loop": 0,
     "no-console": 0,
     "no-param-reassign": 0,
   },
