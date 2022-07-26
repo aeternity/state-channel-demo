@@ -90,7 +90,7 @@ describe('SDK', () => {
         verifyContractBytecode(sdk, contract.bytecode, wrongSource)
       ).rejects.toThrow();
     });
-  }, 20000);
+  });
 });
 
 describe('GameChannel', () => {
