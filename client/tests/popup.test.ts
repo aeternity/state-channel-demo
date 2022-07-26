@@ -27,6 +27,7 @@ const fakePopUpData: Required<PopUpData> = {
   secBtnText: 'Second button',
   mainBtnAction: () => counter.value++,
   secBtnAction: () => counter.value--,
+  tooltipText: 'This is a tooltip',
 };
 
 const singleButtonPopUpData: PopUpData = {
@@ -66,5 +67,15 @@ describe('PopUp', () => {
     expect(() => {
       popUpEl.getByTestId('popup-text');
     }).toThrow('Unable to find an element by: [data-testid="popup-text"]');
+    expect(() => {
+      popUpEl.getByTestId('tooltip');
+    }).toThrow('Unable to find an element by: [data-testid="tooltip"]');
+  });
+
+  it('displays popup with tooltip', async () => {
+    const popUpEl = renderPopUp(fakePopUpData);
+    expect(popUpEl.getByTestId('tooltip')).toBeTruthy();
+    const tooltipTextEl = popUpEl.getByText(fakePopUpData.tooltipText);
+    expect(tooltipTextEl).toBeTruthy();
   });
 });

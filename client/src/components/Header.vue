@@ -20,12 +20,17 @@ const channelStore = useChannelStore();
 </template>
 
 <style scoped lang="scss">
+@import '../mediaqueries.scss';
+
 .header {
   display: flex;
   justify-content: space-between;
   padding: var(--padding);
   padding-bottom: 5px;
   height: 10%;
+  @include for-phone-only {
+    height: 15%;
+  }
 }
 
 .center {

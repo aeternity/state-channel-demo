@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePopUpStore } from '../stores/popup';
 import GenericButton from './GenericButton.vue';
+import Tooltip from './Tooltip.vue';
 const store = usePopUpStore();
 </script>
 
@@ -8,6 +9,7 @@ const store = usePopUpStore();
   <div v-if="store.title" class="popup__wrapper">
     <div class="popup">
       <div class="title">{{ store.title }}</div>
+      <Tooltip v-if="store.tooltipText" :text="store.tooltipText" />
       <div class="text" v-if="store.text" data-testid="popup-text">
         {{ store.text }}
       </div>
@@ -33,11 +35,11 @@ const store = usePopUpStore();
 @import '../mediaqueries.scss';
 
 .popup {
-  width: 50%;
+  max-width: 50%;
   min-height: 200px;
   border-radius: 15px;
   background-color: white;
-  padding: 50px;
+  padding: 50px 100px;
   padding-bottom: 40px;
   display: flex;
   flex-direction: column;
