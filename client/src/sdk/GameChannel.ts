@@ -3,10 +3,14 @@ import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { BigNumber } from 'bignumber.js';
 import { toRaw } from 'vue';
-import { returnCoinsToFaucet, verifyContractBytecode } from './sdkService';
+import {
+  getSdk,
+  returnCoinsToFaucet,
+  verifyContractBytecode,
+} from './sdkService';
 
 export class GameChannel {
-  readonly sdk: AeSdk;
+  sdk: AeSdk;
   channelConfig?: ChannelOptions;
   channelInstance?: Channel;
   isOpen = false;
@@ -61,6 +65,11 @@ export class GameChannel {
         statusText: res.statusText,
         message: data.error || 'Error while fetching channel config',
       };
+      if (this?.error?.message?.includes('greylisted')) {
+        console.log('Greylisted account, retrying with new account');
+        this.sdk = await getSdk();
+        return this.fetchChannelConfig();
+      }
       throw new Error(data.error);
     }
     return data as ChannelOptions;
