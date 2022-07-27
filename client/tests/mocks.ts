@@ -1,4 +1,4 @@
-import { Selections } from '../src/game/gameManager';
+import { Selections } from '../src/game/GameManager';
 
 export class MockGameManager {
   private userSelection: Selections;
