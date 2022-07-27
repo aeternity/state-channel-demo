@@ -1,36 +1,21 @@
 import { render } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
-import RockPaperScissorVue from '../src/components/RockPaperScissor.vue';
+import RockPaperScissors from '../src/components/RockPaperScissors.vue';
+import { Selections } from '../src/game/gameManager';
+import { MockGameManager } from './mocks';
 
-describe('Rock Paper Scissor Component', () => {
-  it('displays Rock Paper Scissor buttons', async () => {
-    const RockPaperScissorEl = render(RockPaperScissorVue, {
-      global: {
-        plugins: [createTestingPinia()],
-      },
-    });
+const mockGameManager = new MockGameManager();
 
-    expect(RockPaperScissorEl.getByText('Choose one')).toBeTruthy();
-    const rockBtn = RockPaperScissorEl.getByText('ROCK');
-    const paperBtn = RockPaperScissorEl.getByText('PAPER');
-    const scissorBtn = RockPaperScissorEl.getByText('SCISSOR');
-    expect(rockBtn).toBeTruthy();
-    expect(paperBtn).toBeTruthy();
-    expect(scissorBtn).toBeTruthy();
-    expect(RockPaperScissorEl.getByTestId('userSelection').innerHTML).toBe('');
-    expect(RockPaperScissorEl.getByTestId('botSelection').innerHTML).toBe('');
-  });
-
-  it('displays user and bot selections', async () => {
-    const RockPaperScissorEl = render(RockPaperScissorVue, {
+describe('Rock Paper Scissors Component', () => {
+  it('displays Rock Paper Scissors buttons', async () => {
+    const RockPaperScissorsEl = render(RockPaperScissors, {
       global: {
         plugins: [
           createTestingPinia({
             initialState: {
               game: {
-                userSelection: 0,
-                botSelection: 1,
+                gameManager: mockGameManager,
               },
             },
           }),
@@ -38,12 +23,41 @@ describe('Rock Paper Scissor Component', () => {
       },
     });
 
-    expect(RockPaperScissorEl.getByTestId('userSelection').innerHTML).toBe(
+    expect(RockPaperScissorsEl.getByText('Choose one')).toBeTruthy();
+    const rockBtn = RockPaperScissorsEl.getByText('ROCK');
+    const paperBtn = RockPaperScissorsEl.getByText('PAPER');
+    const scissorsBtn = RockPaperScissorsEl.getByText('SCISSORS');
+    expect(rockBtn).toBeTruthy();
+    expect(paperBtn).toBeTruthy();
+    expect(scissorsBtn).toBeTruthy();
+    expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe('');
+    expect(RockPaperScissorsEl.getByTestId('botSelection').innerHTML).toBe('');
+  });
+
+  it('displays user and bot selections', async () => {
+    await mockGameManager?.setUserSelection(Selections.rock);
+    mockGameManager.botSelection = Selections.paper;
+
+    const RockPaperScissorsEl = render(RockPaperScissors, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            initialState: {
+              game: {
+                gameManager: mockGameManager,
+              },
+            },
+          }),
+        ],
+      },
+    });
+
+    expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe(
       'rock'
     );
-    expect(RockPaperScissorEl.getByTestId('botSelection').innerHTML).toBe(
+    expect(RockPaperScissorsEl.getByTestId('botSelection').innerHTML).toBe(
       'paper'
     );
-    expect(RockPaperScissorEl.getByText("Bot's selection")).toBeTruthy();
+    expect(RockPaperScissorsEl.getByText("Bot's selection")).toBeTruthy();
   });
 });

@@ -1,6 +1,7 @@
 *.md
 build
 coverage
+dist
 public
 package.json
 package-lock.json

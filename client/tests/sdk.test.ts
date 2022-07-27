@@ -1,4 +1,4 @@
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { EncodedData, sha256hash } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { describe, it, expect, vi } from 'vitest';
 import {
   getSdk,
@@ -9,6 +9,7 @@ import { createTestingPinia } from '@pinia/testing';
 import { GameChannel } from '../src/sdk/GameChannel';
 import { AeSdk } from '@aeternity/aepp-sdk';
 import contractSource from '@aeternity/rock-paper-scissors';
+import { waitForChannelReady } from './utils';
 
 describe('SDK', () => {
   it('creates and returns an SDK instance', async () => {
@@ -18,15 +19,73 @@ describe('SDK', () => {
     expect(sdk.selectedAddress).toBeTruthy();
   });
 
-  it('creates game channel instance, initializes Channel and returns coins to faucet on channel closing', async () => {
-    createTestingPinia();
+  it('cannot call contract when channel is not initialized', async () => {
     const gameChannel = new GameChannel(await getSdk());
+    gameChannel.autoSign = true;
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     await gameChannel.initializeChannel();
+    createTestingPinia({
+      initialState: {
+        channel: {
+          channel: gameChannel,
+        },
+      },
+    });
+    await expect(gameChannel.callContract('init', [])).rejects.toThrow();
+  });
+  it('cannot call contract when contract is not deployed', async () => {
+    const gameChannel = new GameChannel(await getSdk());
+    gameChannel.autoSign = true;
+    await gameChannel.initializeChannel();
+    createTestingPinia({
+      initialState: {
+        channel: {
+          channel: gameChannel,
+        },
+      },
+    });
+    await waitForChannelReady(gameChannel.getChannelWithoutProxy());
+    expect(gameChannel.contract).toBeFalsy();
+    await expect(gameChannel.callContract('init', [])).rejects.toThrow();
+  });
+
+  it('can call contract after it is deployed', async () => {
+    const gameChannel = new GameChannel(await getSdk());
+    gameChannel.autoSign = true;
+    await gameChannel.initializeChannel();
+    createTestingPinia({
+      initialState: {
+        channel: {
+          channel: gameChannel,
+        },
+      },
+    });
+    await waitForChannelReady(gameChannel.getChannelWithoutProxy());
+    expect(gameChannel.contract).toBeFalsy();
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    expect(gameChannel.contract).toBeTruthy();
+    await expect(
+      gameChannel.callContract('provide_hash', [sha256hash('test')])
+    ).resolves.toHaveProperty('accepted');
+  }, 8000);
+
+  it('creates game channel instance, initializes Channel and returns coins to faucet on channel closing', async () => {
+    const gameChannel = new GameChannel(await getSdk());
+    gameChannel.autoSign = true;
+    await gameChannel.initializeChannel();
+    createTestingPinia({
+      initialState: {
+        channel: {
+          channel: gameChannel,
+        },
+      },
+    });
+    await waitForChannelReady(gameChannel.getChannelWithoutProxy());
     const client = gameChannel.sdk as AeSdk;
     const ae = await getSdk();
 
     expect(client?.selectedAddress).toBeTruthy();
-    expect(gameChannel.channelInstance?.status()).toBe('connected');
+    expect(gameChannel.getStatus()).toBe('open');
 
     if (FAUCET_ACCOUNT) {
       await ae.addAccount(FAUCET_ACCOUNT, { select: true });
@@ -42,6 +101,7 @@ describe('SDK', () => {
 
     await gameChannel.closeChannel();
     await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(gameChannel.getStatus()).toBe('disconnected');
 
     const balance_after = await client.getBalance(
       client.selectedAddress as EncodedData<'ak'>
@@ -53,7 +113,7 @@ describe('SDK', () => {
     expect(BigInt(faucet_balance_after)).toBeGreaterThan(
       BigInt(faucet_balance_before)
     );
-  }, 6000);
+  }, 7000);
 
   describe('verifyContractBytecode()', () => {
     const wrongSource = `
@@ -65,7 +125,7 @@ describe('SDK', () => {
         true => Chain.event(Duplicate(0))
         false => ()
     `;
-    it('does not throw an error if proposed bytecode is correct', async () => {
+    it('returns true if proposed bytecode is correct', async () => {
       const sdk = await getSdk();
       const contract = await sdk.getContractInstance({
         source: contractSource,
@@ -75,10 +135,10 @@ describe('SDK', () => {
         throw new Error('Contract bytecode is not defined');
       await expect(
         verifyContractBytecode(sdk, contract.bytecode, contractSource)
-      ).resolves.toBeFalsy();
+      ).resolves.toBeTruthy();
     });
 
-    it('throw an error if proposed bytecode is wrong', async () => {
+    it('returns false if proposed bytecode is wrong', async () => {
       const sdk = await getSdk();
       const contract = await sdk.getContractInstance({
         source: contractSource,
@@ -88,7 +148,7 @@ describe('SDK', () => {
         throw new Error('Contract bytecode is not defined');
       expect(
         verifyContractBytecode(sdk, contract.bytecode, wrongSource)
-      ).rejects.toThrow();
+      ).resolves.toBeFalsy();
     });
   });
 });
