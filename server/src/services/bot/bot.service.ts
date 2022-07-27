@@ -36,6 +36,7 @@ export const mutualChannelConfiguration = {
   channelReserve: 2,
   lockPeriod: 10,
   debug: false,
+  timeoutIdle: 60000,
   minimumDepthStrategy: 'plain',
   minimumDepth: 0,
   gameStake: new BigNumber('0.01e18'),
@@ -50,13 +51,15 @@ export function addChannel(channel: Channel, configuration: ChannelOptions) {
     },
   });
   logger.info(
-    `Added to pool channel with bot ID: ${configuration.initiatorId}`,
+    `Added to pool channel with bot ID: ${configuration.initiatorId}. Total channels: ${channelPool.size}`,
   );
 }
 
 export function removeChannel(botId: EncodedData<'ak'>) {
   channelPool.delete(botId);
-  logger.info(`Removed from pool channel with bot ID: ${botId}`);
+  logger.info(
+    `Removed from pool channel with bot ID: ${botId}. Total channels: ${channelPool.size}`,
+  );
 }
 
 export async function fundThroughFaucet(
