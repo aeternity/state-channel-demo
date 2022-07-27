@@ -5,6 +5,7 @@ import {
   generateKeyPair,
   Channel,
 } from '@aeternity/aepp-sdk';
+import { setTimeout as awaitSetTimeout } from 'timers/promises';
 import {
   NETWORK_ID,
   COMPILER_URL,
@@ -44,4 +45,12 @@ export async function waitForChannelReady(channel: Channel, statuses = ['open'])
       }
     });
   });
+}
+
+export async function pollForRound(desiredRound: number, channel: Channel) {
+  let currentRound = channel.round();
+  while (currentRound < desiredRound) {
+    await awaitSetTimeout(1);
+    currentRound = channel.round();
+  }
 }

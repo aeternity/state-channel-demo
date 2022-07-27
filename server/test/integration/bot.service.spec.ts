@@ -7,8 +7,7 @@ import {
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import BigNumber from 'bignumber.js';
-import botService, { Update } from '../../src/services/bot';
-import { pollForRound } from '../../src/services/bot/bot.service';
+import botService from '../../src/services/bot';
 import {
   CONTRACT_CONFIGURATION,
   Moves,
@@ -18,8 +17,11 @@ import {
   CONTRACT_NAME,
   Methods,
 } from '../../src/services/contract/contract.constants';
+import { Update } from '../../src/services/sdk';
 import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
-import { getSdk, timeout, waitForChannelReady } from '../utils';
+import {
+  getSdk, pollForRound, timeout, waitForChannelReady,
+} from '../utils';
 
 const createHash = (move: Moves, key: string) => sha256hash(key + move);
 

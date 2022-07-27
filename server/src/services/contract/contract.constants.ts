@@ -1,3 +1,5 @@
+import BigNumber from 'bignumber.js';
+
 export const CONTRACT_CONFIGURATION = {
   deposit: 0e18,
   vmVersion: 5,
@@ -5,7 +7,7 @@ export const CONTRACT_CONFIGURATION = {
 } as const;
 
 export const CONTRACT_NAME = 'RockPaperScissors';
-
+export const GAME_STAKE = new BigNumber('0.01e18');
 export enum Moves {
   rock = 'rock',
   paper = 'paper',

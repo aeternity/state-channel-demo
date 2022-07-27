@@ -1,4 +1,4 @@
-import ContractService from '.';
+import { ContractService } from '.';
 
 describe('ContractService', () => {
   it('should be defined', () => {

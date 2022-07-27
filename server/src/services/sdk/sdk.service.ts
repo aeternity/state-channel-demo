@@ -96,3 +96,13 @@ export async function fundAccount(account: EncodedData<'ak'>) {
     await genesisFund(account);
   }
 }
+
+export async function decodeCallData(
+  calldata: EncodedData<'cb'>,
+  bytecode: string,
+) {
+  return sdk.compilerApi.decodeCalldataBytecode({
+    calldata,
+    bytecode,
+  });
+}

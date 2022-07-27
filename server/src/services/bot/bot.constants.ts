@@ -11,5 +11,4 @@ export const MUTUAL_CHANNEL_CONFIGURATION = {
   debug: false,
   minimumDepthStrategy: 'plain',
   minimumDepth: 0,
-  gameStake: new BigNumber('0.01e18'),
 } as const;
