@@ -39,8 +39,14 @@ jobs:
       - name: Sleep for a minute
         run: sleep 60
 
+      - name: Start server
+        run: cd server && npm run dev &
+
+      - name: Sleep for a minute
+        run: sleep 60
+
       - name: Run client tests
-        run: cd client && npm run test
+        run: cd ../client && npm run test
 
       - name: Run server tests
-        run: cd server && npm run test
+        run: cd ../server && npm run test
