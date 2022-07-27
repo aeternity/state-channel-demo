@@ -22,6 +22,7 @@ export class GameChannel {
   channelConfig?: ChannelOptions;
   channelInstance?: Channel;
   isOpen = false;
+  isFunded = false;
   error?: {
     status: number;
     statusText: string;
@@ -93,6 +94,7 @@ export class GameChannel {
     await this.fetchChannelConfig()
       .then(async (config) => {
         this.channelConfig = config;
+        this.isFunded = true;
         await this.openChannel();
       })
       .catch((e) => console.error(e));

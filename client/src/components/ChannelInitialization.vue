@@ -11,6 +11,8 @@ const emit = defineEmits(['initializeChannel']);
 const title = computed(() =>
   !openChannelInitiated.value
     ? 'Start the game by open state channel'
+    : !channelStore.channel?.isFunded
+    ? 'Funding accounts...'
     : !channelStore.channel?.isOpen
     ? 'Setting ‘on-chain’ operations...'
     : 'Waiting for contract to be deployed...'

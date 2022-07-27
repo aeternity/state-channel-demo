@@ -177,6 +177,6 @@ describe('GameChannel', () => {
       const gameChannel = new GameChannel(sdk);
       await gameChannel.fetchChannelConfig();
       expect(fetchSpy).toHaveBeenCalledTimes(2);
-    }, 6000);
+    }, 10000);
   });
 });
