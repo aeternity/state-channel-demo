@@ -38,13 +38,15 @@ export async function addGameSession(
     },
   });
   logger.info(
-    `Added to pool channel with bot ID: ${configuration.initiatorId}`,
+    `Added to game session pool with bot ID: ${configuration.initiatorId}. Total sessions: ${gameSessionPool.size}`,
   );
 }
 
 export function removeGameSession(botId: EncodedData<'ak'>) {
   gameSessionPool.delete(botId);
-  logger.info(`Removed from pool channel with bot ID: ${botId}`);
+  logger.info(
+    `Removed from pool game session with bot ID: ${botId}. Total sessions: ${gameSessionPool.size}`,
+  );
 }
 
 export async function handleChannelClose(onAccount: EncodedData<'ak'>) {

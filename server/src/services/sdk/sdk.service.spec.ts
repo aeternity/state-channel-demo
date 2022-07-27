@@ -38,7 +38,7 @@ describe('fundThroughFaucet()', () => {
     expect(axiosSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should retry by default 1 time when error code is different than 425', async () => {
+  it('should retry by default 200 time when error code is different than 425', async () => {
     mockedAxios.post.mockRejectedValue(
       new AxiosError('Unavailable', '500', null, null, {
         status: 500,
@@ -50,10 +50,10 @@ describe('fundThroughFaucet()', () => {
       }),
     );
     await expect(fundThroughFaucet(accountMock)).rejects.toThrow();
-    expect(axiosSpy).toHaveBeenCalledTimes(2);
+    expect(axiosSpy).toHaveBeenCalledTimes(201);
   });
 
-  it('should retry 3 times with a total delay of 4.5 seconds when given maxRetries:2 and retryDelay:500', async () => {
+  it('should retry 3 times maxRetries:3', async () => {
     mockedAxios.post.mockRejectedValue(
       new AxiosError('Unavailable', '500', null, null, {
         status: 500,
@@ -65,20 +65,12 @@ describe('fundThroughFaucet()', () => {
       }),
     );
 
-    const startTime = performance.now();
-
     await expect(
       fundThroughFaucet(accountMock, {
         maxRetries: 3,
-        retryDelay: 500,
       }),
     ).rejects.toThrow();
     expect(axiosSpy).toHaveBeenCalledTimes(4);
-    const endTime = performance.now();
-
-    const totalDelay = endTime - startTime;
-    expect(totalDelay).toBeGreaterThanOrEqual(4500);
-    expect(totalDelay).toBeLessThanOrEqual(6500);
   });
 
   it('should not throw an error if account has enough coins', async () => {

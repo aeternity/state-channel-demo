@@ -9,6 +9,7 @@ export const MUTUAL_CHANNEL_CONFIGURATION = {
   channelReserve: 2,
   lockPeriod: 10,
   debug: false,
+  timeoutIdle: 60000,
   minimumDepthStrategy: 'plain',
   minimumDepth: 0,
 } as const;

@@ -2,7 +2,6 @@ import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { AeSdk, Node } from '@aeternity/aepp-sdk';
 import axios, { AxiosError } from 'axios';
 import BigNumber from 'bignumber.js';
-import { setTimeout } from 'timers/promises';
 import {
   COMPILER_URL,
   FAUCET_PUBLIC_ADDRESS,
@@ -42,14 +41,11 @@ export async function fundThroughFaucet(
   account: EncodedData<'ak'>,
   options: {
     maxRetries?: number;
-    retryDelay?: number;
   } = {
-    maxRetries: 1,
-    retryDelay: 1000,
+    maxRetries: 200,
   },
 ): Promise<void> {
   const FAUCET_URL = 'https://faucet.aepps.com';
-  if (Number.isNaN(options.retryDelay)) options.retryDelay = 1000;
   try {
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
     return logger.info(`Funded account ${account} through Faucet`);
@@ -62,10 +58,8 @@ export async function fundThroughFaucet(
       logger.warn(
         `Faucet is currently unavailable. Retrying at maximum ${options.maxRetries} more times`,
       );
-      await setTimeout(options.retryDelay);
       return fundThroughFaucet(account, {
         maxRetries: options.maxRetries - 1,
-        retryDelay: options.retryDelay + 1000,
       });
     }
     logger.error({ error }, 'failed to fund account through faucet');
@@ -83,9 +77,7 @@ export async function fundAccount(account: EncodedData<'ak'>) {
       });
     } catch (error) {
       if (
-        new BigNumber(await sdk.getBalance(account)).gt(
-          new BigNumber('4.5e18'),
-        )
+        new BigNumber(await sdk.getBalance(account)).gt(new BigNumber('4.5e18'))
       ) {
         logger.warn(
           `Got an error but Account ${account} already has sufficient balance.`,
