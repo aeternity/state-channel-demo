@@ -8,7 +8,7 @@ on:
       - 'v*'
   pull_request:
     branches: [ main, develop ]
-    types: [ opened ]
+    types: [ opened, synchronize, closed ]
 
 jobs:
   main:
@@ -27,11 +27,14 @@ jobs:
       - name: Npm install client
         run: cd client && npm ci
 
+      - name: Log node version
+        run: node -v
+
       - name: Npm install server
         run: cd server && npm ci
 
       - name: Start containers
-        run: docker-compose --env-file .env.dev up -d --build
+        run: docker-compose up -d --build
 
       - name: List running containers
         run: docker ps
@@ -46,7 +49,7 @@ jobs:
         run: sleep 60
 
       - name: Run client tests
-        run: cd ../client && npm run test
+        run: cd client && npm run test
 
       - name: Run server tests
-        run: cd ../server && npm run test
+        run: cd server && npm run test
