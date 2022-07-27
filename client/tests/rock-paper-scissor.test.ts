@@ -2,7 +2,7 @@ import { render } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
 import RockPaperScissors from '../src/components/RockPaperScissors.vue';
-import { Selections } from '../src/game/gameManager';
+import { Selections } from '../src/game/GameManager';
 import { MockGameManager } from './mocks';
 
 const mockGameManager = new MockGameManager();
