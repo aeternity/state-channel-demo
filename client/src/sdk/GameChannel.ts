@@ -22,6 +22,7 @@ export class GameChannel {
   channelConfig?: ChannelOptions;
   channelInstance?: Channel;
   isOpen = false;
+  isFunded = false;
   error?: {
     status: number;
     statusText: string;
@@ -74,16 +75,16 @@ export class GameChannel {
       stake: new BigNumber(data.gameStake),
     };
     if (res.status != 200) {
-      this.error = {
-        status: res.status,
-        statusText: res.statusText,
-        message: data.error || 'Error while fetching channel config',
-      };
-      if (this?.error?.message?.includes('greylisted')) {
+      if (data.error.includes('greylisted')) {
         console.log('Greylisted account, retrying with new account');
         this.sdk = await getSdk();
         return this.fetchChannelConfig();
-      }
+      } else
+        this.error = {
+          status: res.status,
+          statusText: res.statusText,
+          message: data.error || 'Error while fetching channel config',
+        };
       throw new Error(data.error);
     }
     return data as ChannelOptions;
@@ -93,6 +94,7 @@ export class GameChannel {
     await this.fetchChannelConfig()
       .then(async (config) => {
         this.channelConfig = config;
+        this.isFunded = true;
         await this.openChannel();
       })
       .catch((e) => console.error(e));

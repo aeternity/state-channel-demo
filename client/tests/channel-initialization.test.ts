@@ -18,7 +18,7 @@ describe('Open State Channel Button', () => {
       channelComp.getByText('Start game');
     }).toThrowError();
 
-    channelComp.getByText('Setting ‘on-chain’ operations...');
+    channelComp.getByText('Funding accounts...');
   });
 
   it('shows error message on error', async () => {

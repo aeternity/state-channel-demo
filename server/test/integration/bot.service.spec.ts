@@ -68,6 +68,7 @@ describe('botService', () => {
       sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
     });
     await waitForChannelReady(playerChannel);
+    await timeout(5000);
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
     await timeout(1000);
 
