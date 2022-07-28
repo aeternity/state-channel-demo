@@ -1,149 +1,125 @@
-import {
-  AeSdk,
-  Channel,
-  generateKeyPair,
-  MemoryAccount,
-} from '@aeternity/aepp-sdk';
+import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
+import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
-import axios, { AxiosError } from 'axios';
-import { deployContract, genesisFund } from '../sdk/sdk.service';
-import {
-  IS_USING_LOCAL_NODE,
-  FAUCET_PUBLIC_ADDRESS,
-  WEBSOCKET_URL,
-  sdk,
-} from '../sdk';
 import logger from '../../logger';
+import {
+  ContractService,
+  CONTRACT_CONFIGURATION,
+  GAME_STAKE,
+} from '../contract';
+import { getNextCallData } from '../contract/contract.service';
+import { FAUCET_PUBLIC_ADDRESS, sdk, Update } from '../sdk';
+import { fundAccount } from '../sdk/sdk.service';
+import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
+import { GameSession } from './bot.interface';
 
-export const channelPool = new Map<
-string,
-{
-  instance: Channel;
-  participants: {
-    responderId: EncodedData<'ak'>;
-    initiatorId: EncodedData<'ak'>;
-  };
-}
->();
+export const gameSessionPool = new Map<string, GameSession>();
 
-export const mutualChannelConfiguration = {
-  url: WEBSOCKET_URL,
-  pushAmount: 0,
-  initiatorAmount: new BigNumber('4.5e18'),
-  responderAmount: new BigNumber('4.5e18'),
-  channelReserve: 2,
-  lockPeriod: 10,
-  debug: false,
-  minimumDepthStrategy: 'plain',
-  minimumDepth: 0,
-  gameStake: new BigNumber('0.01e18'),
-};
-
-export function addChannel(channel: Channel, configuration: ChannelOptions) {
-  channelPool.set(configuration.initiatorId, {
-    instance: channel,
+export async function addGameSession(
+  channel: Channel,
+  configuration: ChannelOptions,
+  contractPromise?: Promise<{
+    instance: ContractInstance;
+    address: EncodedData<'ct'>;
+  }>,
+) {
+  const { instance, address } = contractPromise != null && (await contractPromise);
+  gameSessionPool.set(configuration.initiatorId, {
+    channel,
+    contractState: {
+      instance,
+      address,
+    },
     participants: {
       responderId: configuration.responderId,
       initiatorId: configuration.initiatorId,
     },
   });
   logger.info(
-    `Added to pool channel with bot ID: ${configuration.initiatorId}`,
+    `Added to game session pool with bot ID: ${configuration.initiatorId}. Total sessions: ${gameSessionPool.size}`,
   );
 }
 
-export function removeChannel(botId: EncodedData<'ak'>) {
-  channelPool.delete(botId);
-  logger.info(`Removed from pool channel with bot ID: ${botId}`);
+export function removeGameSession(botId: EncodedData<'ak'>) {
+  gameSessionPool.delete(botId);
+  logger.info(
+    `Removed from pool game session with bot ID: ${botId}. Total sessions: ${gameSessionPool.size}`,
+  );
 }
 
-export async function fundThroughFaucet(
-  account: EncodedData<'ak'>,
-  options: {
-    maxRetries?: number;
-  } = {
-    maxRetries: 200,
-  },
-): Promise<void> {
-  const FAUCET_URL = 'https://faucet.aepps.com';
+export async function handleChannelClose(onAccount: EncodedData<'ak'>) {
   try {
-    await axios.post(`${FAUCET_URL}/account/${account}`, {});
-    return logger.info(`Funded account ${account} through Faucet`);
-  } catch (error) {
-    if (error instanceof AxiosError && error.response.status === 425) {
-      const errorMessage = `account ${account} is greylisted.`;
-      logger.error(errorMessage);
-      throw new Error(errorMessage);
-    } else if (options.maxRetries > 0) {
-      logger.warn(
-        `Faucet is currently unavailable. Retrying at maximum ${options.maxRetries} more times`,
-      );
-      return fundThroughFaucet(account, {
-        maxRetries: options.maxRetries - 1,
-      });
-    }
-    logger.error({ error }, 'failed to fund account through faucet');
-    throw new Error(
-      `failed to fund account through faucet. details: ${error.toString()}`,
-    );
-  }
-}
-
-export async function fundAccount(account: EncodedData<'ak'>) {
-  if (!IS_USING_LOCAL_NODE) {
-    try {
-      await fundThroughFaucet(account, {
-        maxRetries: 20,
-      });
-    } catch (error) {
-      if (
-        new BigNumber(await sdk.getBalance(account)).gt(
-          mutualChannelConfiguration.responderAmount,
-        )
-      ) {
-        logger.warn(
-          `Got an error but Account ${account} already has sufficient balance.`,
-        );
-      } else throw error;
-    }
-  } else {
-    await genesisFund(account);
-  }
-}
-
-export async function handleChannelClose(sdk: AeSdk) {
-  try {
-    await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS);
-    logger.info(`${sdk.selectedAddress} has returned funds to faucet`);
+    await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
+      onAccount,
+    });
+    logger.info(`${onAccount} has returned funds to faucet`);
   } catch (e) {
     logger.error({ e }, 'failed to return funds to faucet');
   }
-  const { selectedAddress } = sdk;
-  removeChannel(selectedAddress);
-  sdk.removeAccount(selectedAddress);
+  removeGameSession(onAccount);
+  sdk.removeAccount(onAccount);
+}
+
+export async function handleOpponentCallUpdate(
+  update: Update,
+  gameSession: GameSession,
+) {
+  const nextCallDataToSend = await getNextCallData(
+    update,
+    gameSession.contractState.instance,
+  );
+  gameSession.contractState.callDataToSend = nextCallDataToSend;
+}
+
+async function respondToContractCall(gameSession: GameSession) {
+  if (gameSession.contractState.callDataToSend == null) return;
+  await gameSession.channel.callContract(
+    {
+      amount: GAME_STAKE,
+      contract: gameSession.contractState.address,
+      abiVersion: CONTRACT_CONFIGURATION.abiVersion,
+      callData: gameSession.contractState.callDataToSend,
+    },
+    async (tx: EncodedData<'tx'>) => sdk.signTransaction(tx, {
+      onAccount: gameSession.participants.initiatorId,
+    }),
+  );
+  gameSession.contractState.callDataToSend = null;
 }
 
 export async function registerEvents(
-  channel: Channel,
+  channelInstance: Channel,
   configuration: ChannelOptions,
 ) {
-  channel.on('statusChanged', (status) => {
+  channelInstance.on('statusChanged', (status) => {
     if (status === 'closed' || status === 'died') {
-      sdk.selectAccount(configuration.initiatorId);
-      void handleChannelClose(sdk);
+      void handleChannelClose(configuration.initiatorId);
     }
 
     if (status === 'open') {
-      if (!channelPool.has(configuration.initiatorId)) {
-        void deployContract(configuration.initiatorId, channel, {
-          player0: configuration.initiatorId,
-          player1: configuration.responderId,
-          reactionTime: 3000,
-        });
-        addChannel(channel, configuration);
+      if (!gameSessionPool.has(configuration.initiatorId)) {
+        const contractPromise = ContractService.deployContract(
+          configuration.initiatorId,
+          channelInstance,
+          {
+            player0: configuration.responderId,
+            player1: configuration.initiatorId,
+            reactionTime: 3000,
+          },
+        );
+        void addGameSession(channelInstance, configuration, contractPromise);
       }
+    }
+  });
+
+  channelInstance.on('stateChanged', () => {
+    const gameSession = gameSessionPool.get(configuration.initiatorId);
+    if (gameSession?.contractState?.callDataToSend) {
+      setImmediate(() => {
+        void respondToContractCall(gameSession);
+      });
     }
   });
 }
@@ -165,16 +141,31 @@ export async function generateGameSession(
   await fundAccount(initiatorId);
   await fundAccount(responderId);
 
-  const channelConfig: ChannelOptions = {
-    ...mutualChannelConfiguration,
+  const channelConfig: ChannelOptions & {
+    gameStake: BigNumber;
+  } = {
+    ...MUTUAL_CHANNEL_CONFIGURATION,
+    gameStake: GAME_STAKE,
     initiatorId,
     port: playerNodePort,
     host: playerNodeHost,
     responderId,
     role: 'initiator',
-    sign: (_tag: string, tx: EncodedData<'tx'>) => {
-      bot.selectAccount(botKeyPair.publicKey);
-      return bot.signTransaction(tx);
+    // @ts-ignore
+    sign: (
+      _tag: string,
+      tx: EncodedData<'tx'>,
+      options: {
+        updates: Update[];
+      },
+    ) => {
+      if (options?.updates[0]?.op === 'OffChainCallContract') {
+        const gameSession = gameSessionPool.get(initiatorId);
+        void handleOpponentCallUpdate(options.updates[0], gameSession);
+      }
+      return bot.signTransaction(tx, {
+        onAccount: initiatorId,
+      });
     },
   };
 

@@ -21,7 +21,6 @@ services:
       - game_network
     depends_on:
       - node
-
 networks:
   game_network: 
     driver: bridge

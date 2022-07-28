@@ -5,6 +5,7 @@ import {
   generateKeyPair,
   Channel,
 } from '@aeternity/aepp-sdk';
+import { setTimeout as awaitSetTimeout } from 'timers/promises';
 import {
   NETWORK_ID,
   COMPILER_URL,
@@ -36,12 +37,20 @@ export const getSdk = async () => {
   return sdk;
 };
 
-export async function waitForChannelReady(channel: Channel): Promise<void> {
+export async function waitForChannelReady(channel: Channel, statuses = ['open']): Promise<void> {
   return new Promise((resolve) => {
-    channel.on('statusChanged', (status: string) => {
-      if (status === 'open') {
+    channel.on('statusChanged', (newStatus: string) => {
+      if (statuses.includes(newStatus)) {
         resolve();
       }
     });
   });
+}
+
+export async function pollForRound(desiredRound: number, channel: Channel) {
+  let currentRound = channel.round();
+  while (currentRound < desiredRound) {
+    await awaitSetTimeout(1);
+    currentRound = channel.round();
+  }
 }
