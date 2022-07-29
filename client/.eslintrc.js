@@ -22,7 +22,7 @@ module.exports = {
     'vue/multi-word-component-names': [
       'error',
       {
-        ignores: ['Header'],
+        ignores: ['Header', 'Tooltip'],
       },
     ],
   },
