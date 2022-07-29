@@ -11,6 +11,9 @@ import {
   Moves,
 } from './contract.constants';
 
+/**
+ * @category sdk-wrapper
+ */
 export async function getCompiledContract(onAccount: Encoded.AccountAddress) {
   const contract = await sdk.getContractInstance({
     source: contractSource,
@@ -23,7 +26,9 @@ export async function getCompiledContract(onAccount: Encoded.AccountAddress) {
 /**
  * Makes a random pick and returns calldata for `player1_move` method
  */
-export function getRandomMoveCallData(contract: ContractInstance) {
+export function getRandomMoveCallData(
+  contract: ContractInstance,
+): Encoded.ContractBytearray {
   const randomMove = Math.floor(Math.random() * 3);
   const move = Object.values(Moves)[randomMove];
   return contract.calldata.encode(CONTRACT_NAME, Methods.player1_move, [move]);
@@ -60,10 +65,7 @@ export async function deployContract(
 
   logger.info(`${deployerAddress} deployed contract: ${res.address}`);
 
-  return { instance: contract, address: res.address } as {
-    instance: ContractInstance;
-    address: Encoded.ContractAddress;
-  };
+  return { instance: contract, address: res.address };
 }
 
 /**

@@ -1,9 +1,4 @@
-import {
-  buildContractId,
-  Channel,
-  sha256hash,
-  unpackTx,
-} from '@aeternity/aepp-sdk';
+import { buildContractId, Channel, unpackTx } from '@aeternity/aepp-sdk';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import BigNumber from 'bignumber.js';
@@ -20,10 +15,12 @@ import {
 import { Update } from '../../src/services/sdk';
 import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
 import {
-  getSdk, pollForRound, timeout, waitForChannelReady,
+  createHash,
+  getSdk,
+  pollForRound,
+  timeout,
+  waitForChannelReady,
 } from '../utils';
-
-const createHash = (move: Moves, key: string) => sha256hash(key + move);
 
 describe('botService', () => {
   jest.setTimeout(30000);
@@ -184,7 +181,7 @@ describe('botService', () => {
 
     // wait for the next round
     await pollForRound(playerChannel.round() + 1, playerChannel);
-
+    const nextRound = playerChannel.round() + 1;
     await playerChannel.callContract(
       {
         amount: 0,
@@ -198,7 +195,7 @@ describe('botService', () => {
       async (tx) => playerSdk.signTransaction(tx),
     );
 
-    await pollForRound(playerChannel.round() + 1, playerChannel);
+    await pollForRound(nextRound, playerChannel);
 
     const result = await playerChannel.getContractCall({
       caller: responderConfig.responderId,

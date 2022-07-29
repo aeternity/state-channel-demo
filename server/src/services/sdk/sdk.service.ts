@@ -97,6 +97,7 @@ export async function fundAccount(account: Encoded.AccountAddress) {
 }
 
 /**
+ * @category sdk-wrapper
  * Wrapper function to decode callData.
  */
 export async function decodeCallData(
