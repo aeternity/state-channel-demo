@@ -1,6 +1,5 @@
 import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
-import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import logger from '../../logger';
@@ -17,15 +16,22 @@ import { GameSession } from './bot.interface';
 
 export const gameSessionPool = new Map<string, GameSession>();
 
+/**
+ * Adds game session to the pool after deploying the contract
+ */
 export async function addGameSession(
   channel: Channel,
   configuration: ChannelOptions,
-  contractPromise?: Promise<{
-    instance: ContractInstance;
-    address: EncodedData<'ct'>;
-  }>,
 ) {
-  const { instance, address } = contractPromise != null && (await contractPromise);
+  const { instance, address } = await ContractService.deployContract(
+    configuration.initiatorId,
+    channel,
+    {
+      player0: configuration.responderId,
+      player1: configuration.initiatorId,
+      reactionTime: 60000,
+    },
+  );
   gameSessionPool.set(configuration.initiatorId, {
     channel,
     contractState: {
@@ -42,13 +48,19 @@ export async function addGameSession(
   );
 }
 
-export function removeGameSession(botId: EncodedData<'ak'>) {
-  gameSessionPool.delete(botId);
+/**
+ * Removes game session from the pool after the channel is closed
+ */
+export function removeGameSession(onAccount: EncodedData<'ak'>) {
+  gameSessionPool.delete(onAccount);
   logger.info(
-    `Removed from pool game session with bot ID: ${botId}. Total sessions: ${gameSessionPool.size}`,
+    `Removed from pool game session with bot ID: ${onAccount}. Total sessions: ${gameSessionPool.size}`,
   );
 }
 
+/**
+ * Returns funds to the faucet and removes the game session from the pool
+ */
 export async function handleChannelClose(onAccount: EncodedData<'ak'>) {
   try {
     await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
@@ -62,6 +74,11 @@ export async function handleChannelClose(onAccount: EncodedData<'ak'>) {
   sdk.removeAccount(onAccount);
 }
 
+/**
+ * Triggered when channel operation is `OffChainCallContract`.
+ * Decodes the call data provided by the opponent and generates
+ * the next calldata to be sent to the opponent.
+ */
 export async function handleOpponentCallUpdate(
   update: Update,
   gameSession: GameSession,
@@ -73,6 +90,9 @@ export async function handleOpponentCallUpdate(
   gameSession.contractState.callDataToSend = nextCallDataToSend;
 }
 
+/**
+ * Calls contract if game session has available data to send
+ */
 async function respondToContractCall(gameSession: GameSession) {
   if (gameSession.contractState.callDataToSend == null) return;
   await gameSession.channel.callContract(
@@ -89,6 +109,15 @@ async function respondToContractCall(gameSession: GameSession) {
   gameSession.contractState.callDataToSend = null;
 }
 
+/**
+ * Registers channel events.
+ * If the channel is closed,
+ *  funds are returned to the faucet and the game session is removed from the pool.
+ * If the channel is opened,
+ *  bot deploys contract to the channel and the game session is added to the pool.
+ * If the channel is updated,
+ *  bot decodes the call data provided by the opponent and responds.
+ */
 export async function registerEvents(
   channelInstance: Channel,
   configuration: ChannelOptions,
@@ -100,16 +129,7 @@ export async function registerEvents(
 
     if (status === 'open') {
       if (!gameSessionPool.has(configuration.initiatorId)) {
-        const contractPromise = ContractService.deployContract(
-          configuration.initiatorId,
-          channelInstance,
-          {
-            player0: configuration.responderId,
-            player1: configuration.initiatorId,
-            reactionTime: 3000,
-          },
-        );
-        void addGameSession(channelInstance, configuration, contractPromise);
+        void addGameSession(channelInstance, configuration);
       }
     }
   });
@@ -124,6 +144,10 @@ export async function registerEvents(
   });
 }
 
+/**
+ * Handles client request to create a new game session.
+ * @returns mutual channel configuration
+ */
 export async function generateGameSession(
   playerAddress: EncodedData<'ak'>,
   playerNodeHost: string,

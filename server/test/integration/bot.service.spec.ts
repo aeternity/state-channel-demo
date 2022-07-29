@@ -110,6 +110,8 @@ describe('botService', () => {
 
   it('bot makes a random pick, player reveals and the game is complete', async () => {
     const playerSdk = await getSdk();
+
+    // The responder needs a contract instance in order to call contract
     const contract = (await playerSdk.getContractInstance({
       source: contractSource,
     })) as RockPaperScissorsContract;
@@ -122,6 +124,9 @@ describe('botService', () => {
       3001,
     );
 
+    // we need the contract creation round in order
+    // to fetch the contract address deployed by
+    // the initiator
     let contractCreationRound = '-1';
 
     const playerChannel = await Channel.initialize({
@@ -143,14 +148,20 @@ describe('botService', () => {
       },
     });
 
+    // wait for channel to be opened
     await waitForChannelReady(playerChannel);
     expect(playerChannel.status()).toBe('open');
+
+    // wait for contract to be deployed
     await timeout(4000);
+
+    // build contract address
     const contractAddress = buildContractId(
       responderConfig.initiatorId,
       parseInt(contractCreationRound, 10),
     );
 
+    // arguments for contract's `provide_hash` method
     const hashKey = 'Aeternity';
     const pick = Moves.paper;
     const dummyHash = createHash(pick, hashKey);
@@ -171,9 +182,9 @@ describe('botService', () => {
       async (tx) => playerSdk.signTransaction(tx),
     );
 
+    // wait for the next round
     await pollForRound(playerChannel.round() + 1, playerChannel);
 
-    const nextRound = playerChannel.round() + 1;
     await playerChannel.callContract(
       {
         amount: 0,
@@ -187,7 +198,7 @@ describe('botService', () => {
       async (tx) => playerSdk.signTransaction(tx),
     );
 
-    await pollForRound(nextRound, playerChannel);
+    await pollForRound(playerChannel.round() + 1, playerChannel);
 
     const result = await playerChannel.getContractCall({
       caller: responderConfig.responderId,

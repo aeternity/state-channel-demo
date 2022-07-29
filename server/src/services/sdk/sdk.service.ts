@@ -37,6 +37,10 @@ export const genesisFund = async (address: EncodedData<'ak'>) => {
   if (sdk.accounts[FAUCET_PUBLIC_ADDRESS]) sdk.removeAccount(FAUCET_PUBLIC_ADDRESS);
 };
 
+/**
+ * Funds account with 5AE.
+ * Sometimes, the faucet may throw an error, so we retry the operation.
+ */
 export async function fundThroughFaucet(
   account: EncodedData<'ak'>,
   options: {
@@ -69,6 +73,9 @@ export async function fundThroughFaucet(
   }
 }
 
+/**
+ * Funds account based on which network is used.
+ */
 export async function fundAccount(account: EncodedData<'ak'>) {
   if (!IS_USING_LOCAL_NODE) {
     try {
@@ -89,6 +96,9 @@ export async function fundAccount(account: EncodedData<'ak'>) {
   }
 }
 
+/**
+ * Wrapper function to decode callData.
+ */
 export async function decodeCallData(
   calldata: EncodedData<'cb'>,
   bytecode: string,

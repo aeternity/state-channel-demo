@@ -9,7 +9,10 @@ import botService from './index';
 
 jest.setTimeout(10000);
 
-ContractService.deployContract = jest.fn();
+ContractService.deployContract = jest.fn().mockResolvedValue({
+  instance: {} as any,
+  address: 'ct_test',
+});
 
 interface ChannelMock {
   listeners: {
@@ -52,7 +55,9 @@ describe('botService', () => {
 
     await botService.addGameSession(channel, channelConfig);
 
-    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(true);
+    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(
+      true,
+    );
   });
 
   it('should remove a channel from botPool', async () => {
@@ -63,9 +68,13 @@ describe('botService', () => {
     });
 
     await botService.addGameSession(channel, channelConfig);
-    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(true);
+    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(
+      true,
+    );
     botService.removeGameSession(channelConfig.initiatorId);
-    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(false);
+    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(
+      false,
+    );
   });
 
   it('registers events on channel', async () => {
@@ -74,7 +83,10 @@ describe('botService', () => {
     const channelMock: ChannelMock = channel as unknown as ChannelMock;
     expect(channelMock.listeners.statusChanged).toBeDefined();
     channelMock.listeners.statusChanged('open');
-    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(true);
+    await timeout(100);
+    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(
+      true,
+    );
     channelMock.listeners.statusChanged('closed');
     await timeout(500);
     const channelRemoved = !botService.gameSessionPool.has(

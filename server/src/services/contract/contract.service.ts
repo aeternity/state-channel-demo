@@ -20,12 +20,19 @@ export async function getCompiledContract(onAccount: EncodedData<'ak'>) {
   return contract;
 }
 
+/**
+ * Makes a random pick and returns calldata for `player1_move` method
+ */
 export function getRandomMoveCallData(contract: ContractInstance) {
   const randomMove = Math.floor(Math.random() * 3);
   const move = Object.values(Moves)[randomMove];
   return contract.calldata.encode(CONTRACT_NAME, Methods.player1_move, [move]);
 }
 
+/**
+ * deploys the contract on channel and returns the instance and its address
+ * @param config - parameters used in contract's `init` method {@link 'https://github.com/aeternity/state-channel-demo/blob/develop/contract/contracts/RockPaperScissors.aes#L29'}
+ */
 export async function deployContract(
   deployerAddress: EncodedData<'ak'>,
   channel: Channel,
@@ -59,6 +66,9 @@ export async function deployContract(
   };
 }
 
+/**
+ * extracts latest callData and generates returns next callData to be sent
+ */
 export async function getNextCallData(
   update: Update,
   contract: ContractInstance,
