@@ -1,6 +1,6 @@
 import { Channel } from '@aeternity/aepp-sdk';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import logger from '../../logger';
 import { decodeCallData, sdk, Update } from '../sdk';
@@ -11,7 +11,7 @@ import {
   Moves,
 } from './contract.constants';
 
-export async function getCompiledContract(onAccount: EncodedData<'ak'>) {
+export async function getCompiledContract(onAccount: Encoded.AccountAddress) {
   const contract = await sdk.getContractInstance({
     source: contractSource,
     onAccount,
@@ -34,11 +34,11 @@ export function getRandomMoveCallData(contract: ContractInstance) {
  * @param config - parameters used in contract's `init` method {@link 'https://github.com/aeternity/state-channel-demo/blob/develop/contract/contracts/RockPaperScissors.aes#L29'}
  */
 export async function deployContract(
-  deployerAddress: EncodedData<'ak'>,
+  deployerAddress: Encoded.AccountAddress,
   channel: Channel,
   config: {
-    player0: EncodedData<'ak'>;
-    player1: EncodedData<'ak'>;
+    player0: Encoded.AccountAddress;
+    player1: Encoded.AccountAddress;
     reactionTime: number;
     debugTimestamp?: number;
   },
@@ -51,7 +51,7 @@ export async function deployContract(
       code: contract.bytecode,
       callData: contract.calldata.encode(CONTRACT_NAME, Methods.init, [
         ...Object.values(config),
-      ]) as string,
+      ]) as Encoded.ContractBytearray,
     },
     async (tx) => sdk.signTransaction(tx, {
       onAccount: deployerAddress,
@@ -62,7 +62,7 @@ export async function deployContract(
 
   return { instance: contract, address: res.address } as {
     instance: ContractInstance;
-    address: EncodedData<'ct'>;
+    address: Encoded.ContractAddress;
   };
 }
 

@@ -1,6 +1,6 @@
 import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import logger from '../../logger';
 import {
@@ -51,7 +51,7 @@ export async function addGameSession(
 /**
  * Removes game session from the pool after the channel is closed
  */
-export function removeGameSession(onAccount: EncodedData<'ak'>) {
+export function removeGameSession(onAccount: Encoded.AccountAddress) {
   gameSessionPool.delete(onAccount);
   logger.info(
     `Removed from pool game session with bot ID: ${onAccount}. Total sessions: ${gameSessionPool.size}`,
@@ -61,7 +61,7 @@ export function removeGameSession(onAccount: EncodedData<'ak'>) {
 /**
  * Returns funds to the faucet and removes the game session from the pool
  */
-export async function handleChannelClose(onAccount: EncodedData<'ak'>) {
+export async function handleChannelClose(onAccount: Encoded.AccountAddress) {
   try {
     await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
       onAccount,
@@ -102,7 +102,7 @@ async function respondToContractCall(gameSession: GameSession) {
       abiVersion: CONTRACT_CONFIGURATION.abiVersion,
       callData: gameSession.contractState.callDataToSend,
     },
-    async (tx: EncodedData<'tx'>) => sdk.signTransaction(tx, {
+    async (tx: Encoded.Transaction) => sdk.signTransaction(tx, {
       onAccount: gameSession.participants.initiatorId,
     }),
   );
@@ -149,7 +149,7 @@ export async function registerEvents(
  * @returns mutual channel configuration
  */
 export async function generateGameSession(
-  playerAddress: EncodedData<'ak'>,
+  playerAddress: Encoded.AccountAddress,
   playerNodeHost: string,
   playerNodePort: number,
 ) {
@@ -178,7 +178,7 @@ export async function generateGameSession(
     // @ts-ignore
     sign: (
       _tag: string,
-      tx: EncodedData<'tx'>,
+      tx: Encoded.Transaction,
       options: {
         updates: Update[];
       },

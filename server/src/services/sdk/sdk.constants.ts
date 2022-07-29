@@ -1,5 +1,5 @@
 import { MemoryAccount } from '@aeternity/aepp-sdk';
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import env from '../../env';
 
 const ENVIRONMENT = process.env.NODE_ENV as keyof typeof env;
@@ -10,10 +10,8 @@ export const NETWORK_ID = env[ENVIRONMENT]?.NETWORK_ID ?? process.env.NETWORK_ID
 export const IGNORE_NODE_VERSION = env[ENVIRONMENT]?.IGNORE_VERSION === 'true'
   ?? process.env.IGNORE_VERSION === 'true';
 export const FAUCET_PUBLIC_ADDRESS = env[ENVIRONMENT]?.FAUCET_PUBLIC_ADDRESS
-  ?? (process.env.FAUCET_PUBLIC_ADDRESS as EncodedData<'ak'>);
-export const IS_USING_LOCAL_NODE = !NODE_URL?.includes(
-  'testnet.aeternity.io',
-);
+  ?? (process.env.FAUCET_PUBLIC_ADDRESS as Encoded.AccountAddress);
+export const IS_USING_LOCAL_NODE = !NODE_URL?.includes('testnet.aeternity.io');
 // ! LOCAL NODE USAGE ONLY
 const FAUCET_SECRET_KEY = (ENVIRONMENT === 'development' && env[ENVIRONMENT]?.FAUCET_SECRET_KEY)
   || process.env.FAUCET_SECRET_KEY;

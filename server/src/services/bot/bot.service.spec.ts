@@ -1,6 +1,6 @@
 import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import { mockChannel, timeout } from '../../../test';
 import { ContractService } from '../contract';
@@ -33,8 +33,8 @@ describe('botService', () => {
     lockPeriod: 1,
     debug: false,
     role: 'initiator',
-    initiatorId: 'ak_initiator' as EncodedData<'ak'>,
-    responderId: 'ak_responder' as EncodedData<'ak'>,
+    initiatorId: 'ak_initiator' as Encoded.AccountAddress,
+    responderId: 'ak_responder' as Encoded.AccountAddress,
     sign: () => Promise.resolve('tx_txdata'),
   };
 

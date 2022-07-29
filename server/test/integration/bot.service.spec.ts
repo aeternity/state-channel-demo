@@ -4,7 +4,7 @@ import {
   sha256hash,
   unpackTx,
 } from '@aeternity/aepp-sdk';
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import BigNumber from 'bignumber.js';
 import botService from '../../src/services/bot';
@@ -46,7 +46,7 @@ describe('botService', () => {
     const playerChannel = await Channel.initialize({
       ...responderConfig,
       role: 'responder',
-      sign: (_tag: string, tx: EncodedData<'tx'>, options) => {
+      sign: (_tag: string, tx: Encoded.Transaction, options) => {
         // @ts-expect-error
         if (options?.updates[0]?.op === 'OffChainNewContract') {
           // @ts-expect-error
@@ -89,7 +89,7 @@ describe('botService', () => {
     const playerChannel = await Channel.initialize({
       ...responderConfig,
       role: 'responder',
-      sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
+      sign: (_tag: string, tx: Encoded.Transaction) => playerSdk.signTransaction(tx),
     });
     await waitForChannelReady(playerChannel);
     await timeout(5000);
@@ -135,7 +135,7 @@ describe('botService', () => {
       // @ts-expect-error
       sign: async (
         _tag: string,
-        tx: EncodedData<'tx'>,
+        tx: Encoded.Transaction,
         options: {
           updates: Update[];
         },
