@@ -170,9 +170,9 @@ async function makeSelection(selection: Selections) {
     flex-direction: row;
   }
   & > .button {
-    font-size: 60px;
+    font-size: 50px;
     font-family: 'Clash Display', sans-serif;
-    width: 270px;
+    width: 250px;
     border: none;
     background-color: transparent;
     @include for-tablet-portrait-up {
@@ -184,7 +184,7 @@ async function makeSelection(selection: Selections) {
     }
     @include for-desktop-up {
       font-size: 60px;
-      width: 270px;
+      width: 300px;
     }
   }
   & > .button.user-selecting {

@@ -25,18 +25,12 @@ const channelStore = useChannelStore();
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   padding: var(--padding);
   padding-bottom: 5px;
   height: 10%;
   @include for-phone-only {
     height: 15%;
   }
-}
-
-.center {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
 }
 </style>

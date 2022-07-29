@@ -17,6 +17,8 @@ defineProps<{
 </template>
 
 <style scoped lang="scss">
+@import '../mediaqueries.scss';
+
 .player-info {
   display: flex;
   flex-direction: column;
@@ -26,6 +28,9 @@ defineProps<{
   .name {
     font-size: 50px;
     font-weight: bold;
+    @include for-phone-only {
+      font-size: 34px;
+    }
   }
 
   .balance {
@@ -33,6 +38,9 @@ defineProps<{
     text-align: right;
     font-weight: 500;
     color: var(--pink);
+    @include for-phone-only {
+      font-size: 16px;
+    }
   }
 }
 </style>
