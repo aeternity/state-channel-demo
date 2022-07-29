@@ -4,9 +4,9 @@ import {
   MemoryAccount,
   generateKeyPair,
   Channel,
-  sha256hash,
 } from '@aeternity/aepp-sdk';
 import { setTimeout as awaitSetTimeout } from 'timers/promises';
+import Crypto from 'crypto';
 import { Moves } from '../src/services/contract';
 import {
   NETWORK_ID,
@@ -60,4 +60,6 @@ export async function pollForRound(desiredRound: number, channel: Channel) {
   }
 }
 
-export const createHash = (move: Moves, key: string) => sha256hash(key + move);
+export const createHash = async (move: Moves, key: string) => Crypto.createHash('sha256')
+  .update(key + move)
+  .digest('hex');

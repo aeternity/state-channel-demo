@@ -38,7 +38,7 @@ describe('ContractService', () => {
     it('should make a move when last called method was provide_hash', async () => {
       const hashKey = 'Aeternity';
       const pick = Moves.paper;
-      const dummyHash = createHash(pick, hashKey);
+      const dummyHash = await createHash(pick, hashKey);
 
       const callData = contract.calldata.encode(
         CONTRACT_NAME,

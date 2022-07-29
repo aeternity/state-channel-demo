@@ -161,7 +161,7 @@ describe('botService', () => {
     // arguments for contract's `provide_hash` method
     const hashKey = 'Aeternity';
     const pick = Moves.paper;
-    const dummyHash = createHash(pick, hashKey);
+    const dummyHash = await createHash(pick, hashKey);
 
     const callData = contract.calldata.encode(
       CONTRACT_NAME,
