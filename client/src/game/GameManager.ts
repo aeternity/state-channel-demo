@@ -1,6 +1,6 @@
 import { useChannelStore } from '../stores/channel';
 import { PopUpData } from '../stores/popup';
-import { sha256hash } from '@aeternity/aepp-sdk';
+import SHA from 'sha.js';
 
 export enum Selections {
   rock = 'rock',
@@ -33,9 +33,11 @@ export default class GameManager {
     else throw new Error('Selection was not accepted');
   }
 
-  hashSelection(selection: Selections): Buffer {
+  hashSelection(selection: Selections): string {
     this.hashKey = Math.random().toString(16).substring(2, 8);
-    return sha256hash(selection + this.hashKey);
+    return SHA('sha256')
+      .update(this.hashKey + selection)
+      .digest('hex');
   }
 
   getUserSelection(): Selections {

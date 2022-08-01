@@ -1,4 +1,4 @@
-import { EncodedData, sha256hash } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { describe, it, expect, vi } from 'vitest';
 import {
   getSdk,
@@ -10,6 +10,7 @@ import { GameChannel } from '../src/sdk/GameChannel';
 import { AeSdk } from '@aeternity/aepp-sdk';
 import contractSource from '@aeternity/rock-paper-scissors';
 import { waitForChannelReady } from './utils';
+import SHA from 'sha.js';
 
 describe('SDK', () => {
   it('creates and returns an SDK instance', async () => {
@@ -65,7 +66,11 @@ describe('SDK', () => {
     await new Promise((resolve) => setTimeout(resolve, 5000));
     expect(gameChannel.contract).toBeTruthy();
     await expect(
-      gameChannel.callContract('provide_hash', [sha256hash('test')])
+      gameChannel.callContract('provide_hash', [
+        SHA('sha256')
+          .update('aeternity' + 'rock')
+          .digest('hex'),
+      ])
     ).resolves.toHaveProperty('accepted');
   }, 8000);
 
@@ -91,12 +96,12 @@ describe('SDK', () => {
       await ae.addAccount(FAUCET_ACCOUNT, { select: true });
     }
     const balance_before = await client.getBalance(
-      client.selectedAddress as EncodedData<'ak'>
+      client.selectedAddress as Encoded.AccountAddress
     );
     expect(BigInt(balance_before)).toBeGreaterThan(0);
 
     const faucet_balance_before = await ae.getBalance(
-      ae.selectedAddress as EncodedData<'ak'>
+      ae.selectedAddress as Encoded.AccountAddress
     );
 
     await gameChannel.closeChannel();
@@ -104,10 +109,10 @@ describe('SDK', () => {
     expect(gameChannel.getStatus()).toBe('disconnected');
 
     const balance_after = await client.getBalance(
-      client.selectedAddress as EncodedData<'ak'>
+      client.selectedAddress as Encoded.AccountAddress
     );
     const faucet_balance_after = await ae.getBalance(
-      ae.selectedAddress as EncodedData<'ak'>
+      ae.selectedAddress as Encoded.AccountAddress
     );
     expect(balance_after).toBe('0');
     expect(BigInt(faucet_balance_after)).toBeGreaterThan(

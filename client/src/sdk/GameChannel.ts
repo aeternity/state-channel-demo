@@ -6,7 +6,7 @@ import {
 } from '@aeternity/aepp-sdk';
 import contractSource from '@aeternity/rock-paper-scissors';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { BigNumber } from 'bignumber.js';
 import { toRaw } from 'vue';
 import {
@@ -40,7 +40,7 @@ export class GameChannel {
     round?: number;
   };
   contract?: ContractInstance;
-  contractAddress?: EncodedData<'ct'>;
+  contractAddress?: Encoded.ContractAddress;
   autoSign = false;
 
   constructor(sdk: AeSdk) {
@@ -128,10 +128,10 @@ export class GameChannel {
 
   async signTx(
     tag: string,
-    tx: EncodedData<'tx'>,
+    tx: Encoded.Transaction,
     options?: any,
     popupData?: Partial<PopUpData>
-  ): Promise<EncodedData<'tx'>> {
+  ): Promise<Encoded.Transaction> {
     popupData = popupData ?? {};
     const update = options?.updates?.[0];
 
@@ -196,7 +196,7 @@ export class GameChannel {
     }
   }
 
-  async buildContract(tx: EncodedData<'tx'>, owner: EncodedData<'ak'>) {
+  async buildContract(tx: Encoded.Transaction, owner: Encoded.AccountAddress) {
     // @ts-expect-error ts-mismatch
     const contractCreationRound = unpackTx(tx).tx.round;
     this.contractAddress = encodeContractAddress(owner, contractCreationRound);

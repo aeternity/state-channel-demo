@@ -4,7 +4,7 @@ import {
   generateKeyPair,
   MemoryAccount,
 } from '@aeternity/aepp-sdk';
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 
 export const NODE_URL =
@@ -15,7 +15,7 @@ export const IS_USING_LOCAL_NODE = !import.meta.env.VITE_NODE_URL.includes(
   'testnet.aeternity.io'
 );
 const FAUCET_PUBLIC_ADDRESS = import.meta.env
-  .VITE_FAUCET_PUBLIC_ADDRESS as EncodedData<'ak'>;
+  .VITE_FAUCET_PUBLIC_ADDRESS as Encoded.AccountAddress;
 
 export async function getSdk() {
   const account = new MemoryAccount({ keypair: generateKeyPair() });
@@ -30,7 +30,7 @@ export async function getSdk() {
 
 export async function returnCoinsToFaucet(aeSdk: AeSdk) {
   const userBalance = await aeSdk.getBalance(
-    aeSdk.selectedAddress as EncodedData<'ak'>
+    aeSdk.selectedAddress as Encoded.AccountAddress
   );
   if (BigInt(userBalance) <= 0) return;
   try {
@@ -52,7 +52,7 @@ export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
 
 export async function verifyContractBytecode(
   aeSdk: AeSdk,
-  bytecode: EncodedData<'cb'>,
+  bytecode: Encoded.ContractBytearray,
   source = contractSource
 ) {
   let isEqual = false;
