@@ -17,24 +17,30 @@ export const IS_USING_LOCAL_NODE = !import.meta.env.VITE_NODE_URL.includes(
 const FAUCET_PUBLIC_ADDRESS = import.meta.env
   .VITE_FAUCET_PUBLIC_ADDRESS as EncodedData<'ak'>;
 
-export async function getSdk() {
+export let sdk: AeSdk;
+
+export async function getNewSdk() {
   const account = new MemoryAccount({ keypair: generateKeyPair() });
   const node = new Node(NODE_URL);
-  const aeSdk = new AeSdk({
+  const newSdk = new AeSdk({
     nodes: [{ name: 'testnet', instance: node }],
     compilerUrl: COMPILER_URL,
   });
-  await aeSdk.addAccount(account, { select: true });
-  return aeSdk;
+  await newSdk.addAccount(account, { select: true });
+  return newSdk;
 }
 
-export async function returnCoinsToFaucet(aeSdk: AeSdk) {
-  const userBalance = await aeSdk.getBalance(
-    aeSdk.selectedAddress as EncodedData<'ak'>
+export async function initSdk() {
+  sdk = await getNewSdk();
+}
+
+export async function returnCoinsToFaucet() {
+  const userBalance = await sdk.getBalance(
+    sdk.selectedAddress as EncodedData<'ak'>
   );
   if (BigInt(userBalance) <= 0) return;
   try {
-    await aeSdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS);
+    await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS);
   } catch (e) {
     console.error({ e }, 'failed to return funds to faucet');
   }
@@ -51,13 +57,12 @@ export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
   : null;
 
 export async function verifyContractBytecode(
-  aeSdk: AeSdk,
   bytecode: EncodedData<'cb'>,
   source = contractSource
 ) {
   let isEqual = false;
   try {
-    await aeSdk.compilerApi.validateByteCode({
+    await sdk.compilerApi.validateByteCode({
       bytecode,
       source,
       options: {},

@@ -1,23 +1,28 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
 import GameManager, { Selections } from '../src/game/GameManager';
 import { GameChannel } from '../src/sdk/GameChannel';
-import { getSdk } from '../src/sdk/sdkService';
+import { initSdk } from '../src/sdk/sdkService';
 import { waitForChannelReady } from './utils';
 
 describe('GameManager', async () => {
   let gameManager: GameManager;
-  const gameChannel = new GameChannel(await getSdk());
-  gameChannel.autoSign = true;
-  await gameChannel.initializeChannel();
-  createTestingPinia({
-    initialState: {
-      channel: {
-        channel: gameChannel,
+  let gameChannel: GameChannel;
+
+  beforeAll(async () => {
+    await initSdk();
+    gameChannel = new GameChannel();
+    gameChannel.autoSign = true;
+    await gameChannel.initializeChannel();
+    createTestingPinia({
+      initialState: {
+        channel: {
+          channel: gameChannel,
+        },
       },
-    },
+    });
+    await waitForChannelReady(gameChannel.getChannelWithoutProxy());
   });
-  await waitForChannelReady(gameChannel.getChannelWithoutProxy());
 
   it('creates game manager instance', async () => {
     gameManager = new GameManager();
