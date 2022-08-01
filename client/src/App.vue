@@ -59,6 +59,10 @@ onBeforeUnmount(async () => {
   flex-direction: column;
   height: 100vh;
   justify-content: space-between;
+  @include for-phone-only {
+    min-height: 100vh;
+    height: unset;
+  }
 }
 :root {
   --green: #42bd65;

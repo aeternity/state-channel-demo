@@ -9,8 +9,8 @@ const store = usePopUpStore();
   <div v-if="store.title" class="popup__wrapper">
     <div class="popup">
       <div class="title">{{ store.title }}</div>
-      <Tooltip v-if="store.tooltipText" :text="store.tooltipText" />
       <div class="text" v-if="store.text" data-testid="popup-text">
+        <Tooltip v-if="store.tooltipText" :text="store.tooltipText" />
         {{ store.text }}
       </div>
       <div class="buttons">
@@ -78,16 +78,17 @@ const store = usePopUpStore();
     align-items: center;
   }
   @include for-phone-only {
+    max-width: unset;
     width: 100%;
     margin: 0 10px;
     height: unset;
     padding: 15px;
     & > .title {
-      font-size: 44px;
+      font-size: 30px;
     }
 
     & > .text {
-      font-size: 24px;
+      font-size: 20px;
     }
     & > .buttons {
       button {

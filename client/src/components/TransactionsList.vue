@@ -119,7 +119,7 @@ const isMinimized = computed(() => !channelStore.channel?.isOpen);
         font-size: 28px;
         font-weight: 500;
         @include for-phone-only {
-          font-size: 22px;
+          font-size: 16px;
         }
       }
       .expand {
@@ -142,15 +142,18 @@ const isMinimized = computed(() => !channelStore.channel?.isOpen);
           cursor: not-allowed;
         }
         @include for-phone-only {
-          font-size: 22px;
+          span {
+            display: none;
+          }
         }
         .icon {
           width: 28px;
           height: 28px;
           margin-right: 15px;
           @include for-phone-only {
-            width: 22px;
-            height: 22px;
+            width: 16px;
+            height: 16px;
+            margin-right: 0px;
           }
         }
       }

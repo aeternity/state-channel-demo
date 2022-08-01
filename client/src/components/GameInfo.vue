@@ -10,17 +10,19 @@ defineProps<{
 <template>
   <div class="round-info">
     <span class="title">Game</span>
-    <span class="info" data-testid="info" v-if="stake">
-      <span class="stake"
-        >STAKE: {{ stake.dividedBy(1e18).toFormat(2) }} AE</span
-      >
+    <div class="info" data-testid="info" v-if="stake">
+      <span class="stake">
+        STAKE: {{ stake.dividedBy(1e18).toFormat(2) }} AE
+      </span>
       <span class="info-seperator" v-if="round"> / </span>
-      <span v-if="round">ROUND: {{ round }}</span></span
-    >
+      <span v-if="round">ROUND: {{ round }}</span>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@import '../mediaqueries.scss';
+
 .round-info {
   display: flex;
   flex-direction: column;
@@ -30,12 +32,19 @@ defineProps<{
   .title {
     font-size: 50px;
     font-weight: bold;
+    @include for-phone-only {
+      font-size: 34px;
+    }
   }
 
   .info {
     font-size: 30px;
     text-align: right;
     font-weight: 500;
+    @include for-phone-only {
+      font-size: 16px;
+      text-align: center;
+    }
   }
   .stake,
   .info-seperator {

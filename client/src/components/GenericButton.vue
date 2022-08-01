@@ -14,7 +14,7 @@ defineProps<{
 button {
   font-family: unset;
   font-size: 16px;
-  font-weight: 100;
+  font-weight: 400;
   border: none;
   user-select: none;
   cursor: pointer;
@@ -34,7 +34,7 @@ button {
     cursor: not-allowed;
   }
   @include for-phone-only {
-    font-size: 30px;
+    font-size: 24px;
   }
 }
 </style>

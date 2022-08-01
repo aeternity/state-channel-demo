@@ -17,16 +17,13 @@ defineProps<{
 @import '../mediaqueries.scss';
 
 .tooltip {
-  position: absolute;
-  right: 70px;
-  transform: translateY(-20px);
+  display: block;
+  position: relative;
+  margin-left: 5px;
+  float: right;
   img {
     width: 20px;
     height: 20px;
-  }
-  @include for-phone-only {
-    right: 20px;
-    transform: translateY(-30px);
   }
   .tooltip-text {
     visibility: hidden;
