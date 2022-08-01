@@ -7,13 +7,16 @@ import {
   initSdk,
   sdk,
 } from '../src/sdk/sdkService';
-import { createTestingPinia } from '@pinia/testing';
-import { GameChannel } from '../src/sdk/GameChannel';
+import { gameChannel, initGameChannel } from '../src/sdk/GameChannel';
 import contractSource from '@aeternity/rock-paper-scissors';
 import { waitForChannelReady } from './utils';
 
 describe('SDK', () => {
-  beforeEach(async () => await initSdk());
+  beforeEach(async () => {
+    await initSdk();
+    await initGameChannel();
+    await gameChannel.initializeChannel();
+  });
 
   it('creates and returns an SDK instance', async () => {
     expect(sdk).toBeTruthy();
@@ -22,47 +25,27 @@ describe('SDK', () => {
   });
 
   it('cannot call contract when channel is not initialized', async () => {
-    const gameChannel = new GameChannel();
     gameChannel.autoSign = true;
     await new Promise((resolve) => setTimeout(resolve, 3000));
-    await gameChannel.initializeChannel();
-    createTestingPinia({
-      initialState: {
-        channel: {
-          channel: gameChannel,
-        },
-      },
-    });
+
     await expect(gameChannel.callContract('init', [])).rejects.toThrow();
   });
   it('cannot call contract when contract is not deployed', async () => {
-    const gameChannel = new GameChannel();
     gameChannel.autoSign = true;
-    await gameChannel.initializeChannel();
-    createTestingPinia({
-      initialState: {
-        channel: {
-          channel: gameChannel,
-        },
-      },
-    });
-    await waitForChannelReady(gameChannel.getChannelWithoutProxy());
+
+    if (!gameChannel.channelInstance)
+      throw new Error('Channel instance is not initialized');
+    await waitForChannelReady(gameChannel.channelInstance);
     expect(gameChannel.contract).toBeFalsy();
     await expect(gameChannel.callContract('init', [])).rejects.toThrow();
   });
 
   it('can call contract after it is deployed', async () => {
-    const gameChannel = new GameChannel();
     gameChannel.autoSign = true;
-    await gameChannel.initializeChannel();
-    createTestingPinia({
-      initialState: {
-        channel: {
-          channel: gameChannel,
-        },
-      },
-    });
-    await waitForChannelReady(gameChannel.getChannelWithoutProxy());
+
+    if (!gameChannel.channelInstance)
+      throw new Error('Channel instance is not initialized');
+    await waitForChannelReady(gameChannel.channelInstance);
     expect(gameChannel.contract).toBeFalsy();
     await new Promise((resolve) => setTimeout(resolve, 5000));
     expect(gameChannel.contract).toBeTruthy();
@@ -72,17 +55,11 @@ describe('SDK', () => {
   }, 8000);
 
   it('creates game channel instance, initializes Channel and returns coins to faucet on channel closing', async () => {
-    const gameChannel = new GameChannel();
     gameChannel.autoSign = true;
-    await gameChannel.initializeChannel();
-    createTestingPinia({
-      initialState: {
-        channel: {
-          channel: gameChannel,
-        },
-      },
-    });
-    await waitForChannelReady(gameChannel.getChannelWithoutProxy());
+
+    if (!gameChannel.channelInstance)
+      throw new Error('Channel instance is not initialized');
+    await waitForChannelReady(gameChannel.channelInstance);
     const client = sdk;
     const ae = await getNewSdk();
 
@@ -172,7 +149,6 @@ describe('GameChannel', () => {
         url: '',
       } as unknown as Response);
 
-      const gameChannel = new GameChannel();
       await gameChannel.fetchChannelConfig();
       expect(fetchSpy).toHaveBeenCalledTimes(2);
     }, 10000);

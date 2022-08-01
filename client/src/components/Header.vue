@@ -1,21 +1,20 @@
 <script setup lang="ts">
-import { useChannelStore } from '../stores/channel';
 import PlayerInfo from './PlayerInfo.vue';
 import GameInfo from './GameInfo.vue';
-const channelStore = useChannelStore();
+import { gameChannel } from '../sdk/GameChannel';
 </script>
 
 <template>
   <div class="header">
-    <PlayerInfo name="You" :balance="channelStore.channel?.balances.user" />
+    <PlayerInfo name="You" :balance="gameChannel.balances.user" />
     <div class="center">
       <GameInfo
-        :stake="channelStore.channel?.game?.stake"
-        :round="channelStore.channel?.game?.round"
-        v-if="channelStore.channel?.isOpen"
+        :stake="gameChannel.game?.stake"
+        :round="gameChannel.game?.round"
+        v-if="gameChannel.isOpen"
       />
     </div>
-    <PlayerInfo name="Bot" :balance="channelStore.channel?.balances.bot" />
+    <PlayerInfo name="Bot" :balance="gameChannel.balances.bot" />
   </div>
 </template>
 

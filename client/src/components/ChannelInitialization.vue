@@ -1,26 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { gameChannel } from '../sdk/GameChannel';
 import { default as Button } from './GenericButton.vue';
 import LoadingAnimation from './LoadingAnimation.vue';
-import { useChannelStore } from '../stores/channel';
 
 const openChannelInitiated = ref(false);
-const channelStore = useChannelStore();
 const emit = defineEmits(['initializeChannel']);
 
 const title = computed(() =>
   !openChannelInitiated.value
     ? 'Start the game by open state channel'
-    : !channelStore.channel?.isFunded
+    : !gameChannel.isFunded
     ? 'Funding accounts...'
-    : !channelStore.channel?.isOpen
+    : !gameChannel.isOpen
     ? 'Setting ‘on-chain’ operations...'
     : 'Waiting for contract to be deployed...'
 );
 
 const errorMessage = computed(() =>
-  channelStore.channel?.error
-    ? `Error ${channelStore.channel?.error.status}: ${channelStore.channel?.error.statusText}, ${channelStore.channel?.error.message}`
+  gameChannel.error
+    ? `Error ${gameChannel.error.status}: ${gameChannel.error.statusText}, ${gameChannel.error.message}`
     : ''
 );
 
@@ -58,7 +57,7 @@ async function openStateChannel(): Promise<void> {
         text="Start game"
       />
     </div>
-    <LoadingAnimation v-else-if="!channelStore.channel?.error" />
+    <LoadingAnimation v-else-if="!gameChannel.error" />
     <p v-else>
       {{ errorMessage }}
     </p>

@@ -1,6 +1,6 @@
-import { useChannelStore } from '../stores/channel';
 import { PopUpData } from '../stores/popup';
 import { sha256hash } from '@aeternity/aepp-sdk';
+import { gameChannel } from '../sdk/GameChannel';
 
 export enum Selections {
   rock = 'rock',
@@ -18,13 +18,12 @@ export default class GameManager {
     if (selection === Selections.none) {
       throw new Error('Selection should not be none');
     }
-    const channelStore = useChannelStore();
     const popupData: Partial<PopUpData> = {
       title: Selections[selection].toUpperCase(),
       text: 'Confirm your selection',
     };
 
-    const result = await channelStore.channel?.callContract(
+    const result = await gameChannel.callContract(
       'provide_hash',
       [this.hashSelection(selection)],
       popupData

@@ -3,7 +3,6 @@ import contractSource from '@aeternity/rock-paper-scissors';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { BigNumber } from 'bignumber.js';
-import { toRaw } from 'vue';
 import {
   initSdk,
   returnCoinsToFaucet,
@@ -13,7 +12,16 @@ import {
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { PopUpData, usePopUpStore } from '../stores/popup';
 
-export class GameChannel {
+export let gameChannel: GameChannel;
+
+export function initGameChannel() {
+  if (!sdk) {
+    throw new Error('SDK is not initialized');
+  }
+  gameChannel = new GameChannel();
+}
+
+class GameChannel {
   channelConfig?: ChannelOptions;
   channelInstance?: Channel;
   isOpen = false;
@@ -37,13 +45,6 @@ export class GameChannel {
   contract?: ContractInstance;
   contractAddress?: EncodedData<'ct'>;
   autoSign = false;
-
-  getChannelWithoutProxy() {
-    if (!this.channelInstance) {
-      throw new Error('Channel is not initialized');
-    }
-    return toRaw(this.channelInstance);
-  }
 
   async fetchChannelConfig(): Promise<ChannelOptions> {
     if (!sdk) throw new Error('SDK is not set');
@@ -111,7 +112,7 @@ export class GameChannel {
   }
 
   getStatus() {
-    return this.getChannelWithoutProxy().status();
+    return this.channelInstance?.status();
   }
 
   async signTx(
@@ -169,7 +170,7 @@ export class GameChannel {
 
   private registerEvents() {
     if (this.channelInstance) {
-      this.getChannelWithoutProxy().on('statusChanged', (status) => {
+      this.channelInstance.on('statusChanged', (status) => {
         if (status === 'disconnected') {
           returnCoinsToFaucet();
         }
@@ -202,7 +203,7 @@ export class GameChannel {
     if (!this.contract || !this.contractAddress) {
       throw new Error('Contract is not set');
     }
-    const result = await this.getChannelWithoutProxy().callContract(
+    const result = await this.channelInstance.callContract(
       {
         amount: 0,
         callData: this.contract.calldata.encode(
@@ -223,7 +224,7 @@ export class GameChannel {
     if (!this.channelInstance || !this.channelConfig)
       throw new Error('Channel is not open');
     const { initiatorId, responderId } = this.channelConfig;
-    const balances = await this.getChannelWithoutProxy().balances([
+    const balances = await this.channelInstance.balances([
       initiatorId,
       responderId,
     ]);

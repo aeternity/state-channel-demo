@@ -1,9 +1,15 @@
+import { gameChannel } from './../src/sdk/GameChannel';
 import { render, fireEvent } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
 import ChannelInitialization from '../src/components/ChannelInitialization.vue';
 import { createTestingPinia } from '@pinia/testing';
+import { initGameChannel } from '../src/sdk/GameChannel';
+import { initSdk } from '../src/sdk/sdkService';
 
-describe('Open State Channel Button', () => {
+describe('Open State Channel Button', async () => {
+  await initSdk();
+  await initGameChannel();
+
   expect(ChannelInitialization).toBeTruthy();
   it('should hide button after clicking it and show loader', async () => {
     const channelComp = render(ChannelInitialization, {
@@ -22,25 +28,12 @@ describe('Open State Channel Button', () => {
   });
 
   it('shows error message on error', async () => {
-    const channelComp = render(ChannelInitialization, {
-      global: {
-        plugins: [
-          createTestingPinia({
-            initialState: {
-              channel: {
-                channel: {
-                  error: {
-                    status: 500,
-                    statusText: 'Internal Server Error',
-                    message: 'Error while fetching channel config',
-                  },
-                },
-              },
-            },
-          }),
-        ],
-      },
-    });
+    const channelComp = render(ChannelInitialization);
+    gameChannel.error = {
+      status: 500,
+      statusText: 'Internal Server Error',
+      message: 'Error while fetching channel config',
+    };
     const button = channelComp.getByText('Start game');
     await fireEvent.click(button);
     await new Promise((resolve) => setTimeout(resolve, 200));

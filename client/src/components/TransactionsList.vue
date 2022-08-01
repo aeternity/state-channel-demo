@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useChannelStore } from '../stores/channel';
 import { useTransactionsStore } from '../stores/transactions';
 import SingleTransaction from './SingleTransaction.vue';
+import { gameChannel } from '../sdk/GameChannel';
 
 const EXPAND_ICON = new URL('../assets/svg/expand.svg', import.meta.url).href;
 const MINIMISE_ICON = new URL('../assets/minimize.png', import.meta.url).href;
 
-const channelStore = useChannelStore();
 const transactionStore = useTransactionsStore();
 const { userTransactions, botTransactions } = storeToRefs(transactionStore);
 
 const isFullscreen = ref(false);
-const isMinimized = computed(() => !channelStore.channel?.isOpen);
+const isMinimized = computed(() => !gameChannel.isOpen);
 </script>
 
 <template>
@@ -48,7 +47,7 @@ const isMinimized = computed(() => !channelStore.channel?.isOpen);
         <button
           class="expand"
           aria-label="expand_button"
-          :disabled="!channelStore.channel?.isOpen"
+          :disabled="!gameChannel.isOpen"
           @click="isFullscreen = !isFullscreen"
         >
           <img
