@@ -1,6 +1,6 @@
 import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import { mockChannel, timeout } from '../../../test';
 import { ContractService } from '../contract';
@@ -9,7 +9,10 @@ import botService from './index';
 
 jest.setTimeout(10000);
 
-ContractService.deployContract = jest.fn();
+ContractService.deployContract = jest.fn().mockResolvedValue({
+  instance: {} as any,
+  address: 'ct_test',
+});
 
 interface ChannelMock {
   listeners: {
@@ -30,8 +33,8 @@ describe('botService', () => {
     lockPeriod: 1,
     debug: false,
     role: 'initiator',
-    initiatorId: 'ak_initiator' as EncodedData<'ak'>,
-    responderId: 'ak_responder' as EncodedData<'ak'>,
+    initiatorId: 'ak_initiator' as Encoded.AccountAddress,
+    responderId: 'ak_responder' as Encoded.AccountAddress,
     sign: () => Promise.resolve('tx_txdata'),
   };
 
@@ -52,7 +55,9 @@ describe('botService', () => {
 
     await botService.addGameSession(channel, channelConfig);
 
-    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(true);
+    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(
+      true,
+    );
   });
 
   it('should remove a channel from botPool', async () => {
@@ -63,9 +68,13 @@ describe('botService', () => {
     });
 
     await botService.addGameSession(channel, channelConfig);
-    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(true);
+    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(
+      true,
+    );
     botService.removeGameSession(channelConfig.initiatorId);
-    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(false);
+    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(
+      false,
+    );
   });
 
   it('registers events on channel', async () => {
@@ -74,7 +83,10 @@ describe('botService', () => {
     const channelMock: ChannelMock = channel as unknown as ChannelMock;
     expect(channelMock.listeners.statusChanged).toBeDefined();
     channelMock.listeners.statusChanged('open');
-    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(true);
+    await timeout(100);
+    expect(botService.gameSessionPool.has(channelConfig.initiatorId)).toBe(
+      true,
+    );
     channelMock.listeners.statusChanged('closed');
     await timeout(500);
     const channelRemoved = !botService.gameSessionPool.has(

@@ -1,4 +1,4 @@
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { AeSdk, Node } from '@aeternity/aepp-sdk';
 import axios, { AxiosError } from 'axios';
 import BigNumber from 'bignumber.js';
@@ -29,7 +29,7 @@ export const sdk = new AeSdk({
  * ! LOCAL NODE USAGE ONLY
  * a helper function to fund account
  */
-export const genesisFund = async (address: EncodedData<'ak'>) => {
+export const genesisFund = async (address: Encoded.AccountAddress) => {
   if (!IS_USING_LOCAL_NODE) throw new Error('genesis fund is only for local node usage');
   await sdk.addAccount(FAUCET_ACCOUNT, { select: true });
   await sdk.awaitHeight(2);
@@ -37,8 +37,12 @@ export const genesisFund = async (address: EncodedData<'ak'>) => {
   if (sdk.accounts[FAUCET_PUBLIC_ADDRESS]) sdk.removeAccount(FAUCET_PUBLIC_ADDRESS);
 };
 
+/**
+ * Funds account with 5AE.
+ * Sometimes, the faucet may throw an error, so we retry the operation.
+ */
 export async function fundThroughFaucet(
-  account: EncodedData<'ak'>,
+  account: Encoded.AccountAddress,
   options: {
     maxRetries?: number;
   } = {
@@ -69,7 +73,10 @@ export async function fundThroughFaucet(
   }
 }
 
-export async function fundAccount(account: EncodedData<'ak'>) {
+/**
+ * Funds account based on which network is used.
+ */
+export async function fundAccount(account: Encoded.AccountAddress) {
   if (!IS_USING_LOCAL_NODE) {
     try {
       await fundThroughFaucet(account, {
@@ -89,8 +96,12 @@ export async function fundAccount(account: EncodedData<'ak'>) {
   }
 }
 
+/**
+ * @category sdk-wrapper
+ * Wrapper function to decode callData.
+ */
 export async function decodeCallData(
-  calldata: EncodedData<'cb'>,
+  calldata: Encoded.ContractBytearray,
   bytecode: string,
 ) {
   return sdk.compilerApi.decodeCalldataBytecode({

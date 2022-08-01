@@ -6,6 +6,8 @@ import {
   Channel,
 } from '@aeternity/aepp-sdk';
 import { setTimeout as awaitSetTimeout } from 'timers/promises';
+import Crypto from 'crypto';
+import { Moves } from '../src/services/contract';
 import {
   NETWORK_ID,
   COMPILER_URL,
@@ -37,7 +39,10 @@ export const getSdk = async () => {
   return sdk;
 };
 
-export async function waitForChannelReady(channel: Channel, statuses = ['open']): Promise<void> {
+export async function waitForChannelReady(
+  channel: Channel,
+  statuses = ['open'],
+): Promise<void> {
   return new Promise((resolve) => {
     channel.on('statusChanged', (newStatus: string) => {
       if (statuses.includes(newStatus)) {
@@ -54,3 +59,7 @@ export async function pollForRound(desiredRound: number, channel: Channel) {
     currentRound = channel.round();
   }
 }
+
+export const createHash = async (move: Moves, key: string) => Crypto.createHash('sha256')
+  .update(key + move)
+  .digest('hex');

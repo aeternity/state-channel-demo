@@ -1,10 +1,5 @@
-import {
-  buildContractId,
-  Channel,
-  sha256hash,
-  unpackTx,
-} from '@aeternity/aepp-sdk';
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { buildContractId, Channel, unpackTx } from '@aeternity/aepp-sdk';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import BigNumber from 'bignumber.js';
 import botService from '../../src/services/bot';
@@ -20,10 +15,12 @@ import {
 import { Update } from '../../src/services/sdk';
 import { FAUCET_PUBLIC_ADDRESS } from '../../src/services/sdk/sdk.constants';
 import {
-  getSdk, pollForRound, timeout, waitForChannelReady,
+  createHash,
+  getSdk,
+  pollForRound,
+  timeout,
+  waitForChannelReady,
 } from '../utils';
-
-const createHash = (move: Moves, key: string) => sha256hash(key + move);
 
 describe('botService', () => {
   jest.setTimeout(30000);
@@ -46,7 +43,7 @@ describe('botService', () => {
     const playerChannel = await Channel.initialize({
       ...responderConfig,
       role: 'responder',
-      sign: (_tag: string, tx: EncodedData<'tx'>, options) => {
+      sign: (_tag: string, tx: Encoded.Transaction, options) => {
         // @ts-expect-error
         if (options?.updates[0]?.op === 'OffChainNewContract') {
           // @ts-expect-error
@@ -89,7 +86,7 @@ describe('botService', () => {
     const playerChannel = await Channel.initialize({
       ...responderConfig,
       role: 'responder',
-      sign: (_tag: string, tx: EncodedData<'tx'>) => playerSdk.signTransaction(tx),
+      sign: (_tag: string, tx: Encoded.Transaction) => playerSdk.signTransaction(tx),
     });
     await waitForChannelReady(playerChannel);
     await timeout(5000);
@@ -110,6 +107,8 @@ describe('botService', () => {
 
   it('bot makes a random pick, player reveals and the game is complete', async () => {
     const playerSdk = await getSdk();
+
+    // The responder needs a contract instance in order to call contract
     const contract = (await playerSdk.getContractInstance({
       source: contractSource,
     })) as RockPaperScissorsContract;
@@ -122,6 +121,9 @@ describe('botService', () => {
       3001,
     );
 
+    // we need the contract creation round in order
+    // to fetch the contract address deployed by
+    // the initiator
     let contractCreationRound = '-1';
 
     const playerChannel = await Channel.initialize({
@@ -130,7 +132,7 @@ describe('botService', () => {
       // @ts-expect-error
       sign: async (
         _tag: string,
-        tx: EncodedData<'tx'>,
+        tx: Encoded.Transaction,
         options: {
           updates: Update[];
         },
@@ -143,17 +145,23 @@ describe('botService', () => {
       },
     });
 
+    // wait for channel to be opened
     await waitForChannelReady(playerChannel);
     expect(playerChannel.status()).toBe('open');
+
+    // wait for contract to be deployed
     await timeout(4000);
+
+    // build contract address
     const contractAddress = buildContractId(
       responderConfig.initiatorId,
       parseInt(contractCreationRound, 10),
     );
 
+    // arguments for contract's `provide_hash` method
     const hashKey = 'Aeternity';
     const pick = Moves.paper;
-    const dummyHash = createHash(pick, hashKey);
+    const dummyHash = await createHash(pick, hashKey);
 
     const callData = contract.calldata.encode(
       CONTRACT_NAME,
@@ -171,8 +179,8 @@ describe('botService', () => {
       async (tx) => playerSdk.signTransaction(tx),
     );
 
+    // wait for the next round
     await pollForRound(playerChannel.round() + 1, playerChannel);
-
     const nextRound = playerChannel.round() + 1;
     await playerChannel.callContract(
       {

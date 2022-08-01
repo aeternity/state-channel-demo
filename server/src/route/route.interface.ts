@@ -1,7 +1,7 @@
-import { EncodedData } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 
 export interface ResponderBaseChannelConfig {
-  address: EncodedData<'ak'>;
+  address: Encoded.AccountAddress;
   port: number;
   host: string;
 }
