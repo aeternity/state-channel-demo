@@ -6,11 +6,10 @@ import RockPaperScissors from './components/RockPaperScissors.vue';
 import PopUp from './components/PopUp.vue';
 import { useChannelStore } from './stores/channel';
 import { useGameStore } from './stores/game';
-import { onBeforeUnmount, onMounted, toRaw } from 'vue';
-import { getSdk, returnCoinsToFaucet } from './sdk/sdkService';
+import { onBeforeUnmount, onMounted } from 'vue';
+import { initSdk, returnCoinsToFaucet, sdk } from './sdk/sdkService';
 import { GameChannel } from './sdk/GameChannel';
 import GameManager from './game/GameManager';
-import { AeSdk } from '@aeternity/aepp-sdk';
 
 const channelStore = useChannelStore();
 const gameStore = useGameStore();
@@ -23,13 +22,14 @@ async function initChannel() {
 }
 
 onMounted(async () => {
-  channelStore.channel = new GameChannel(await getSdk());
+  await initSdk();
+  channelStore.channel = new GameChannel();
   gameStore.gameManager = new GameManager();
 });
 
 onBeforeUnmount(async () => {
-  if (channelStore.channel?.sdk) {
-    await returnCoinsToFaucet(toRaw(channelStore.channel.sdk) as AeSdk);
+  if (sdk) {
+    await returnCoinsToFaucet();
   }
 });
 </script>

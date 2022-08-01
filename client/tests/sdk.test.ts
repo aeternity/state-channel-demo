@@ -1,27 +1,29 @@
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  getSdk,
+  getNewSdk,
   FAUCET_ACCOUNT,
   verifyContractBytecode,
+  initSdk,
+  sdk,
 } from '../src/sdk/sdkService';
 import { createTestingPinia } from '@pinia/testing';
 import { GameChannel } from '../src/sdk/GameChannel';
-import { AeSdk } from '@aeternity/aepp-sdk';
 import contractSource from '@aeternity/rock-paper-scissors';
 import { waitForChannelReady } from './utils';
 import SHA from 'sha.js';
 
 describe('SDK', () => {
+  beforeEach(async () => await initSdk());
+
   it('creates and returns an SDK instance', async () => {
-    const sdk = await getSdk();
     expect(sdk).toBeTruthy();
     expect(Object.keys(sdk.accounts).length).toBe(1);
     expect(sdk.selectedAddress).toBeTruthy();
   });
 
   it('cannot call contract when channel is not initialized', async () => {
-    const gameChannel = new GameChannel(await getSdk());
+    const gameChannel = new GameChannel();
     gameChannel.autoSign = true;
     await new Promise((resolve) => setTimeout(resolve, 3000));
     await gameChannel.initializeChannel();
@@ -35,7 +37,7 @@ describe('SDK', () => {
     await expect(gameChannel.callContract('init', [])).rejects.toThrow();
   });
   it('cannot call contract when contract is not deployed', async () => {
-    const gameChannel = new GameChannel(await getSdk());
+    const gameChannel = new GameChannel();
     gameChannel.autoSign = true;
     await gameChannel.initializeChannel();
     createTestingPinia({
@@ -51,7 +53,7 @@ describe('SDK', () => {
   });
 
   it('can call contract after it is deployed', async () => {
-    const gameChannel = new GameChannel(await getSdk());
+    const gameChannel = new GameChannel();
     gameChannel.autoSign = true;
     await gameChannel.initializeChannel();
     createTestingPinia({
@@ -75,7 +77,7 @@ describe('SDK', () => {
   }, 8000);
 
   it('creates game channel instance, initializes Channel and returns coins to faucet on channel closing', async () => {
-    const gameChannel = new GameChannel(await getSdk());
+    const gameChannel = new GameChannel();
     gameChannel.autoSign = true;
     await gameChannel.initializeChannel();
     createTestingPinia({
@@ -86,8 +88,8 @@ describe('SDK', () => {
       },
     });
     await waitForChannelReady(gameChannel.getChannelWithoutProxy());
-    const client = gameChannel.sdk as AeSdk;
-    const ae = await getSdk();
+    const client = sdk;
+    const ae = await getNewSdk();
 
     expect(client?.selectedAddress).toBeTruthy();
     expect(gameChannel.getStatus()).toBe('open');
@@ -131,7 +133,6 @@ describe('SDK', () => {
         false => ()
     `;
     it('returns true if proposed bytecode is correct', async () => {
-      const sdk = await getSdk();
       const contract = await sdk.getContractInstance({
         source: contractSource,
       });
@@ -139,12 +140,11 @@ describe('SDK', () => {
       if (!contract.bytecode)
         throw new Error('Contract bytecode is not defined');
       await expect(
-        verifyContractBytecode(sdk, contract.bytecode, contractSource)
+        verifyContractBytecode(contract.bytecode, contractSource)
       ).resolves.toBeTruthy();
     });
 
     it('returns false if proposed bytecode is wrong', async () => {
-      const sdk = await getSdk();
       const contract = await sdk.getContractInstance({
         source: contractSource,
       });
@@ -152,7 +152,7 @@ describe('SDK', () => {
       if (!contract.bytecode)
         throw new Error('Contract bytecode is not defined');
       expect(
-        verifyContractBytecode(sdk, contract.bytecode, wrongSource)
+        verifyContractBytecode(contract.bytecode, wrongSource)
       ).resolves.toBeFalsy();
     });
   });
@@ -177,9 +177,7 @@ describe('GameChannel', () => {
         url: '',
       } as unknown as Response);
 
-      const sdk = await getSdk();
-
-      const gameChannel = new GameChannel(sdk);
+      const gameChannel = new GameChannel();
       await gameChannel.fetchChannelConfig();
       expect(fetchSpy).toHaveBeenCalledTimes(2);
     }, 10000);
