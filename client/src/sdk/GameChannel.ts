@@ -5,6 +5,7 @@ import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { BigNumber } from 'bignumber.js';
 import { toRaw } from 'vue';
 import {
+  decodeCallData,
   initSdk,
   returnCoinsToFaucet,
   sdk,
@@ -12,6 +13,28 @@ import {
 } from './sdkService';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { PopUpData, usePopUpStore } from '../stores/popup';
+import { useGameStore } from '../stores/game';
+import { Selections } from '../game/GameManager';
+
+interface Update {
+  call_data: Encoded.ContractBytearray;
+  contract_id: Encoded.ContractAddress;
+  op: 'OffChainCallContract' | 'OffChainNewContract';
+  code?: Encoded.ContractBytearray;
+  owner?: Encoded.AccountAddress;
+  caller_id?: Encoded.AccountAddress;
+}
+
+enum Methods {
+  init = 'init',
+  provide_hash = 'provide_hash',
+  get_state = 'get_state',
+  player1_move = 'player1_move',
+  reveal = 'reveal',
+  player1_dispute_no_reveal = 'player1_dispute_no_reveal',
+  player0_dispute_no_move = 'player0_dispute_no_move',
+  set_timestamp = 'set_timestamp',
+}
 
 export class GameChannel {
   channelConfig?: ChannelOptions;
@@ -36,6 +59,7 @@ export class GameChannel {
   };
   contract?: ContractInstance;
   contractAddress?: Encoded.ContractAddress;
+  nextCallData?: Encoded.ContractBytearray;
   autoSign = false;
 
   getChannelWithoutProxy() {
@@ -114,17 +138,31 @@ export class GameChannel {
     return this.getChannelWithoutProxy().status();
   }
 
+  /**
+   * Triggered when channel operation is `OffChainCallContract`.
+   * Decodes the call data provided by the opponent and generates
+   * the next calldata to be sent to the opponent.
+   */
+  async handleOpponentCallUpdate(update: Update) {
+    this.nextCallData = await this.getNextCallData(
+      update,
+      this.channelInstance
+    );
+  }
+
   async signTx(
     tag: string,
     tx: Encoded.Transaction,
-    options?: any,
+    options?: {
+      updates: Update[];
+    },
     popupData?: Partial<PopUpData>
   ): Promise<Encoded.Transaction> {
     popupData = popupData ?? {};
     const update = options?.updates?.[0];
 
     // if we are signing a transaction that updates the contract
-    if (update?.op === 'OffChainNewContract') {
+    if (update?.op === 'OffChainNewContract' && update?.code && update?.owner) {
       const proposedBytecode = update.code;
       const isContractValid = await verifyContractBytecode(proposedBytecode);
       popupData.title = 'Contract validation';
@@ -136,6 +174,15 @@ export class GameChannel {
         await this.buildContract(tx, update.owner);
       };
     }
+
+    if (
+      options?.updates[0]?.op === 'OffChainCallContract' &&
+      options?.updates[0]?.caller_id !== sdk.selectedAddress
+    ) {
+      popupData.mainBtnAction = () =>
+        this.handleOpponentCallUpdate(options.updates[0]);
+    }
+
     if (this.autoSign) {
       return new Promise((resolve) => {
         resolve(sdk.signTransaction(tx, {}));
@@ -189,6 +236,7 @@ export class GameChannel {
     this.contract = await sdk.getContractInstance({
       source: contractSource,
     });
+    await this.contract.compile();
   }
 
   async callContract(
@@ -229,5 +277,42 @@ export class GameChannel {
     ]);
     this.balances.user = new BigNumber(balances[responderId]);
     this.balances.bot = new BigNumber(balances[initiatorId]);
+  }
+
+  /**
+   * extracts latest callData and generates returns next callData to be sent
+   */
+  async getNextCallData(update: Update) {
+    if (!this.contract) throw new Error('Contract is not set');
+    if (!this.contract.bytecode) throw new Error('Contract is not compiled');
+    const data = await decodeCallData(update.call_data, this.contract.bytecode);
+    const popupStore = usePopUpStore();
+    const gameStore = useGameStore();
+    switch (data.function) {
+      case Methods.player1_move:
+        if (!this.autoSign)
+          return new Promise((resolve) => {
+            popupStore.showPopUp({
+              title: `Bot has picked. Reveal?`,
+              text: 'Do you want to reveal the winner?',
+              mainBtnText: 'Confirm',
+              secBtnText: 'Cancel',
+              mainBtnAction: () => {
+                popupStore.resetPopUp();
+                gameStore.gameManager?.setBotSelection(
+                  data.arguments[0].value as Selections
+                );
+                resolve(1);
+              },
+              secBtnAction: () => {
+                popupStore.resetPopUp();
+                resolve(1);
+              },
+            });
+          });
+        return;
+      default:
+        throw new Error(`Unhandled method: ${data.function}`);
+    }
   }
 }

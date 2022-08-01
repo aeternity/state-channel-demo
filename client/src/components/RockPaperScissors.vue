@@ -48,13 +48,6 @@ async function makeSelection(selection: Selections) {
     console.info((e as Error).message);
     return;
   }
-
-  // ! temporary placeholder for bot selection
-  setTimeout(() => {
-    if (gameStore.gameManager) {
-      gameStore.gameManager.botSelection = Selections.rock;
-    }
-  }, 2000);
 }
 </script>
 

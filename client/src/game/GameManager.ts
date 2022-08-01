@@ -14,6 +14,10 @@ export default class GameManager {
   botSelection: Selections = Selections.none;
   private hashKey = '';
 
+  async setBotSelection(selection: Selections) {
+    this.botSelection = selection;
+  }
+
   async setUserSelection(selection: Selections) {
     if (selection === Selections.none) {
       throw new Error('Selection should not be none');

@@ -73,3 +73,17 @@ export async function verifyContractBytecode(
   }
   return isEqual;
 }
+
+/**
+ * @category sdk-wrapper
+ * Wrapper function to decode callData.
+ */
+export async function decodeCallData(
+  calldata: Encoded.ContractBytearray,
+  bytecode: string
+) {
+  return sdk.compilerApi.decodeCalldataBytecode({
+    calldata,
+    bytecode,
+  });
+}
