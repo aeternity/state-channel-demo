@@ -23,12 +23,12 @@ const channelStore = useChannelStore();
 @import '../mediaqueries.scss';
 
 .header {
+  grid-area: header;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   padding: var(--padding);
   padding-bottom: 5px;
-  height: 10%;
   @include for-phone-only {
     height: 15%;
   }

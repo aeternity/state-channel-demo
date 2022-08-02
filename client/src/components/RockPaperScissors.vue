@@ -208,12 +208,11 @@ async function makeSelection(selection: Selections) {
   }
 }
 .rock-paper-scissors {
+  grid-area: body;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 0 var(--padding);
-  height: 60%;
 }
 
 .round-controls {

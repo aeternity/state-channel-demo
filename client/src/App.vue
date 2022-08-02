@@ -4,7 +4,7 @@ import TransactionsList from './components/TransactionsList.vue';
 import Header from './components/Header.vue';
 import RockPaperScissors from './components/RockPaperScissors.vue';
 import { useChannelStore } from './stores/channel';
-import { onBeforeUnmount, onMounted } from 'vue';
+import { onBeforeUnmount, onMounted, computed } from 'vue';
 import { initSdk, returnCoinsToFaucet, sdk } from './sdk/sdkService';
 import { GameChannel } from './sdk/GameChannel';
 
@@ -16,6 +16,8 @@ async function initChannel() {
   }
   await channelStore.channel.initializeChannel();
 }
+
+const showTerminal = computed(() => channelStore.channel?.isOpen);
 
 onMounted(async () => {
   await initSdk();
@@ -30,15 +32,17 @@ onBeforeUnmount(async () => {
 </script>
 
 <template>
-  <Header />
-  <ChannelInitialization
-    v-if="!channelStore.channel?.isOpen || !channelStore.channel?.contract"
-    @initializeChannel="initChannel()"
-  />
-  <RockPaperScissors
-    v-if="channelStore.channel?.isOpen && channelStore.channel.contract"
-  />
-  <TransactionsList />
+  <div class="container">
+    <Header />
+    <ChannelInitialization
+      v-if="!channelStore.channel?.isOpen || !channelStore.channel?.contract"
+      @initializeChannel="initChannel()"
+    />
+    <RockPaperScissors
+      v-if="channelStore.channel?.isOpen && channelStore.channel.contract"
+    />
+    <TransactionsList v-if="showTerminal" />
+  </div>
 </template>
 
 <style lang="scss">
@@ -49,13 +53,24 @@ onBeforeUnmount(async () => {
   font-family: 'Clash Display', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  justify-content: space-between;
-  @include for-phone-only {
-    min-height: 100vh;
-    height: unset;
+  scroll-behavior: smooth;
+
+  .container {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 20% 50% 30%;
+    gap: 0px 0px;
+    grid-auto-flow: column;
+    grid-template-areas:
+      'header'
+      'body'
+      'transactions';
+    height: 100vh;
+
+    @include for-phone-only {
+      min-height: 100vh;
+      height: unset;
+    }
   }
 }
 :root {
