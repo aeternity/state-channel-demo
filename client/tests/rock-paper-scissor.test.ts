@@ -36,12 +36,40 @@ describe('Rock Paper Scissors Component', () => {
     expect(paperBtn).toBeTruthy();
     expect(scissorsBtn).toBeTruthy();
     expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe('');
-    expect(RockPaperScissorsEl.getByTestId('botSelection').innerHTML).toBe('');
+    expect(() => RockPaperScissorsEl.getByTestId('botSelection')).toThrow();
   });
 
-  it('displays user and bot selections', async () => {
+  it('displays only user selection if result is not revealed', async () => {
     await gameChannel.setUserSelection(Selections.rock);
     gameChannel.setBotSelection(Selections.paper);
+
+    const RockPaperScissorsEl = render(RockPaperScissors, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            initialState: {
+              channel: {
+                channel: gameChannel,
+              },
+            },
+          }),
+        ],
+      },
+    });
+
+    expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe(
+      'rock'
+    );
+    expect(() => RockPaperScissorsEl.getByTestId('botsSelection')).toThrow();
+    expect(() => RockPaperScissorsEl.getByText("Bot's selection")).toThrow();
+
+    expect(gameChannelSpy).toBeCalled();
+  });
+
+  it('displays only user selection if game is not completed', async () => {
+    await gameChannel.setUserSelection(Selections.rock);
+    gameChannel.setBotSelection(Selections.paper);
+    gameChannel.game.round.isCompleted = true;
 
     const RockPaperScissorsEl = render(RockPaperScissors, {
       global: {
@@ -63,8 +91,6 @@ describe('Rock Paper Scissors Component', () => {
     expect(RockPaperScissorsEl.getByTestId('botSelection').innerHTML).toBe(
       'paper'
     );
-    expect(RockPaperScissorsEl.getByText("Bot's selection")).toBeTruthy();
-
     expect(gameChannelSpy).toBeCalled();
   });
 });

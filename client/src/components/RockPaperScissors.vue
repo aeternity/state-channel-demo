@@ -71,7 +71,11 @@ async function makeSelection(selection: Selections) {
         {{ userSelection }}
       </div>
       <h1 class="title">{{ status }}</h1>
-      <div class="finalized-selection bot" data-testid="botSelection">
+      <div
+        v-if="gameChannel.channel?.game.round.isCompleted"
+        class="finalized-selection bot"
+        data-testid="botSelection"
+      >
         {{ botSelection }}
       </div>
     </div>

@@ -39,6 +39,8 @@ export default defineConfig({
       VITE_RESPONDER_HOST: 'localhost',
       VITE_RESPONDER_PORT: '3333',
     },
+    minThreads: 1,
+    maxThreads: 1,
   },
   server: {
     watch: {

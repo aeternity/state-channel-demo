@@ -3,7 +3,7 @@ import contractSource from '@aeternity/rock-paper-scissors';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { BigNumber } from 'bignumber.js';
-import { toRaw } from 'vue';
+import { nextTick, toRaw } from 'vue';
 import {
   decodeCallData,
   initSdk,
@@ -68,6 +68,7 @@ export class GameChannel {
       botSelection?: Selections;
       winner?: Encoded.AccountAddress;
       isCompleted?: boolean;
+      hasRevealed?: boolean;
     };
   } = {
     round: {
@@ -79,7 +80,6 @@ export class GameChannel {
   };
   contract?: ContractInstance;
   contractAddress?: Encoded.ContractAddress;
-  nextCallData?: Encoded.ContractBytearray;
   autoSign = false;
 
   getChannelWithoutProxy() {
@@ -136,6 +136,7 @@ export class GameChannel {
     this.channelInstance = await Channel.initialize({
       ...this.channelConfig,
       role: 'responder',
+      // @ts-expect-error ts-mismatch
       sign: this.signTx.bind(this),
       url:
         import.meta.env.VITE_NODE_ENV == 'development'
@@ -189,29 +190,10 @@ export class GameChannel {
     this.game.round.botSelection = selection;
   }
 
-  startNewRound() {
-    this.game.round.index++;
-    this.game.round.userSelection = Selections.none;
-    this.game.round.botSelection = Selections.none;
-    this.game.round.isCompleted = false;
-  }
-
-  /**
-   * Triggered when channel operation is `OffChainCallContract`.
-   * Decodes the call data provided by the opponent and generates
-   * the next calldata to be sent to the opponent.
-   */
-  async handleOpponentCallUpdate(update: Update) {
-    this.nextCallData = await this.getNextCallData(
-      update,
-      this.channelInstance
-    );
-  }
-
   async signTx(
     tag: string,
     tx: Encoded.Transaction,
-    options?: {
+    options: {
       updates: Update[];
     },
     popupData?: Partial<PopUpData>
@@ -229,6 +211,7 @@ export class GameChannel {
       popupData.mainBtnText = 'Accept Contract';
       popupData.secBtnText = 'Decline Contract';
       popupData.mainBtnAction = async () => {
+        if (!update.owner) throw new Error('Owner is not set');
         await this.buildContract(tx, update.owner);
       };
     }
@@ -283,6 +266,16 @@ export class GameChannel {
           this.updateBalances();
         }
       });
+
+      this.getChannelWithoutProxy().on('stateChanged', () => {
+        if (
+          this.game.round.botSelection != Selections.none &&
+          !this.game.round.hasRevealed
+        ) {
+          this.game.round.hasRevealed = true;
+          nextTick(() => this.revealRoundResult());
+        }
+      });
     }
   }
 
@@ -300,10 +293,10 @@ export class GameChannel {
   async callContract(
     method: string,
     params: unknown[],
-    options?: {
+    options: {
       popupData?: Partial<PopUpData>;
       amount?: number | BigNumber;
-    }
+    } = {}
   ) {
     const { popupData, amount } = options;
 
@@ -324,8 +317,22 @@ export class GameChannel {
         contract: this.contractAddress,
         abiVersion: 3,
       },
-      async (tx, options) =>
-        this.signTx(`call ${method}`, tx, options, popupData)
+      // @ts-expect-error ts-mismatch
+      async (
+        tx,
+        options: {
+          updates: Update[];
+        }
+      ) => {
+        if (method === Methods.reveal && options != null)
+          return this.signTx(
+            `bot pick confirmation. Reveal Winner?`,
+            tx,
+            options,
+            popupData
+          );
+        return this.signTx(`call ${method}`, tx, options, popupData);
+      }
     );
     return result;
   }
@@ -342,35 +349,13 @@ export class GameChannel {
     this.balances.bot = new BigNumber(balances[initiatorId]);
   }
 
-  /**
-   * extracts latest callData and generates returns next callData to be sent
-   */
-  async getNextCallData(update: Update) {
+  async handleOpponentCallUpdate(update: Update) {
     if (!this.contract) throw new Error('Contract is not set');
     if (!this.contract.bytecode) throw new Error('Contract is not compiled');
     const data = await decodeCallData(update.call_data, this.contract.bytecode);
-    const popupStore = usePopUpStore();
     switch (data.function) {
       case Methods.player1_move:
-        if (!this.autoSign)
-          return new Promise((resolve) => {
-            popupStore.showPopUp({
-              title: `Bot has picked. Reveal?`,
-              text: 'Do you want to reveal the winner?',
-              mainBtnText: 'Confirm',
-              secBtnText: 'Cancel',
-              mainBtnAction: () => {
-                popupStore.resetPopUp();
-                this.setBotSelection(data.arguments[0].value as Selections);
-                resolve(this.revealRoundResult());
-              },
-              secBtnAction: () => {
-                popupStore.resetPopUp();
-                resolve(1);
-              },
-            });
-          });
-        return;
+        return this.setBotSelection(data.arguments[0].value as Selections);
       default:
         throw new Error(`Unhandled method: ${data.function}`);
     }
@@ -406,8 +391,21 @@ export class GameChannel {
       result.returnValue
     );
 
+    return this.finishGameRound(winner);
+  }
+
+  async finishGameRound(winner?: Encoded.AccountAddress) {
     this.game.round.winner = winner;
     this.game.round.isCompleted = true;
     await this.updateBalances();
+  }
+
+  startNewRound() {
+    this.game.round.index++;
+    this.game.round.userSelection = Selections.none;
+    this.game.round.botSelection = Selections.none;
+    this.game.round.isCompleted = false;
+    this.game.round.hasRevealed = false;
+    this.game.round.winner = undefined;
   }
 }
