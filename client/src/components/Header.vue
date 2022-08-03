@@ -11,7 +11,7 @@ const channelStore = useChannelStore();
     <div class="center">
       <GameInfo
         :stake="channelStore.channel?.game?.stake"
-        :round="channelStore.channel?.game?.round"
+        :round="channelStore.channel?.game?.round.index"
         v-if="channelStore.channel?.isOpen"
       />
     </div>

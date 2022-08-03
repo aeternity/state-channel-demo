@@ -5,14 +5,11 @@ import Header from './components/Header.vue';
 import RockPaperScissors from './components/RockPaperScissors.vue';
 import PopUp from './components/PopUp.vue';
 import { useChannelStore } from './stores/channel';
-import { useGameStore } from './stores/game';
 import { onBeforeUnmount, onMounted } from 'vue';
 import { initSdk, returnCoinsToFaucet, sdk } from './sdk/sdkService';
 import { GameChannel } from './sdk/GameChannel';
-import GameManager from './game/GameManager';
 
 const channelStore = useChannelStore();
-const gameStore = useGameStore();
 
 async function initChannel() {
   if (!channelStore.channel) {
@@ -24,7 +21,6 @@ async function initChannel() {
 onMounted(async () => {
   await initSdk();
   channelStore.channel = new GameChannel();
-  gameStore.gameManager = new GameManager();
 });
 
 onBeforeUnmount(async () => {

@@ -13,8 +13,7 @@ import {
 } from './sdkService';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { PopUpData, usePopUpStore } from '../stores/popup';
-import { useGameStore } from '../stores/game';
-import { Selections } from '../game/GameManager';
+import SHA from 'sha.js';
 
 interface Update {
   call_data: Encoded.ContractBytearray;
@@ -36,6 +35,13 @@ enum Methods {
   set_timestamp = 'set_timestamp',
 }
 
+export enum Selections {
+  rock = 'rock',
+  paper = 'paper',
+  scissors = 'scissors',
+  none = 'none',
+}
+
 export class GameChannel {
   channelConfig?: ChannelOptions;
   channelInstance?: Channel;
@@ -53,9 +59,21 @@ export class GameChannel {
     user: undefined,
     bot: undefined,
   };
-  game?: {
+  game: {
     stake?: BigNumber;
-    round?: number;
+    round: {
+      index?: number;
+      hashKey?: string;
+      userSelection?: Selections;
+      botSelection?: Selections;
+      winner?: Encoded.AccountAddress;
+    };
+  } = {
+    round: {
+      index: 1,
+      userSelection: Selections.none,
+      botSelection: Selections.none,
+    },
   };
   contract?: ContractInstance;
   contractAddress?: Encoded.ContractAddress;
@@ -83,9 +101,7 @@ export class GameChannel {
       }),
     });
     const data = await res.json();
-    this.game = {
-      stake: new BigNumber(data.gameStake),
-    };
+    this.game.stake = new BigNumber(data.gameStake);
     if (res.status != 200) {
       if (data.error.includes('greylisted')) {
         console.log('Greylisted account, retrying with new account');
@@ -136,6 +152,39 @@ export class GameChannel {
 
   getStatus() {
     return this.getChannelWithoutProxy().status();
+  }
+
+  getSelectionHash(selection: Selections): string {
+    this.game.round.hashKey = Math.random().toString(16).substring(2, 8);
+    return SHA('sha256')
+      .update(this.game.round.hashKey + selection)
+      .digest('hex');
+  }
+
+  getUserSelection() {
+    return this.game.round.userSelection;
+  }
+
+  async setUserSelection(selection: Selections) {
+    if (selection === Selections.none) {
+      throw new Error('Selection should not be none');
+    }
+    const popupData: Partial<PopUpData> = {
+      title: Selections[selection].toUpperCase(),
+      text: 'Confirm your selection',
+    };
+
+    const result = await this.callContract(
+      Methods.provide_hash,
+      [this.getSelectionHash(selection)],
+      popupData
+    );
+    if (result?.accepted) this.game.round.userSelection = selection;
+    else throw new Error('Selection was not accepted');
+  }
+
+  async setBotSelection(selection: Selections) {
+    this.game.round.botSelection = selection;
   }
 
   /**
@@ -287,7 +336,6 @@ export class GameChannel {
     if (!this.contract.bytecode) throw new Error('Contract is not compiled');
     const data = await decodeCallData(update.call_data, this.contract.bytecode);
     const popupStore = usePopUpStore();
-    const gameStore = useGameStore();
     switch (data.function) {
       case Methods.player1_move:
         if (!this.autoSign)
@@ -299,9 +347,7 @@ export class GameChannel {
               secBtnText: 'Cancel',
               mainBtnAction: () => {
                 popupStore.resetPopUp();
-                gameStore.gameManager?.setBotSelection(
-                  data.arguments[0].value as Selections
-                );
+                this.setBotSelection(data.arguments[0].value as Selections);
                 resolve(1);
               },
               secBtnAction: () => {

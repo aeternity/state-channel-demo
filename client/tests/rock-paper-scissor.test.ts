@@ -1,21 +1,26 @@
+import { GameChannel, Selections } from './../src/sdk/GameChannel';
 import { render } from '@testing-library/vue';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
 import RockPaperScissors from '../src/components/RockPaperScissors.vue';
-import { Selections } from '../src/game/GameManager';
-import { MockGameManager } from './mocks';
-
-const mockGameManager = new MockGameManager();
 
 describe('Rock Paper Scissors Component', () => {
+  const gameChannel = new GameChannel();
+
+  const gameChannelSpy = vi
+    .spyOn(gameChannel, 'callContract')
+    .mockResolvedValue({
+      accepted: true,
+      signedTx: 'tx_l',
+    });
   it('displays Rock Paper Scissors buttons', async () => {
     const RockPaperScissorsEl = render(RockPaperScissors, {
       global: {
         plugins: [
           createTestingPinia({
             initialState: {
-              game: {
-                gameManager: mockGameManager,
+              channel: {
+                channel: gameChannel,
               },
             },
           }),
@@ -35,16 +40,16 @@ describe('Rock Paper Scissors Component', () => {
   });
 
   it('displays user and bot selections', async () => {
-    await mockGameManager?.setUserSelection(Selections.rock);
-    mockGameManager.botSelection = Selections.paper;
+    await gameChannel.setUserSelection(Selections.rock);
+    gameChannel.setBotSelection(Selections.paper);
 
     const RockPaperScissorsEl = render(RockPaperScissors, {
       global: {
         plugins: [
           createTestingPinia({
             initialState: {
-              game: {
-                gameManager: mockGameManager,
+              channel: {
+                channel: gameChannel,
               },
             },
           }),
@@ -59,5 +64,7 @@ describe('Rock Paper Scissors Component', () => {
       'paper'
     );
     expect(RockPaperScissorsEl.getByText("Bot's selection")).toBeTruthy();
+
+    expect(gameChannelSpy).toBeCalled();
   });
 });

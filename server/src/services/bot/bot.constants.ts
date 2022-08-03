@@ -16,7 +16,6 @@ export const MUTUAL_CHANNEL_CONFIGURATION: Partial<ChannelOptions> & {
   channelReserve: 2,
   lockPeriod: 10,
   debug: false,
-  timeoutIdle: 60000,
   // How to calculate minimum depth - either txfee (default) or plain. We use
   // `plain` with `minimumDepth` in order to reduce delay.
   minimumDepthStrategy: 'plain',

@@ -1,12 +1,10 @@
-import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
-import GameManager, { Selections } from '../src/game/GameManager';
-import { GameChannel } from '../src/sdk/GameChannel';
+import { GameChannel, Selections } from '../src/sdk/GameChannel';
 import { initSdk } from '../src/sdk/sdkService';
 import { waitForChannelReady } from './utils';
 
-describe('GameManager', async () => {
-  let gameManager: GameManager;
+describe('GameChannel', async () => {
   let gameChannel: GameChannel;
 
   beforeAll(async () => {
@@ -24,25 +22,24 @@ describe('GameManager', async () => {
     await waitForChannelReady(gameChannel.getChannelWithoutProxy());
   });
 
-  it('creates game manager instance', async () => {
-    gameManager = new GameManager();
-    expect(gameManager).toBeTruthy();
-    expect(gameManager.getUserSelection()).toBe(Selections.none);
-    expect(gameManager.botSelection).toBe(Selections.none);
+  it('creates game channel instance', async () => {
+    expect(gameChannel).toBeTruthy();
+    expect(gameChannel.getUserSelection()).toBe(Selections.none);
+    expect(gameChannel.game.round.botSelection).toBe(Selections.none);
   });
 
   it('can set/get selection for user', async () => {
     // wait for contract to be deployed
     await new Promise((resolve) => setTimeout(resolve, 5000));
     expect(gameChannel.contract).toBeTruthy();
-    await gameManager.setUserSelection(Selections.rock);
-    expect(gameManager.getUserSelection()).toBe(Selections.rock);
+    await gameChannel.setUserSelection(Selections.rock);
+    expect(gameChannel.getUserSelection()).toBe(Selections.rock);
   }, 6000);
 
   it('throws error if selection is none', async () => {
     let errorMsg = '';
     try {
-      await gameManager.setUserSelection(Selections.none);
+      await gameChannel.setUserSelection(Selections.none);
     } catch (e) {
       errorMsg = e.message;
     }

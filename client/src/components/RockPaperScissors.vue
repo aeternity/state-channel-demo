@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useGameStore } from '../stores/game';
-import { Selections } from '../game/GameManager';
+import { Selections } from '../sdk/GameChannel';
+import { useChannelStore } from '../stores/channel';
 
-const gameStore = useGameStore();
+const gameChannel = useChannelStore();
 
 const userHasSelected = computed(() => {
-  return gameStore.gameManager?.getUserSelection() != Selections.none
+  return gameChannel.channel?.getUserSelection() != Selections.none
     ? true
     : false;
 });
 const botIsMakingSelection = computed(() => {
-  return gameStore.gameManager?.getUserSelection() != Selections.none
-    ? gameStore.gameManager?.getUserSelection() === Selections.none
+  return gameChannel.channel?.getUserSelection() != Selections.none
+    ? gameChannel.channel?.getUserSelection() === Selections.none
       ? true
       : false
     : false;
@@ -20,13 +20,15 @@ const botIsMakingSelection = computed(() => {
 
 const userSelection = computed(() =>
   userHasSelected.value
-    ? Selections[gameStore.gameManager?.getUserSelection() ?? Selections.none]
+    ? Selections[gameChannel.channel?.getUserSelection() ?? Selections.none]
     : ''
 );
 
 const botSelection = computed(() =>
-  gameStore.gameManager?.botSelection != Selections.none
-    ? Selections[gameStore.gameManager?.botSelection ?? Selections.none]
+  gameChannel.channel?.game.round.botSelection != Selections.none
+    ? Selections[
+        gameChannel.channel?.game.round.botSelection ?? Selections.none
+      ]
     : ''
 );
 
@@ -43,7 +45,7 @@ const status = computed(() => {
 async function makeSelection(selection: Selections) {
   if (userHasSelected.value) return;
   try {
-    await gameStore.gameManager?.setUserSelection(selection);
+    await gameChannel.channel?.setUserSelection(selection);
   } catch (e) {
     console.info((e as Error).message);
     return;
