@@ -62,17 +62,19 @@ export class GameChannel {
   game: {
     stake?: BigNumber;
     round: {
-      index?: number;
+      index: number;
       hashKey?: string;
       userSelection?: Selections;
       botSelection?: Selections;
       winner?: Encoded.AccountAddress;
+      isCompleted?: boolean;
     };
   } = {
     round: {
       index: 1,
       userSelection: Selections.none,
       botSelection: Selections.none,
+      isCompleted: false,
     },
   };
   contract?: ContractInstance;
@@ -177,7 +179,7 @@ export class GameChannel {
     const result = await this.callContract(
       Methods.provide_hash,
       [this.getSelectionHash(selection)],
-      popupData
+      { popupData }
     );
     if (result?.accepted) this.game.round.userSelection = selection;
     else throw new Error('Selection was not accepted');
@@ -185,6 +187,13 @@ export class GameChannel {
 
   async setBotSelection(selection: Selections) {
     this.game.round.botSelection = selection;
+  }
+
+  startNewRound() {
+    this.game.round.index++;
+    this.game.round.userSelection = Selections.none;
+    this.game.round.botSelection = Selections.none;
+    this.game.round.isCompleted = false;
   }
 
   /**
@@ -291,8 +300,13 @@ export class GameChannel {
   async callContract(
     method: string,
     params: unknown[],
-    popupData?: Partial<PopUpData>
+    options?: {
+      popupData?: Partial<PopUpData>;
+      amount?: number | BigNumber;
+    }
   ) {
+    const { popupData, amount } = options;
+
     if (!this.channelInstance) {
       throw new Error('Channel is not open');
     }
@@ -301,7 +315,7 @@ export class GameChannel {
     }
     const result = await this.getChannelWithoutProxy().callContract(
       {
-        amount: 0,
+        amount: amount ?? this.game.stake,
         callData: this.contract.calldata.encode(
           'RockPaperScissors',
           method,
@@ -348,7 +362,7 @@ export class GameChannel {
               mainBtnAction: () => {
                 popupStore.resetPopUp();
                 this.setBotSelection(data.arguments[0].value as Selections);
-                resolve(1);
+                resolve(this.revealRoundResult());
               },
               secBtnAction: () => {
                 popupStore.resetPopUp();
@@ -360,5 +374,40 @@ export class GameChannel {
       default:
         throw new Error(`Unhandled method: ${data.function}`);
     }
+  }
+
+  async revealRoundResult() {
+    await this.callContract(
+      Methods.reveal,
+      [this.game.round.hashKey, this.game.round.userSelection],
+      {
+        // reveal method is not payable, so we use 0
+        amount: 0,
+      }
+    );
+
+    const currentRound = this?.getChannelWithoutProxy().round();
+
+    if (!this.channelConfig) throw new Error('No channel configuration');
+    if (!this.contractAddress) throw new Error('Contract address is not set');
+    if (!currentRound) throw new Error('No current round');
+    if (!this.contract) throw new Error('Contract is not set');
+    if (!this.channelInstance) throw new Error('Channel is not open');
+
+    const result = await this.getChannelWithoutProxy().getContractCall({
+      caller: this.channelConfig.responderId,
+      contract: this.contractAddress,
+      round: currentRound,
+    });
+
+    const winner = this.contract.calldata.decode(
+      'RockPaperScissors',
+      Methods.reveal,
+      result.returnValue
+    );
+
+    this.game.round.winner = winner;
+    this.game.round.isCompleted = true;
+    await this.updateBalances();
   }
 }
