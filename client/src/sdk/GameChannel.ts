@@ -1,24 +1,19 @@
-import {
-  AeSdk,
-  Channel,
-  encodeContractAddress,
-  unpackTx,
-} from '@aeternity/aepp-sdk';
+import { Channel, encodeContractAddress, unpackTx } from '@aeternity/aepp-sdk';
 import contractSource from '@aeternity/rock-paper-scissors';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { BigNumber } from 'bignumber.js';
 import { toRaw } from 'vue';
 import {
-  getSdk,
+  initSdk,
   returnCoinsToFaucet,
+  sdk,
   verifyContractBytecode,
 } from './sdkService';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { PopUpData, usePopUpStore } from '../stores/popup';
 
 export class GameChannel {
-  sdk: AeSdk;
   channelConfig?: ChannelOptions;
   channelInstance?: Channel;
   isOpen = false;
@@ -43,29 +38,22 @@ export class GameChannel {
   contractAddress?: Encoded.ContractAddress;
   autoSign = false;
 
-  constructor(sdk: AeSdk) {
-    this.sdk = sdk;
-  }
-
   getChannelWithoutProxy() {
     if (!this.channelInstance) {
       throw new Error('Channel is not initialized');
     }
     return toRaw(this.channelInstance);
   }
-  getSdkWithoutProxy() {
-    return toRaw(this.sdk);
-  }
 
   async fetchChannelConfig(): Promise<ChannelOptions> {
-    if (!this.sdk) throw new Error('SDK is not set');
+    if (!sdk) throw new Error('SDK is not set');
     const res = await fetch(import.meta.env.VITE_BOT_SERVICE_URL + '/open', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        address: this.sdk.selectedAddress,
+        address: sdk.selectedAddress,
         port: import.meta.env.VITE_RESPONDER_PORT ?? '3333',
         host: import.meta.env.VITE_RESPONDER_HOST ?? 'localhost',
       }),
@@ -77,7 +65,7 @@ export class GameChannel {
     if (res.status != 200) {
       if (data.error.includes('greylisted')) {
         console.log('Greylisted account, retrying with new account');
-        this.sdk = await getSdk();
+        initSdk();
         return this.fetchChannelConfig();
       } else
         this.error = {
@@ -138,10 +126,7 @@ export class GameChannel {
     // if we are signing a transaction that updates the contract
     if (update?.op === 'OffChainNewContract') {
       const proposedBytecode = update.code;
-      const isContractValid = await verifyContractBytecode(
-        this.getSdkWithoutProxy(),
-        proposedBytecode
-      );
+      const isContractValid = await verifyContractBytecode(proposedBytecode);
       popupData.title = 'Contract validation';
       popupData.text = `Contract bytecode is 
       ${isContractValid ? 'matching' : 'not matching'}`;
@@ -153,7 +138,7 @@ export class GameChannel {
     }
     if (this.autoSign) {
       return new Promise((resolve) => {
-        resolve(this.getSdkWithoutProxy().signTransaction(tx, {}));
+        resolve(sdk.signTransaction(tx, {}));
         // call the callback if it exists
         popupData?.mainBtnAction?.();
       });
@@ -167,7 +152,7 @@ export class GameChannel {
         secBtnText: popupData?.secBtnText ?? 'Cancel',
         mainBtnAction: () => {
           popupStore.resetPopUp();
-          resolve(this.getSdkWithoutProxy().signTransaction(tx, {}));
+          resolve(sdk.signTransaction(tx, {}));
           // call the callback if it exists
           popupData?.mainBtnAction?.();
         },
@@ -186,7 +171,7 @@ export class GameChannel {
     if (this.channelInstance) {
       this.getChannelWithoutProxy().on('statusChanged', (status) => {
         if (status === 'disconnected') {
-          returnCoinsToFaucet(this.getSdkWithoutProxy());
+          returnCoinsToFaucet();
         }
         if (status === 'open') {
           this.isOpen = true;
@@ -201,7 +186,7 @@ export class GameChannel {
     const contractCreationRound = unpackTx(tx).tx.round;
     this.contractAddress = encodeContractAddress(owner, contractCreationRound);
 
-    this.contract = await this.getSdkWithoutProxy().getContractInstance({
+    this.contract = await sdk.getContractInstance({
       source: contractSource,
     });
   }
