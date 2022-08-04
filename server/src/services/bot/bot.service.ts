@@ -12,9 +12,10 @@ import { getNextCallData } from '../contract/contract.service';
 import { FAUCET_PUBLIC_ADDRESS, sdk, Update } from '../sdk';
 import { fundAccount } from '../sdk/sdk.service';
 import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
-import { GameSession } from './bot.interface';
+import { GameSession, TransactionLog } from './bot.interface';
 
 export const gameSessionPool = new Map<string, GameSession>();
+let openStateChannelTxLog: TransactionLog;
 
 /**
  * Adds game session to the pool after deploying the contract
@@ -109,6 +110,19 @@ async function respondToContractCall(gameSession: GameSession) {
   gameSession.contractState.callDataToSend = null;
 }
 
+function sendOpenStateChannelTxLog(
+  channelInstance: Channel,
+  recipient: Encoded.AccountAddress,
+) {
+  void channelInstance.sendMessage(
+    {
+      type: 'add_bot_transaction_log',
+      data: openStateChannelTxLog,
+    },
+    recipient,
+  );
+}
+
 /**
  * Registers channel events.
  * If the channel is closed,
@@ -131,6 +145,12 @@ export async function registerEvents(
       if (!gameSessionPool.has(configuration.initiatorId)) {
         void addGameSession(channelInstance, configuration);
       }
+    }
+
+    // this is where the USER has signed the open channel transaction
+    // but this is the soonest we can send a message
+    if (status === 'signed') {
+      sendOpenStateChannelTxLog(channelInstance, configuration.responderId);
     }
   });
 
@@ -177,12 +197,22 @@ export async function generateGameSession(
     role: 'initiator',
     // @ts-ignore
     sign: (
-      _tag: string,
+      tag: string,
       tx: Encoded.Transaction,
       options: {
         updates: Update[];
       },
     ) => {
+      if (tag === 'initiator_sign') {
+        // we are signing the channel open transaction
+        openStateChannelTxLog = {
+          description: 'Open state channel',
+          id: tx,
+          onChain: true,
+          signed: true,
+          timestamp: Date.now(),
+        };
+      }
       if (options?.updates[0]?.op === 'OffChainCallContract') {
         const gameSession = gameSessionPool.get(initiatorId);
         void handleOpponentCallUpdate(options.updates[0], gameSession);

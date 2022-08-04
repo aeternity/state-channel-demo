@@ -14,3 +14,11 @@ export interface GameSession {
     initiatorId: Encoded.AccountAddress;
   };
 }
+
+export interface TransactionLog {
+  id: string;
+  onChain: boolean;
+  description: string;
+  signed: boolean;
+  timestamp: number;
+}

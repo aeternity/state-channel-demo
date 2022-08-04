@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useChannelStore } from '../stores/channel';
 import { useTransactionsStore } from '../stores/transactions';
@@ -13,64 +13,74 @@ const transactionStore = useTransactionsStore();
 const { userTransactions, botTransactions } = storeToRefs(transactionStore);
 
 const isFullscreen = ref(false);
-const isMinimized = computed(() => !channelStore.channel?.isOpen);
 </script>
 
 <template>
   <div
     class="transactions"
     data-testid="transactions"
-    :class="{ minimized: isMinimized, fullscreen: isFullscreen }"
+    :class="{ fullscreen: isFullscreen }"
   >
-    <!-- User Terminal  -->
-    <div class="terminal">
-      <div class="header">
-        <div class="title">Your Terminal</div>
-      </div>
-      <div
-        class="transactions-list"
-        v-if="!isMinimized && userTransactions.length > 0"
-      >
-        <SingleTransaction
-          v-for="transaction in userTransactions"
-          :transaction="transaction"
-          :key="transaction.hash"
-        />
-      </div>
-      <div class="transactions-list" v-else-if="!isMinimized">
-        <div class="empty-list">No transactions yet</div>
-      </div>
-    </div>
-    <!-- Bot Terminal  -->
-    <div class="terminal">
-      <div class="header">
-        <div class="title">Bot Terminal</div>
-        <button
-          class="expand"
-          aria-label="expand_button"
-          :disabled="!channelStore.channel?.isOpen"
-          @click="isFullscreen = !isFullscreen"
-        >
-          <img
-            class="icon"
-            :src="isFullscreen ? MINIMISE_ICON : EXPAND_ICON"
-            alt="Expand icon"
+    <div class="terminals">
+      <!-- User Terminal  -->
+      <div class="terminal">
+        <div class="header">
+          <div class="title">Your Terminal</div>
+          <button
+            class="expand mobile-only"
+            aria-label="expand_button_mobile"
+            :disabled="!channelStore.channel?.isOpen"
+            @click="isFullscreen = !isFullscreen"
+          >
+            <img
+              class="icon"
+              :src="isFullscreen ? MINIMISE_ICON : EXPAND_ICON"
+              alt="Expand icon"
+            />
+            <span> {{ isFullscreen ? 'Minimize' : 'Expand' }} </span>
+          </button>
+        </div>
+        <div class="transactions-list" v-if="userTransactions.length > 0">
+          <SingleTransaction
+            v-for="transaction in userTransactions"
+            :transaction="transaction"
+            :key="transaction.id"
           />
-          <span> {{ isFullscreen ? 'Minimize' : 'Expand' }} </span>
-        </button>
+        </div>
+        <div class="transactions-list" v-else>
+          <div class="empty-list">No transactions yet</div>
+        </div>
       </div>
-      <div
-        class="transactions-list"
-        v-if="!isMinimized && botTransactions.length > 0"
-      >
-        <SingleTransaction
-          v-for="transaction in botTransactions"
-          :transaction="transaction"
-          :key="transaction.hash"
-        />
-      </div>
-      <div class="transactions-list" v-else-if="!isMinimized">
-        <div class="empty-list">No transactions yet</div>
+      <!-- Bot Terminal  -->
+      <div class="terminal">
+        <div class="header">
+          <div class="title">
+            Bot Terminal
+            <button
+              class="expand"
+              aria-label="expand_button"
+              :disabled="!channelStore.channel?.isOpen"
+              @click="isFullscreen = !isFullscreen"
+            >
+              <img
+                class="icon"
+                :src="isFullscreen ? MINIMISE_ICON : EXPAND_ICON"
+                alt="Expand icon"
+              />
+              <span> {{ isFullscreen ? 'Minimize' : 'Expand' }} </span>
+            </button>
+          </div>
+        </div>
+        <div class="transactions-list" v-if="botTransactions.length > 0">
+          <SingleTransaction
+            v-for="transaction in botTransactions"
+            :transaction="transaction"
+            :key="transaction.id"
+          />
+        </div>
+        <div class="transactions-list" v-else>
+          <div class="empty-list">No transactions yet</div>
+        </div>
       </div>
     </div>
   </div>
@@ -80,91 +90,136 @@ const isMinimized = computed(() => !channelStore.channel?.isOpen);
 @import '../mediaqueries.scss';
 
 .transactions {
+  grid-area: transactions;
   background-color: #f4f4f4;
   padding: var(--padding);
-  height: 30%;
+  padding-bottom: min(20px, var(--padding));
+  max-width: 100%;
   transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
 
   &.fullscreen {
     position: absolute;
     z-index: 1;
     bottom: 0;
     right: 0;
+    padding-bottom: var(--padding);
     width: calc(100% - var(--padding) * 2);
     height: calc(100vh - var(--padding) * 2);
   }
-
-  &.minimized {
-    height: 4%;
-    padding: 20px var(--padding);
-    & .header {
-      margin-bottom: 0;
-      & .title,
-      & .expand {
-        opacity: 0.25;
-      }
-    }
-  }
-  .terminal {
-    width: 50%;
-    .header {
+  .header {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #f4f4f4;
+    .title {
+      font-weight: 500;
       width: 100%;
       display: flex;
-      flex-direction: row;
       justify-content: space-between;
-      margin-bottom: 20px;
-      .title {
-        font-size: 28px;
-        font-weight: 500;
-        @include for-phone-only {
-          font-size: 16px;
-        }
+    }
+    .expand {
+      user-select: none;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      font-size: 28px;
+      font-weight: 500;
+
+      background: unset;
+      border: unset;
+      font-family: unset;
+      color: unset;
+
+      &:hover {
+        cursor: pointer;
       }
-      .expand {
-        user-select: none;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        font-size: 28px;
-        font-weight: 500;
-
-        background: unset;
-        border: unset;
-        font-family: unset;
-        color: unset;
-
-        &:hover {
-          cursor: pointer;
-        }
-        &:disabled {
-          cursor: not-allowed;
-        }
+      &:disabled {
+        cursor: not-allowed;
+      }
+      @include for-phone-only {
+        display: none;
+      }
+      &.mobile-only {
+        display: none;
         @include for-phone-only {
+          display: flex;
           span {
-            display: none;
+            font-size: 16px;
           }
         }
-        .icon {
+      }
+      .icon {
+        width: 28px;
+        height: 28px;
+        margin-right: 15px;
+        @include for-phone-only {
+          width: 16px;
+          height: 16px;
+        }
+        @include for-tablet-portrait-up {
+          width: 18px;
+          height: 18px;
+          margin-right: 5px;
+        }
+        @include for-tablet-landscape-up {
+          width: 24px;
+          height: 24px;
+          margin-right: 10px;
+        }
+        @include for-desktop-up {
           width: 28px;
           height: 28px;
           margin-right: 15px;
-          @include for-phone-only {
-            width: 16px;
-            height: 16px;
-            margin-right: 0px;
-          }
         }
       }
     }
+    .title,
+    .expand {
+      @include for-phone-only {
+        font-size: 16px;
+      }
+      @include for-tablet-portrait-up {
+        font-size: 18px;
+      }
+      @include for-tablet-landscape-up {
+        font-size: 24px;
+      }
+      @include for-desktop-up {
+        font-size: 28px;
+      }
+    }
   }
-  .transactions-list {
+  .terminals {
     display: flex;
-    flex-direction: column-reverse;
-    .empty-list {
-      font-family: 'DM Mono', monospace;
-      font-size: 16px;
+    overflow-y: auto;
+    .terminal {
+      width: 50%;
+      height: max-content;
+      .transactions-list {
+        display: flex;
+        flex-direction: column-reverse;
+        .empty-list {
+          font-family: 'DM Mono', monospace;
+          font-size: 16px;
+        }
+      }
+    }
+    @include for-phone-only {
+      flex-direction: column;
+      overflow-y: unset;
+      height: 100%;
+      .terminal {
+        width: 100%;
+        height: 50%;
+        overflow-y: auto;
+      }
     }
   }
 }

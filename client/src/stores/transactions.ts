@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
-import { Transaction } from '../components/SingleTransaction.vue';
+import { TransactionLog } from '../components/SingleTransaction.vue';
 
 interface TransactionsStore {
-  userTransactions: Array<Transaction>;
-  botTransactions: Array<Transaction>;
+  userTransactions: Array<TransactionLog>;
+  botTransactions: Array<TransactionLog>;
 }
 
 export const useTransactionsStore = defineStore('transactions', {
@@ -13,10 +13,10 @@ export const useTransactionsStore = defineStore('transactions', {
       botTransactions: [],
     } as TransactionsStore),
   actions: {
-    addUserTransaction(transaction: Transaction) {
+    addUserTransaction(transaction: TransactionLog) {
       this.userTransactions.push(transaction);
     },
-    addBotTransaction(transaction: Transaction) {
+    addBotTransaction(transaction: TransactionLog) {
       this.botTransactions.push(transaction);
     },
   },

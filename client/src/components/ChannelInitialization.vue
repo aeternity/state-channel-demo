@@ -69,12 +69,12 @@ async function openStateChannel(): Promise<void> {
 @import '../mediaqueries.scss';
 
 .open-channel {
+  grid-area: body;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
   padding: var(--padding);
-  height: 60%;
 }
 .title {
   min-width: 400px;

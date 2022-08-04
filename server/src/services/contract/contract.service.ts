@@ -3,6 +3,7 @@ import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import logger from '../../logger';
+import { TransactionLog } from '../bot/bot.interface';
 import { decodeCallData, sdk, Update } from '../sdk';
 import {
   CONTRACT_CONFIGURATION,
@@ -58,9 +59,26 @@ export async function deployContract(
         ...Object.values(config),
       ]) as Encoded.ContractBytearray,
     },
-    async (tx) => sdk.signTransaction(tx, {
-      onAccount: deployerAddress,
-    }),
+    async (tx) => {
+      const log: TransactionLog = {
+        id: tx,
+        onChain: false,
+        description: 'Deploy contract',
+        timestamp: Date.now(),
+        signed: true,
+      };
+      void channel.sendMessage(
+        {
+          type: 'add_bot_transaction_log',
+          data: log,
+        },
+        config.player0,
+      );
+
+      return sdk.signTransaction(tx, {
+        onAccount: deployerAddress,
+      });
+    },
   );
 
   logger.info(`${deployerAddress} deployed contract: ${res.address}`);

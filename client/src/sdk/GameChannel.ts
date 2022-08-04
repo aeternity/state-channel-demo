@@ -13,6 +13,8 @@ import {
 } from './sdkService';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import SHA from 'sha.js';
+import { useTransactionsStore } from '../stores/transactions';
+import { TransactionLog } from '../components/SingleTransaction.vue';
 
 interface Update {
   call_data: Encoded.ContractBytearray;
@@ -191,13 +193,34 @@ export class GameChannel {
   ): Promise<Encoded.Transaction> {
     const update = options?.updates?.[0];
 
+    // if we are signing the open channel tx
+    if (tag === 'responder_sign') {
+      const transaction_log: TransactionLog = {
+        id: tx,
+        description: 'Open state channel',
+        signed: true,
+        onChain: true,
+        timestamp: Date.now(),
+      };
+      useTransactionsStore().addUserTransaction(transaction_log);
+    }
+
     // if we are signing a transaction that updates the contract
     if (update?.op === 'OffChainNewContract' && update?.code && update?.owner) {
       const proposedBytecode = update.code;
       const isContractValid = await verifyContractBytecode(proposedBytecode);
       if (!update.owner) throw new Error('Owner is not set');
       if (!isContractValid) throw new Error('Contract is not valid');
+
       await this.buildContract(tx, update.owner);
+      const transaction_log: TransactionLog = {
+        id: tx,
+        description: 'Deploy contract',
+        signed: true,
+        onChain: false,
+        timestamp: Date.now(),
+      };
+      useTransactionsStore().addUserTransaction(transaction_log);
     }
 
     // if we are signing a transaction that calls the contract
@@ -207,6 +230,7 @@ export class GameChannel {
     ) {
       await this.handleOpponentCallUpdate(update);
     }
+
     return new Promise((resolve) => {
       resolve(sdk.signTransaction(tx, {}));
     });
@@ -232,6 +256,10 @@ export class GameChannel {
           this.game.round.hasRevealed = true;
           nextTick(() => this.revealRoundResult());
         }
+      });
+      this.getChannelWithoutProxy().on('message', (message) => {
+        const msg = JSON.parse(message.info);
+        this.handleMessage(msg);
       });
     }
   }
@@ -357,5 +385,11 @@ export class GameChannel {
     this.game.round.isCompleted = false;
     this.game.round.hasRevealed = false;
     this.game.round.winner = undefined;
+  }
+  private handleMessage(message: { type: string; data: TransactionLog }) {
+    if (message.type === 'add_bot_transaction_log') {
+      const txLog = message.data as TransactionLog;
+      useTransactionsStore().addBotTransaction(txLog);
+    }
   }
 }
