@@ -33,7 +33,7 @@ export const genesisFund = async (address: Encoded.AccountAddress) => {
   if (!IS_USING_LOCAL_NODE) throw new Error('genesis fund is only for local node usage');
   await sdk.addAccount(FAUCET_ACCOUNT, { select: true });
   await sdk.awaitHeight(2);
-  await sdk.spend(1e25, address);
+  await sdk.spend(10e18, address);
   if (sdk.accounts[FAUCET_PUBLIC_ADDRESS]) sdk.removeAccount(FAUCET_PUBLIC_ADDRESS);
 };
 

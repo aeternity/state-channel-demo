@@ -25,8 +25,6 @@ describe('SDK', () => {
   it('cannot call contract when channel is not initialized', async () => {
     const gameChannel = new GameChannel();
     gameChannel.autoSign = true;
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    await gameChannel.initializeChannel();
     createTestingPinia({
       initialState: {
         channel: {
@@ -34,7 +32,9 @@ describe('SDK', () => {
         },
       },
     });
-    await expect(gameChannel.callContract('init', [])).rejects.toThrow();
+    await expect(gameChannel.callContract('init', [])).rejects.toThrowError(
+      'Channel is not open'
+    );
   });
   it('cannot call contract when contract is not deployed', async () => {
     const gameChannel = new GameChannel();
@@ -49,8 +49,10 @@ describe('SDK', () => {
     });
     await waitForChannelReady(gameChannel.getChannelWithoutProxy());
     expect(gameChannel.contract).toBeFalsy();
-    await expect(gameChannel.callContract('init', [])).rejects.toThrow();
-  });
+    await expect(gameChannel.callContract('init', [])).rejects.toThrowError(
+      'Contract is not set'
+    );
+  }, 10000);
 
   it('can call contract after it is deployed', async () => {
     const gameChannel = new GameChannel();
@@ -154,32 +156,6 @@ describe('SDK', () => {
       expect(
         verifyContractBytecode(contract.bytecode, wrongSource)
       ).resolves.toBeFalsy();
-    });
-  });
-});
-
-describe('GameChannel', () => {
-  describe('fetchChannelConfig()', () => {
-    it('retries with a different sdk if account is greylisted', async () => {
-      const fetchSpy = vi.spyOn(global, 'fetch');
-      fetchSpy.mockResolvedValueOnce({
-        headers: {} as any,
-        ok: false,
-        redirected: false,
-        status: 500,
-        statusText: 'lalalal',
-        type: 'error',
-        json: () => {
-          return {
-            error: 'account is greylisted',
-          };
-        },
-        url: '',
-      } as unknown as Response);
-
-      const gameChannel = new GameChannel();
-      await gameChannel.fetchChannelConfig();
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
     }, 10000);
   });
 });
