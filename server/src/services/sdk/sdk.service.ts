@@ -2,7 +2,6 @@ import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { AeSdk, Node } from '@aeternity/aepp-sdk';
 import axios, { AxiosError } from 'axios';
 import BigNumber from 'bignumber.js';
-import { setTimeout } from 'timers/promises';
 import {
   COMPILER_URL,
   FAUCET_PUBLIC_ADDRESS,
