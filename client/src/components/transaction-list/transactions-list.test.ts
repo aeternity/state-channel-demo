@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
-import TransactionsList from '../src/components/TransactionsList.vue';
+import TransactionsList from './transaction-list.vue';
 
 describe('Render Transactions List', () => {
   expect(TransactionsList).toBeTruthy();

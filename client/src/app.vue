@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import ChannelInitialization from './components/ChannelInitialization.vue';
-import TransactionsList from './components/TransactionsList.vue';
-import Header from './components/Header.vue';
-import RockPaperScissors from './components/RockPaperScissors.vue';
+import ChannelInitialization from './components/channel-initialization/channel-initialization.vue';
+import TransactionsList from './components/transaction-list/transaction-list.vue';
+import Header from './components/header/header.vue';
+import RockPaperScissors from './components/rock-paper-scissors/rock-paper-scissors.vue';
 import { useChannelStore } from './stores/channel';
 import { onBeforeUnmount, onMounted, computed } from 'vue';
-import { initSdk, returnCoinsToFaucet, sdk } from './sdk/sdkService';
-import { GameChannel } from './sdk/GameChannel';
+import {
+  initSdk,
+  returnCoinsToFaucet,
+  sdk,
+} from './utils/sdk-service/sdk-service';
+import { GameChannel } from './utils/game-channel/game-channel';
 
 const channelStore = useChannelStore();
 

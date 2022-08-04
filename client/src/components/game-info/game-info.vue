@@ -21,7 +21,7 @@ defineProps<{
 </template>
 
 <style scoped lang="scss">
-@import '../mediaqueries.scss';
+@import '../../mediaqueries.scss';
 
 .round-info {
   display: flex;

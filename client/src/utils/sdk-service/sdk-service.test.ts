@@ -6,11 +6,11 @@ import {
   verifyContractBytecode,
   initSdk,
   sdk,
-} from '../src/sdk/sdkService';
+} from '../../utils/sdk-service/sdk-service';
 import { createTestingPinia } from '@pinia/testing';
-import { GameChannel } from '../src/sdk/GameChannel';
+import { GameChannel } from '../../utils/game-channel/game-channel';
 import contractSource from '@aeternity/rock-paper-scissors';
-import { waitForChannelReady } from './utils';
+import { waitForChannelReady } from '../../../tests/utils';
 import SHA from 'sha.js';
 
 describe('SDK', () => {

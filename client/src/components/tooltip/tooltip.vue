@@ -6,7 +6,7 @@ defineProps<{
 
 <template>
   <div class="tooltip" data-testid="tooltip">
-    <img src="../assets/svg/info.svg" alt="?" />
+    <img src="../../assets/svg/info.svg" alt="?" />
     <div class="tooltip-text">
       {{ text }}
     </div>
@@ -14,7 +14,7 @@ defineProps<{
 </template>
 
 <style scoped lang="scss">
-@import '../mediaqueries.scss';
+@import '../../mediaqueries.scss';
 
 .tooltip {
   display: block;

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useChannelStore } from '../stores/channel';
-import { useTransactionsStore } from '../stores/transactions';
-import SingleTransaction from './SingleTransaction.vue';
+import { useChannelStore } from '../../stores/channel';
+import { useTransactionsStore } from '../../stores/transactions';
+import SingleTransaction from '../transaction/transaction.vue';
 
 const EXPAND_ICON = new URL('../assets/svg/expand.svg', import.meta.url).href;
 const MINIMISE_ICON = new URL('../assets/minimize.png', import.meta.url).href;
@@ -87,7 +87,7 @@ const isFullscreen = ref(false);
 </template>
 
 <style scoped lang="scss">
-@import '../mediaqueries.scss';
+@import '../../mediaqueries.scss';
 
 .transactions {
   grid-area: transactions;

@@ -1,7 +1,7 @@
 import { BigNumber } from 'bignumber.js';
 import { render } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
-import PlayerInfo from '../src/components/PlayerInfo.vue';
+import PlayerInfo from './player-info.vue';
 
 const mockPlayerInfoNoBalance = { name: 'You' };
 const mockPlayerInfo = { name: 'You', balance: new BigNumber(3e18) };

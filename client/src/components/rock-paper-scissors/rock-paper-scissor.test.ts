@@ -1,4 +1,4 @@
-import { GameChannel, Selections } from './../src/sdk/GameChannel';
+import { GameChannel, Selections } from '../../utils/game-channel/game-channel';
 import { render } from '@testing-library/vue';
 import { describe, it, expect, vi } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';

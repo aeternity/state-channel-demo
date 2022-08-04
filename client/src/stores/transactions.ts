@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { TransactionLog } from '../components/SingleTransaction.vue';
+import { TransactionLog } from '../components/transaction/SingleTransaction.vue';
 
 interface TransactionsStore {
   userTransactions: Array<TransactionLog>;

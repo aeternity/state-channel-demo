@@ -1,8 +1,6 @@
 import { render } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
-import SingleTransaction, {
-  TransactionLog,
-} from '../src/components/SingleTransaction.vue';
+import SingleTransaction, { TransactionLog } from './transaction.vue';
 
 const mockTransactionLog: TransactionLog = {
   id: 'tx_123',

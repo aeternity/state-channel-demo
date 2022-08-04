@@ -10,11 +10,11 @@ import {
   returnCoinsToFaucet,
   sdk,
   verifyContractBytecode,
-} from './sdkService';
+} from '../sdk-service/sdk-service';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import SHA from 'sha.js';
-import { useTransactionsStore } from '../stores/transactions';
-import { TransactionLog } from '../components/SingleTransaction.vue';
+import { useTransactionsStore } from '../../stores/transactions';
+import { TransactionLog } from '../../components/transaction/transaction.vue';
 
 interface Update {
   call_data: Encoded.ContractBytearray;

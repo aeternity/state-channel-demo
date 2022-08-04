@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
-import { GameChannel, Selections } from '../src/sdk/GameChannel';
-import { initSdk } from '../src/sdk/sdkService';
-import { waitForChannelReady } from './utils';
+import { GameChannel, Selections } from '../../utils/game-channel/game-channel';
+import { initSdk } from '../sdk-service/sdk-service';
+import { waitForChannelReady } from '../../../tests/utils';
 
 describe('GameChannel', async () => {
   let gameChannel: GameChannel;

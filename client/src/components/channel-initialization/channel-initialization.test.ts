@@ -1,6 +1,6 @@
 import { render, fireEvent } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
-import ChannelInitialization from '../src/components/ChannelInitialization.vue';
+import ChannelInitialization from './channel-initialization.vue';
 import { createTestingPinia } from '@pinia/testing';
 
 describe('Open State Channel Button', () => {
