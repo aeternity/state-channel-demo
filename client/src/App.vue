@@ -3,7 +3,6 @@ import ChannelInitialization from './components/ChannelInitialization.vue';
 import TransactionsList from './components/TransactionsList.vue';
 import Header from './components/Header.vue';
 import RockPaperScissors from './components/RockPaperScissors.vue';
-import PopUp from './components/PopUp.vue';
 import { useChannelStore } from './stores/channel';
 import { onBeforeUnmount, onMounted } from 'vue';
 import { initSdk, returnCoinsToFaucet, sdk } from './sdk/sdkService';
@@ -31,7 +30,6 @@ onBeforeUnmount(async () => {
 </script>
 
 <template>
-  <PopUp />
   <Header />
   <ChannelInitialization
     v-if="!channelStore.channel?.isOpen || !channelStore.channel?.contract"

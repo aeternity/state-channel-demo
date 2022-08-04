@@ -1,5 +1,5 @@
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getNewSdk,
   FAUCET_ACCOUNT,
@@ -24,7 +24,6 @@ describe('SDK', () => {
 
   it('cannot call contract when channel is not initialized', async () => {
     const gameChannel = new GameChannel();
-    gameChannel.autoSign = true;
     createTestingPinia({
       initialState: {
         channel: {
@@ -38,7 +37,6 @@ describe('SDK', () => {
   });
   it('cannot call contract when contract is not deployed', async () => {
     const gameChannel = new GameChannel();
-    gameChannel.autoSign = true;
     await gameChannel.initializeChannel();
     createTestingPinia({
       initialState: {
@@ -56,7 +54,6 @@ describe('SDK', () => {
 
   it('can call contract after it is deployed', async () => {
     const gameChannel = new GameChannel();
-    gameChannel.autoSign = true;
     await gameChannel.initializeChannel();
     createTestingPinia({
       initialState: {
@@ -80,7 +77,6 @@ describe('SDK', () => {
 
   it('creates game channel instance, initializes Channel and returns coins to faucet on channel closing', async () => {
     const gameChannel = new GameChannel();
-    gameChannel.autoSign = true;
     await gameChannel.initializeChannel();
     createTestingPinia({
       initialState: {

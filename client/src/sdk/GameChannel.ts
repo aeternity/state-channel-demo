@@ -12,7 +12,6 @@ import {
   verifyContractBytecode,
 } from './sdkService';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
-import { PopUpData, usePopUpStore } from '../stores/popup';
 import SHA from 'sha.js';
 
 interface Update {
@@ -80,7 +79,6 @@ export class GameChannel {
   };
   contract?: ContractInstance;
   contractAddress?: Encoded.ContractAddress;
-  autoSign = false;
 
   getChannelWithoutProxy() {
     if (!this.channelInstance) {
@@ -172,21 +170,15 @@ export class GameChannel {
     if (selection === Selections.none) {
       throw new Error('Selection should not be none');
     }
-    const popupData: Partial<PopUpData> = {
-      title: Selections[selection].toUpperCase(),
-      text: 'Confirm your selection',
-    };
 
-    const result = await this.callContract(
-      Methods.provide_hash,
-      [this.getSelectionHash(selection)],
-      { popupData }
-    );
+    const result = await this.callContract(Methods.provide_hash, [
+      this.getSelectionHash(selection),
+    ]);
     if (result?.accepted) this.game.round.userSelection = selection;
     else throw new Error('Selection was not accepted');
   }
 
-  async setBotSelection(selection: Selections) {
+  setBotSelection(selection: Selections) {
     this.game.round.botSelection = selection;
   }
 
@@ -195,63 +187,28 @@ export class GameChannel {
     tx: Encoded.Transaction,
     options: {
       updates: Update[];
-    },
-    popupData?: Partial<PopUpData>
+    }
   ): Promise<Encoded.Transaction> {
-    popupData = popupData ?? {};
     const update = options?.updates?.[0];
 
     // if we are signing a transaction that updates the contract
     if (update?.op === 'OffChainNewContract' && update?.code && update?.owner) {
       const proposedBytecode = update.code;
       const isContractValid = await verifyContractBytecode(proposedBytecode);
-      popupData.title = 'Contract validation';
-      popupData.text = `Contract bytecode is 
-      ${isContractValid ? 'matching' : 'not matching'}`;
-      popupData.mainBtnText = 'Accept Contract';
-      popupData.secBtnText = 'Decline Contract';
-      popupData.mainBtnAction = async () => {
-        if (!update.owner) throw new Error('Owner is not set');
-        await this.buildContract(tx, update.owner);
-      };
+      if (!update.owner) throw new Error('Owner is not set');
+      if (!isContractValid) throw new Error('Contract is not valid');
+      await this.buildContract(tx, update.owner);
     }
 
+    // if we are signing a transaction that calls the contract
     if (
-      options?.updates[0]?.op === 'OffChainCallContract' &&
-      options?.updates[0]?.caller_id !== sdk.selectedAddress
+      update?.op === 'OffChainCallContract' &&
+      update?.caller_id !== sdk.selectedAddress
     ) {
-      popupData.mainBtnAction = () =>
-        this.handleOpponentCallUpdate(options.updates[0]);
+      await this.handleOpponentCallUpdate(update);
     }
-
-    if (this.autoSign) {
-      return new Promise((resolve) => {
-        resolve(sdk.signTransaction(tx, {}));
-        // call the callback if it exists
-        popupData?.mainBtnAction?.();
-      });
-    }
-    const popupStore = usePopUpStore();
     return new Promise((resolve) => {
-      popupStore.showPopUp({
-        title: popupData?.title ?? `Signing ${tag}`,
-        text: popupData?.text ?? 'Do you want to sign this transaction?',
-        mainBtnText: popupData?.mainBtnText ?? 'Confirm',
-        secBtnText: popupData?.secBtnText ?? 'Cancel',
-        mainBtnAction: () => {
-          popupStore.resetPopUp();
-          resolve(sdk.signTransaction(tx, {}));
-          // call the callback if it exists
-          popupData?.mainBtnAction?.();
-        },
-        secBtnAction: () => {
-          popupStore.resetPopUp();
-          // @ts-expect-error reject the promise
-          resolve(1);
-          // call the callback if it exists
-          popupData?.secBtnAction?.();
-        },
-      });
+      resolve(sdk.signTransaction(tx, {}));
     });
   }
 
@@ -294,11 +251,10 @@ export class GameChannel {
     method: string,
     params: unknown[],
     options: {
-      popupData?: Partial<PopUpData>;
       amount?: number | BigNumber;
     } = {}
   ) {
-    const { popupData, amount } = options;
+    const { amount } = options;
 
     if (!this.channelInstance) {
       throw new Error('Channel is not open');
@@ -324,22 +280,16 @@ export class GameChannel {
           updates: Update[];
         }
       ) => {
-        if (method === Methods.reveal && options != null)
-          return this.signTx(
-            `bot pick confirmation. Reveal Winner?`,
-            tx,
-            options,
-            popupData
-          );
-        return this.signTx(`call ${method}`, tx, options, popupData);
+        return this.signTx(`contract call ${method}`, tx, options);
       }
     );
     return result;
   }
 
   async updateBalances() {
-    if (!this.channelInstance || !this.channelConfig)
-      throw new Error('Channel is not open');
+    if (!this.channelConfig) {
+      throw new Error('Channel config is not set');
+    }
     const { initiatorId, responderId } = this.channelConfig;
     const balances = await this.getChannelWithoutProxy().balances([
       initiatorId,
