@@ -74,7 +74,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_NODE_ENV=staging
-            VITE_BOT_SERVICE_URL=https://state-channel-demo-backend.dev.aepps.com
+            VITE_BOT_SERVICE_URL=https://pr-${{ env.PR_NUMBER }}-state-channel-demo-backend.stg.aepps.com
             VITE_CLIENT_PORT=8000 
             VITE_NODE_URL=https://testnet.aeternity.io
             VITE_COMPILER_URL= https://compiler.aepps.com
