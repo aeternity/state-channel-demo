@@ -5,8 +5,10 @@ import { useChannelStore } from '../../stores/channel';
 import { useTransactionsStore } from '../../stores/transactions';
 import SingleTransaction from '../transaction/transaction.vue';
 
-const EXPAND_ICON = new URL('../assets/svg/expand.svg', import.meta.url).href;
-const MINIMISE_ICON = new URL('../assets/minimize.png', import.meta.url).href;
+const EXPAND_ICON = new URL('../../assets/svg/expand.svg', import.meta.url)
+  .href;
+const MINIMISE_ICON = new URL('../../assets/minimize.png', import.meta.url)
+  .href;
 
 const channelStore = useChannelStore();
 const transactionStore = useTransactionsStore();

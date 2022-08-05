@@ -23,7 +23,7 @@ export default defineConfig({
     include: ['./**/*.test.ts'],
     globals: true,
     environment: 'happy-dom',
-    silent: true,
+    silent: false,
     env: {
       VITE_NODE_ENV: 'development',
       VITE_BOT_SERVICE_URL: 'http://localhost:3000',
@@ -38,8 +38,6 @@ export default defineConfig({
       VITE_RESPONDER_HOST: 'localhost',
       VITE_RESPONDER_PORT: '3333',
     },
-    minThreads: 1,
-    maxThreads: 1,
   },
   server: {
     watch: {
@@ -55,6 +53,3 @@ export default defineConfig({
     },
   },
 });
-function fileURLToPath(arg0: URL): string {
-  throw new Error('Function not implemented.');
-}

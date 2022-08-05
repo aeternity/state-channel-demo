@@ -52,7 +52,7 @@ export class GameChannel {
     status: number;
     statusText: string;
     message: string;
-  } = undefined;
+  };
   balances: {
     user?: BigNumber;
     bot?: BigNumber;
@@ -82,11 +82,43 @@ export class GameChannel {
   contract?: ContractInstance;
   contractAddress?: Encoded.ContractAddress;
 
+  // since gameChannel is reactive, we need to get the raw channel instance
   getChannelWithoutProxy() {
     if (!this.channelInstance) {
       throw new Error('Channel is not initialized');
     }
     return toRaw(this.channelInstance);
+  }
+
+  getStatus() {
+    return this.getChannelWithoutProxy().status();
+  }
+
+  getSelectionHash(selection: Selections): string {
+    this.game.round.hashKey = Math.random().toString(16).substring(2, 8);
+    return SHA('sha256')
+      .update(this.game.round.hashKey + selection)
+      .digest('hex');
+  }
+
+  getUserSelection() {
+    return this.game.round.userSelection;
+  }
+
+  async setUserSelection(selection: Selections) {
+    if (selection === Selections.none) {
+      throw new Error('Selection should not be none');
+    }
+
+    const result = await this.callContract(Methods.provide_hash, [
+      this.getSelectionHash(selection),
+    ]);
+    if (result?.accepted) this.game.round.userSelection = selection;
+    else throw new Error('Selection was not accepted');
+  }
+
+  setBotSelection(selection: Selections) {
+    this.game.round.botSelection = selection;
   }
 
   async fetchChannelConfig(): Promise<ChannelOptions> {
@@ -121,17 +153,9 @@ export class GameChannel {
   }
 
   async initializeChannel() {
-    await this.fetchChannelConfig()
-      .then(async (config) => {
-        this.channelConfig = config;
-        this.isFunded = true;
-        await this.openChannel();
-      })
-      .catch((e) => console.error(e));
-  }
-
-  async openChannel() {
-    if (!this.channelConfig) throw new Error('Channel config is not set');
+    const config = await this.fetchChannelConfig();
+    this.channelConfig = config;
+    this.isFunded = true;
 
     this.channelInstance = await Channel.initialize({
       ...this.channelConfig,
@@ -150,38 +174,7 @@ export class GameChannel {
     if (!this.channelInstance) {
       throw new Error('Channel is not open');
     }
-    this.channelInstance.disconnect();
-  }
-
-  getStatus() {
-    return this.getChannelWithoutProxy().status();
-  }
-
-  getSelectionHash(selection: Selections): string {
-    this.game.round.hashKey = Math.random().toString(16).substring(2, 8);
-    return SHA('sha256')
-      .update(this.game.round.hashKey + selection)
-      .digest('hex');
-  }
-
-  getUserSelection() {
-    return this.game.round.userSelection;
-  }
-
-  async setUserSelection(selection: Selections) {
-    if (selection === Selections.none) {
-      throw new Error('Selection should not be none');
-    }
-
-    const result = await this.callContract(Methods.provide_hash, [
-      this.getSelectionHash(selection),
-    ]);
-    if (result?.accepted) this.game.round.userSelection = selection;
-    else throw new Error('Selection was not accepted');
-  }
-
-  setBotSelection(selection: Selections) {
-    this.game.round.botSelection = selection;
+    this.channelInstance.shutdown(sdk.signTransaction.bind(sdk));
   }
 
   async signTx(
@@ -230,10 +223,7 @@ export class GameChannel {
     ) {
       await this.handleOpponentCallUpdate(update);
     }
-
-    return new Promise((resolve) => {
-      resolve(sdk.signTransaction(tx, {}));
-    });
+    return sdk.signTransaction(tx);
   }
 
   private registerEvents() {
@@ -268,7 +258,6 @@ export class GameChannel {
     // @ts-expect-error ts-mismatch
     const contractCreationRound = unpackTx(tx).tx.round;
     this.contractAddress = encodeContractAddress(owner, contractCreationRound);
-
     this.contract = await sdk.getContractInstance({
       source: contractSource,
     });
@@ -278,12 +267,8 @@ export class GameChannel {
   async callContract(
     method: string,
     params: unknown[],
-    options: {
-      amount?: number | BigNumber;
-    } = {}
+    amount?: number | BigNumber
   ) {
-    const { amount } = options;
-
     if (!this.channelInstance) {
       throw new Error('Channel is not open');
     }
@@ -343,10 +328,7 @@ export class GameChannel {
     await this.callContract(
       Methods.reveal,
       [this.game.round.hashKey, this.game.round.userSelection],
-      {
-        // reveal method is not payable, so we use 0
-        amount: 0,
-      }
+      0 // reveal method is not payable, so we use 0
     );
 
     const currentRound = this?.getChannelWithoutProxy().round();

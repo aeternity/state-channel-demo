@@ -1,17 +1,25 @@
+import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
 import { GameChannel, Selections } from '../../utils/game-channel/game-channel';
-import { initSdk } from '../sdk-service/sdk-service';
-import { waitForChannelReady } from '../../../tests/utils';
+import { initSdk, sdk } from '../sdk-service/sdk-service';
+import contractSource from '@aeternity/rock-paper-scissors';
 
 describe('GameChannel', async () => {
-  let gameChannel: GameChannel;
+  const gameChannel = new GameChannel();
+  await initSdk();
+
+  vi.spyOn(gameChannel, 'callContract').mockResolvedValue({
+    accepted: true,
+    signedTx: 'tx_mock',
+  });
+
+  vi.spyOn(sdk, 'getContractInstance').mockResolvedValue({
+    source: contractSource,
+    compile: () => ({ bytecode: 'bytecode_mock' }),
+  } as unknown as ContractInstance);
 
   beforeEach(async () => {
-    await initSdk();
-    gameChannel = new GameChannel();
-    gameChannel.autoSign = true;
-    await gameChannel.initializeChannel();
     createTestingPinia({
       initialState: {
         channel: {
@@ -19,7 +27,6 @@ describe('GameChannel', async () => {
         },
       },
     });
-    await waitForChannelReady(gameChannel.getChannelWithoutProxy());
   });
 
   it('creates game channel instance', async () => {
@@ -29,19 +36,16 @@ describe('GameChannel', async () => {
   });
 
   it('can set/get selection for user', async () => {
-    // wait for contract to be deployed
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    expect(gameChannel.contract).toBeTruthy();
     await gameChannel.setUserSelection(Selections.rock);
     expect(gameChannel.getUserSelection()).toBe(Selections.rock);
-  }, 10000);
+  });
 
   it('throws error if selection is none', async () => {
     let errorMsg = '';
     try {
       await gameChannel.setUserSelection(Selections.none);
     } catch (e) {
-      errorMsg = e.message;
+      errorMsg = (e as { message: string }).message;
     }
     expect(errorMsg).toBe('Selection should not be none');
   });
@@ -52,7 +56,7 @@ describe('GameChannel', async () => {
       const fetchSpy = vi.spyOn(global, 'fetch');
       fetchSpy
         .mockResolvedValueOnce({
-          headers: {} as any,
+          headers: {} as Headers,
           ok: false,
           redirected: false,
           status: 500,
@@ -66,7 +70,7 @@ describe('GameChannel', async () => {
           url: '',
         } as unknown as Response)
         .mockReturnValueOnce({
-          headers: {} as any,
+          headers: {} as Headers,
           ok: false,
           redirected: false,
           status: 200,
@@ -76,7 +80,7 @@ describe('GameChannel', async () => {
             return {};
           },
           url: '',
-        });
+        } as unknown as Promise<Response>);
 
       const gameChannel = new GameChannel();
       await gameChannel.fetchChannelConfig();

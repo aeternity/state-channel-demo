@@ -2,7 +2,7 @@ import { GameChannel, Selections } from '../../utils/game-channel/game-channel';
 import { render } from '@testing-library/vue';
 import { describe, it, expect, vi } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
-import RockPaperScissors from '../src/components/RockPaperScissors.vue';
+import RockPaperScissors from './rock-paper-scissors.vue';
 
 describe('Rock Paper Scissors Component', () => {
   const gameChannel = new GameChannel();

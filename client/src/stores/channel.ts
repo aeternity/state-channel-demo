@@ -1,4 +1,4 @@
-import { GameChannel } from '../sdk/GameChannel';
+import { GameChannel } from '../utils/game-channel/game-channel';
 import { defineStore } from 'pinia';
 
 interface ChannelStore {
