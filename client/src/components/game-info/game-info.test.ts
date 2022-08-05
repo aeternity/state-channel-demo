@@ -1,7 +1,7 @@
 import { BigNumber } from 'bignumber.js';
 import { render } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
-import GameInfo from '../src/components/GameInfo.vue';
+import GameInfo from './game-info.vue';
 
 const initialGameInfo = {
   stake: new BigNumber(0.05e18),

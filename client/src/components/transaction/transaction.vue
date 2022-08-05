@@ -37,7 +37,7 @@ function truncate(str: string, length: number): string {
 </template>
 
 <style scoped lang="scss">
-@import '../mediaqueries.scss';
+@import '../../mediaqueries.scss';
 
 .transaction {
   font-family: 'DM Mono', monospace;

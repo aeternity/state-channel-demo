@@ -2,7 +2,6 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import replace from '@rollup/plugin-replace';
-
 // https://vitejs.dev/config/
 export default defineConfig({
   optimizeDeps: {
@@ -21,10 +20,9 @@ export default defineConfig({
     dedupe: ['vue'],
   },
   test: {
-    include: ['./tests/**/*.test.ts'],
+    include: ['./**/*.test.ts'],
     globals: true,
     environment: 'happy-dom',
-    silent: true,
     env: {
       VITE_NODE_ENV: 'development',
       VITE_BOT_SERVICE_URL: 'http://localhost:3000',
@@ -39,8 +37,6 @@ export default defineConfig({
       VITE_RESPONDER_HOST: 'localhost',
       VITE_RESPONDER_PORT: '3333',
     },
-    minThreads: 1,
-    maxThreads: 1,
   },
   server: {
     watch: {

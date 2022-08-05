@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { default as Button } from './GenericButton.vue';
-import LoadingAnimation from './LoadingAnimation.vue';
-import { useChannelStore } from '../stores/channel';
+import { default as Button } from '../generic-button/generic-button.vue';
+import LoadingAnimation from '../loading-animation/loading-animation.vue';
+import { useChannelStore } from '../../stores/channel';
 
 const openChannelInitiated = ref(false);
 const channelStore = useChannelStore();
@@ -66,7 +66,7 @@ async function openStateChannel(): Promise<void> {
 </template>
 
 <style scoped lang="scss">
-@import '../mediaqueries.scss';
+@import '../../mediaqueries.scss';
 
 .open-channel {
   grid-area: body;

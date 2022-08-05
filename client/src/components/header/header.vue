@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useChannelStore } from '../stores/channel';
-import PlayerInfo from './PlayerInfo.vue';
-import GameInfo from './GameInfo.vue';
+import { useChannelStore } from '../../stores/channel';
+import PlayerInfo from '../player-info/player-info.vue';
+import GameInfo from '../game-info/game-info.vue';
 const channelStore = useChannelStore();
 </script>
 
@@ -20,7 +20,7 @@ const channelStore = useChannelStore();
 </template>
 
 <style scoped lang="scss">
-@import '../mediaqueries.scss';
+@import '../../mediaqueries.scss';
 
 .header {
   grid-area: header;

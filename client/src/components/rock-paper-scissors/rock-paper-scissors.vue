@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Selections } from '../sdk/GameChannel';
-import { useChannelStore } from '../stores/channel';
-import GenericButton from './GenericButton.vue';
+import { Selections } from '../../utils/game-channel/game-channel';
+import { useChannelStore } from '../../stores/channel';
+import GenericButton from '../generic-button/generic-button.vue';
 
 const gameChannel = useChannelStore();
 
@@ -122,7 +122,7 @@ async function makeSelection(selection: Selections) {
 </template>
 
 <style scoped lang="scss">
-@import '../mediaqueries.scss';
+@import '../../mediaqueries.scss';
 
 .header {
   width: 100%;
