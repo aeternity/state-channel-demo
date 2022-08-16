@@ -20,15 +20,15 @@ function formatDate(timestamp: number): string {
     ('0' + date.getSeconds()).slice(-2)
   );
 }
-function truncate(str: string, length: number): string {
-  return str.length > length ? str.slice(0, length - 1) + '…' : str;
+function formatTxId(id: string): string {
+  return id.length > 10 ? id.slice(0, 5) + '…' + id.slice(-5, -1) : id;
 }
 </script>
 
 <template>
   <div class="transaction" :class="{ 'on-chain': transaction.onChain }">
     <span class="on-chain-pill" v-if="transaction.onChain">on Chain</span>
-    {{ `TXID ${truncate(transaction.id, 10)} - ${transaction.description}` }}
+    {{ `TXID ${formatTxId(transaction.id)} - ${transaction.description}` }}
     <div class="info">
       <span>{{ formatDate(transaction.timestamp) }} | </span>
       <span> {{ transaction.signed ? 'Signed' : 'Declined' }}</span>
