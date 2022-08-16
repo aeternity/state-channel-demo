@@ -188,14 +188,14 @@ export class GameChannel {
 
     // if we are signing the open channel tx
     if (tag === 'responder_sign') {
-      const transaction_log: TransactionLog = {
+      const transactionLog: TransactionLog = {
         id: tx,
         description: 'Open state channel',
         signed: true,
         onChain: true,
         timestamp: Date.now(),
       };
-      useTransactionsStore().addUserTransaction(transaction_log);
+      useTransactionsStore().addUserTransaction(transactionLog);
     }
 
     // if we are signing a transaction that updates the contract
@@ -206,23 +206,29 @@ export class GameChannel {
       if (!isContractValid) throw new Error('Contract is not valid');
 
       await this.buildContract(tx, update.owner);
-      const transaction_log: TransactionLog = {
+      const transactionLog: TransactionLog = {
         id: tx,
         description: 'Deploy contract',
         signed: true,
         onChain: false,
         timestamp: Date.now(),
       };
-      useTransactionsStore().addUserTransaction(transaction_log);
+      useTransactionsStore().addUserTransaction(transactionLog);
     }
 
-    // if we are signing a transaction that calls the contract
+    // if we are signing a bot transaction that calls the contract
     if (
       update?.op === 'OffChainCallContract' &&
       update?.caller_id !== sdk.selectedAddress
     ) {
       await this.handleOpponentCallUpdate(update);
     }
+
+    // for both user and bot calls to the contract
+    if (update?.op === 'OffChainCallContract') {
+      await this.logCallUpdate(update.call_data, tx);
+    }
+
     return sdk.signTransaction(tx);
   }
 
@@ -293,7 +299,7 @@ export class GameChannel {
           updates: Update[];
         }
       ) => {
-        return this.signTx(`contract call ${method}`, tx, options);
+        return this.signTx(method, tx, options);
       }
     );
     return result;
@@ -322,6 +328,37 @@ export class GameChannel {
       default:
         throw new Error(`Unhandled method: ${data.function}`);
     }
+  }
+
+  async logCallUpdate(
+    callData: Encoded.ContractBytearray,
+    tx: Encoded.Transaction
+  ) {
+    if (!this.contract) throw new Error('Contract is not set');
+    if (!this.contract.bytecode) throw new Error('Contract is not compiled');
+    const decodedCallData = await decodeCallData(
+      callData,
+      this.contract.bytecode
+    );
+    const transactionLog: TransactionLog = {
+      id: tx,
+      description: `User called ${decodedCallData.function}()`,
+      signed: true,
+      onChain: false,
+      timestamp: Date.now(),
+    };
+    switch (decodedCallData.function) {
+      case Methods.provide_hash:
+        transactionLog.description = `User hashed his selection`;
+        break;
+      case Methods.reveal:
+        transactionLog.description = `User revealed his selection: ${decodedCallData.arguments[1].value}`;
+        break;
+      case Methods.player1_move:
+        transactionLog.description = `Bot selected ${decodedCallData.arguments[0].value}`;
+        break;
+    }
+    useTransactionsStore().addUserTransaction(transactionLog);
   }
 
   async revealRoundResult() {
@@ -368,6 +405,7 @@ export class GameChannel {
     this.game.round.hasRevealed = false;
     this.game.round.winner = undefined;
   }
+
   private handleMessage(message: { type: string; data: TransactionLog }) {
     if (message.type === 'add_bot_transaction_log') {
       const txLog = message.data as TransactionLog;

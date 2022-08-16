@@ -1,7 +1,7 @@
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
-import { GameChannel, Selections } from '../../utils/game-channel/game-channel';
+import { GameChannel, Selections } from './game-channel';
 import { initSdk, sdk } from '../sdk-service/sdk-service';
 import contractSource from '@aeternity/rock-paper-scissors';
 
@@ -26,6 +26,7 @@ describe('GameChannel', async () => {
           channel: gameChannel,
         },
       },
+      stubActions: false,
     });
   });
 

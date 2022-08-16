@@ -7,9 +7,12 @@ import {
   ContractService,
   CONTRACT_CONFIGURATION,
   GAME_STAKE,
+  Methods,
 } from '../contract';
 import { getNextCallData } from '../contract/contract.service';
-import { FAUCET_PUBLIC_ADDRESS, sdk, Update } from '../sdk';
+import {
+  FAUCET_PUBLIC_ADDRESS, sdk, Update, decodeCallData,
+} from '../sdk';
 import { fundAccount } from '../sdk/sdk.service';
 import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
 import { GameSession, TransactionLog } from './bot.interface';
@@ -60,6 +63,70 @@ export function removeGameSession(onAccount: Encoded.AccountAddress) {
 }
 
 /**
+ * In order to log the updates of the bot service on the client terminal,
+ * we construct and send a transaction log through the channel
+ * on each contract call.
+ */
+export async function sendCallUpdateLog(
+  tx: Encoded.Transaction,
+  callData: Encoded.ContractBytearray,
+  gameSession: GameSession,
+) {
+  const data = await decodeCallData(
+    callData,
+    gameSession.contractState.instance.bytecode,
+  );
+  const txLog: TransactionLog = {
+    id: tx,
+    description: `${data.function}()`,
+    signed: true,
+    onChain: false,
+    timestamp: Date.now(),
+  };
+  switch (data.function) {
+    case Methods.provide_hash:
+      txLog.description = 'User hashed his selection';
+      break;
+    case Methods.reveal: {
+      const selection = data.arguments[1].value.toString();
+      txLog.description = `User revealed his selection: ${selection}`;
+      break;
+    }
+    case Methods.player1_move: {
+      const selection = data.arguments[0].value.toString();
+      txLog.description = `Bot selected ${selection}`;
+      break;
+    }
+    default:
+      throw new Error(`Unhandled method: ${data.function}`);
+  }
+  void gameSession.channel.sendMessage(
+    {
+      type: 'add_bot_transaction_log',
+      data: txLog,
+    },
+    gameSession.participants.responderId,
+  );
+}
+
+/**
+ * Since we cannot send a message through the channel until the user also initializes the channel,
+ * we store the log and send it when the user initializes the channel.
+ */
+function sendOpenStateChannelTxLog(
+  channelInstance: Channel,
+  recipient: Encoded.AccountAddress,
+) {
+  void channelInstance.sendMessage(
+    {
+      type: 'add_bot_transaction_log',
+      data: openStateChannelTxLog,
+    },
+    recipient,
+  );
+}
+
+/**
  * Returns funds to the faucet and removes the game session from the pool
  */
 export async function handleChannelClose(onAccount: Encoded.AccountAddress) {
@@ -83,7 +150,9 @@ export async function handleChannelClose(onAccount: Encoded.AccountAddress) {
 export async function handleOpponentCallUpdate(
   update: Update,
   gameSession: GameSession,
+  tx: Encoded.Transaction,
 ) {
+  void sendCallUpdateLog(tx, update.call_data, gameSession);
   const nextCallDataToSend = await getNextCallData(
     update,
     gameSession.contractState.instance,
@@ -103,24 +172,18 @@ async function respondToContractCall(gameSession: GameSession) {
       abiVersion: CONTRACT_CONFIGURATION.abiVersion,
       callData: gameSession.contractState.callDataToSend,
     },
-    async (tx: Encoded.Transaction) => sdk.signTransaction(tx, {
-      onAccount: gameSession.participants.initiatorId,
-    }),
+    async (tx: Encoded.Transaction) => {
+      void sendCallUpdateLog(
+        tx,
+        gameSession.contractState.callDataToSend,
+        gameSession,
+      );
+      return sdk.signTransaction(tx, {
+        onAccount: gameSession.participants.initiatorId,
+      });
+    },
   );
   gameSession.contractState.callDataToSend = null;
-}
-
-function sendOpenStateChannelTxLog(
-  channelInstance: Channel,
-  recipient: Encoded.AccountAddress,
-) {
-  void channelInstance.sendMessage(
-    {
-      type: 'add_bot_transaction_log',
-      data: openStateChannelTxLog,
-    },
-    recipient,
-  );
 }
 
 /**
@@ -215,7 +278,7 @@ export async function generateGameSession(
       }
       if (options?.updates[0]?.op === 'OffChainCallContract') {
         const gameSession = gameSessionPool.get(initiatorId);
-        void handleOpponentCallUpdate(options.updates[0], gameSession);
+        void handleOpponentCallUpdate(options.updates[0], gameSession, tx);
       }
       return bot.signTransaction(tx, {
         onAccount: initiatorId,
