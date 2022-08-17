@@ -240,9 +240,8 @@ export async function generateGameSession(
   await sdk.addAccount(new MemoryAccount({ keypair: botKeyPair }), {
     select: true,
   });
-  const bot = sdk;
 
-  const initiatorId = await bot.address();
+  const initiatorId = botKeyPair.publicKey;
   const responderId = playerAddress;
 
   await fundAccount(initiatorId);
@@ -280,7 +279,7 @@ export async function generateGameSession(
         const gameSession = gameSessionPool.get(initiatorId);
         void handleOpponentCallUpdate(options.updates[0], gameSession, tx);
       }
-      return bot.signTransaction(tx, {
+      return sdk.signTransaction(tx, {
         onAccount: initiatorId,
       });
     },
