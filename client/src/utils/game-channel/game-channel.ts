@@ -81,7 +81,6 @@ export class GameChannel {
   };
   contract?: ContractInstance;
   contractAddress?: Encoded.ContractAddress;
-  contractReady = false;
 
   // since gameChannel is reactive, we need to get the raw channel instance
   getChannelWithoutProxy() {
@@ -209,15 +208,7 @@ export class GameChannel {
       if (!update.owner) throw new Error('Owner is not set');
       if (!isContractValid) throw new Error('Contract is not valid');
 
-      await this.buildContract(tx, update.owner);
-      const transactionLog: TransactionLog = {
-        id: tx,
-        description: 'Deploy contract',
-        signed: true,
-        onChain: false,
-        timestamp: Date.now(),
-      };
-      useTransactionsStore().addUserTransaction(transactionLog);
+      void this.buildContract(tx, update.owner);
     }
 
     // for both user and bot calls to the contract
@@ -263,12 +254,19 @@ export class GameChannel {
   async buildContract(tx: Encoded.Transaction, owner: Encoded.AccountAddress) {
     // @ts-expect-error ts-mismatch
     const contractCreationRound = unpackTx(tx).tx.round;
-    this.contractAddress = encodeContractAddress(owner, contractCreationRound);
     this.contract = await sdk.getContractInstance({
       source: contractSource,
     });
     await this.contract.compile();
-    this.contractReady = true;
+    this.contractAddress = encodeContractAddress(owner, contractCreationRound);
+    const transactionLog: TransactionLog = {
+      id: tx,
+      description: 'Deploy contract',
+      signed: true,
+      onChain: false,
+      timestamp: Date.now(),
+    };
+    useTransactionsStore().addUserTransaction(transactionLog);
   }
 
   async callContract(

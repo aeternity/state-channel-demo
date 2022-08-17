@@ -100,7 +100,7 @@ export async function sendCallUpdateLog(
     default:
       throw new Error(`Unhandled method: ${data.function}`);
   }
-  void gameSession.channel.sendMessage(
+  await gameSession.channel.sendMessage(
     {
       type: 'add_bot_transaction_log',
       data: txLog,
@@ -152,12 +152,12 @@ export async function handleOpponentCallUpdate(
   gameSession: GameSession,
   tx: Encoded.Transaction,
 ) {
-  void sendCallUpdateLog(tx, update.call_data, gameSession);
   const nextCallDataToSend = await getNextCallData(
     update,
     gameSession.contractState.instance,
   );
   gameSession.contractState.callDataToSend = nextCallDataToSend;
+  await sendCallUpdateLog(tx, update.call_data, gameSession);
 }
 
 /**
