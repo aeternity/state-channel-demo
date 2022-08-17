@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Selections } from '../../utils/game-channel/game-channel';
 import { useChannelStore } from '../../stores/channel';
 import GenericButton from '../generic-button/generic-button.vue';
+import _ from 'lodash';
 
 const gameChannel = useChannelStore();
 
@@ -59,9 +60,14 @@ async function makeSelection(selection: Selections) {
     await gameChannel.channel?.setUserSelection(selection);
   } catch (e) {
     console.info((e as Error).message);
-    return;
   }
 }
+
+const debouncedSelect = (selection: Selections) => {
+  return _.debounce(() => {
+    makeSelection(selection);
+  }, 500);
+};
 </script>
 
 <template>
@@ -81,32 +87,35 @@ async function makeSelection(selection: Selections) {
     </div>
     <div v-if="!gameChannel.channel?.game.round.isCompleted" class="selections">
       <button
+        :disabled="userHasSelected"
         class="button"
         :class="{
           'bot-selecting': botIsMakingSelection,
           'user-selecting': !userHasSelected,
         }"
-        @click="makeSelection(Selections.rock)"
+        @click="(() => debouncedSelect(Selections.rock))()"
       >
         ROCK
       </button>
       <button
+        :disabled="userHasSelected"
         class="button"
         :class="{
           'bot-selecting': botIsMakingSelection,
           'user-selecting': !userHasSelected,
         }"
-        @click="makeSelection(Selections.paper)"
+        @click="(() => debouncedSelect(Selections.paper))()"
       >
         PAPER
       </button>
       <button
+        :disabled="userHasSelected"
         class="button"
         :class="{
           'bot-selecting': botIsMakingSelection,
           'user-selecting': !userHasSelected,
         }"
-        @click="makeSelection(Selections.scissors)"
+        @click="(() => debouncedSelect(Selections.scissors))()"
       >
         SCISSORS
       </button>
@@ -115,8 +124,16 @@ async function makeSelection(selection: Selections) {
       v-if="gameChannel.channel?.game.round.isCompleted"
       class="round-controls"
     >
-      <GenericButton text="Play again" data-testid="btn-play-again" />
-      <GenericButton text="End game" data-testid="btn-play-again" />
+      <GenericButton
+        v-on:click="gameChannel.channel?.startNewRound()"
+        text="Play again"
+        data-testid="btn-play-again"
+      />
+      <GenericButton
+        disabled="true /*TODO: remove me when end-screen is implemented*/"
+        text="End game"
+        data-testid="btn-play-again"
+      />
     </div>
   </div>
 </template>

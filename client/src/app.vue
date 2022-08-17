@@ -39,11 +39,15 @@ onBeforeUnmount(async () => {
   <div class="container">
     <Header />
     <ChannelInitialization
-      v-if="!channelStore.channel?.isOpen || !channelStore.channel?.contract"
+      v-if="
+        !channelStore.channel?.isOpen || !channelStore.channel?.contractAddress
+      "
       @initializeChannel="initChannel()"
     />
     <RockPaperScissors
-      v-if="channelStore.channel?.isOpen && channelStore.channel.contract"
+      v-if="
+        channelStore.channel?.isOpen && channelStore.channel.contractAddress
+      "
     />
     <TransactionsList v-if="showTerminal" />
   </div>

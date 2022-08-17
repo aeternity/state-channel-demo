@@ -114,7 +114,10 @@ export class GameChannel {
       this.getSelectionHash(selection),
     ]);
     if (result?.accepted) this.game.round.userSelection = selection;
-    else throw new Error('Selection was not accepted');
+    else {
+      console.error(result);
+      throw new Error('Selection was not accepted');
+    }
   }
 
   setBotSelection(selection: Selections) {
@@ -216,17 +219,13 @@ export class GameChannel {
       useTransactionsStore().addUserTransaction(transactionLog);
     }
 
-    // if we are signing a bot transaction that calls the contract
-    if (
-      update?.op === 'OffChainCallContract' &&
-      update?.caller_id !== sdk.selectedAddress
-    ) {
-      await this.handleOpponentCallUpdate(update);
-    }
-
     // for both user and bot calls to the contract
     if (update?.op === 'OffChainCallContract') {
       await this.logCallUpdate(update.call_data, tx);
+      // if we are signing a bot transaction that calls the contract
+      if (update?.caller_id !== sdk.selectedAddress) {
+        await this.handleOpponentCallUpdate(update);
+      }
     }
 
     return sdk.signTransaction(tx);
