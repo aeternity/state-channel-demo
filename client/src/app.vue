@@ -3,6 +3,7 @@ import ChannelInitialization from './components/channel-initialization/channel-i
 import TransactionsList from './components/transaction-list/transaction-list.vue';
 import Header from './components/header/header.vue';
 import RockPaperScissors from './components/rock-paper-scissors/rock-paper-scissors.vue';
+import EndScreen from './components/end-screen/end-screen.vue';
 import { useChannelStore } from './stores/channel';
 import { onBeforeUnmount, onMounted, computed } from 'vue';
 import {
@@ -21,7 +22,9 @@ async function initChannel() {
   await channelStore.channel.initializeChannel();
 }
 
-const showTerminal = computed(() => channelStore.channel?.isOpen);
+const showTerminal = computed(
+  () => channelStore.channel?.isOpen || channelStore.channel?.isClosedByUser
+);
 
 onMounted(async () => {
   await initSdk();
@@ -38,17 +41,14 @@ onBeforeUnmount(async () => {
 <template>
   <div class="container">
     <Header />
+    <EndScreen v-if="channelStore.channel?.isClosedByUser" />
     <ChannelInitialization
-      v-if="
-        !channelStore.channel?.isOpen || !channelStore.channel.contractAddress
+      v-else-if="
+        !channelStore.channel?.isOpen || !channelStore.channel?.contractAddress
       "
       @initializeChannel="initChannel()"
     />
-    <RockPaperScissors
-      v-if="
-        channelStore.channel?.isOpen && channelStore.channel.contractAddress
-      "
-    />
+    <RockPaperScissors v-else />
     <TransactionsList v-if="showTerminal" />
   </div>
 </template>

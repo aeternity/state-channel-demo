@@ -275,6 +275,23 @@ export async function generateGameSession(
           timestamp: Date.now(),
         };
       }
+      if (tag === 'shutdown_sign_ack') {
+        // we are signing the channel close transaction
+        const gameSession = gameSessionPool.get(initiatorId);
+        void gameSession.channel.sendMessage(
+          {
+            type: 'add_bot_transaction_log',
+            data: {
+              description: 'Close state channel',
+              id: tx,
+              onChain: true,
+              signed: true,
+              timestamp: Date.now(),
+            },
+          },
+          responderId,
+        );
+      }
       if (options?.updates[0]?.op === 'OffChainCallContract') {
         const gameSession = gameSessionPool.get(initiatorId);
         void handleOpponentCallUpdate(options.updates[0], gameSession, tx);

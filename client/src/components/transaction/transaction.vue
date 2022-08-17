@@ -21,14 +21,19 @@ function formatDate(timestamp: number): string {
   );
 }
 function formatTxId(id: string): string {
-  return id.length > 10 ? id.slice(0, 5) + '…' + id.slice(-5, -1) : id;
+  return id.length > 10 ? id.slice(0, 5) + '…' + id.slice(-5) : id;
 }
 </script>
 
 <template>
   <div class="transaction" :class="{ 'on-chain': transaction.onChain }">
     <span class="on-chain-pill" v-if="transaction.onChain">on Chain</span>
-    {{ `TXID ${formatTxId(transaction.id)} - ${transaction.description}` }}
+    <span :title="transaction.id">
+      {{ `TXID ${formatTxId(transaction.id)} ` }} |
+    </span>
+    <span>
+      {{ transaction.description }}
+    </span>
     <div class="info">
       <span>{{ formatDate(transaction.timestamp) }} | </span>
       <span> {{ transaction.signed ? 'Signed' : 'Declined' }}</span>

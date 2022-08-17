@@ -6,7 +6,7 @@ const channelStore = useChannelStore();
 </script>
 
 <template>
-  <div class="header">
+  <div class="header" v-if="!channelStore.channel?.isClosedByUser">
     <PlayerInfo name="You" :balance="channelStore.channel?.balances.user" />
     <div class="center">
       <GameInfo
@@ -16,6 +16,9 @@ const channelStore = useChannelStore();
       />
     </div>
     <PlayerInfo name="Bot" :balance="channelStore.channel?.balances.bot" />
+  </div>
+  <div v-else class="header end-screen">
+    <img src="../../assets/logo.png" alt="?" />
   </div>
 </template>
 
@@ -31,6 +34,12 @@ const channelStore = useChannelStore();
   padding-bottom: 5px;
   @include for-phone-only {
     height: 15%;
+  }
+
+  &.end-screen {
+    img {
+      width: 110px;
+    }
   }
 }
 </style>
