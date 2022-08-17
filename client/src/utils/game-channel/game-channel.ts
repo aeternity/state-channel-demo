@@ -48,6 +48,9 @@ export class GameChannel {
   channelInstance?: Channel;
   isOpen = false;
   isFunded = false;
+  isClosedByUser = false;
+  channelOpenTime = -1;
+  channelCloseTime = -1;
   error?: {
     status: number;
     statusText: string;
@@ -160,6 +163,8 @@ export class GameChannel {
     this.channelConfig = config;
     this.isFunded = true;
 
+    // ? Do we start counting before the funding or after?
+    this.channelOpenTime = Date.now();
     this.channelInstance = await Channel.initialize({
       ...this.channelConfig,
       role: 'responder',
@@ -177,13 +182,21 @@ export class GameChannel {
     if (!this.channelInstance) {
       throw new Error('Channel is not open');
     }
-    this.channelInstance.shutdown(sdk.signTransaction.bind(sdk));
+    this.getChannelWithoutProxy()
+      .shutdown((tx: Encoded.Transaction) => {
+        return this.signTx('channel_close', tx);
+      })
+      .then(() => {
+        this.isClosedByUser = true;
+        this.isOpen = false;
+        this.channelCloseTime = Date.now();
+      });
   }
 
   async signTx(
     tag: string,
     tx: Encoded.Transaction,
-    options: {
+    options?: {
       updates: Update[];
     }
   ): Promise<Encoded.Transaction> {
@@ -194,6 +207,18 @@ export class GameChannel {
       const transactionLog: TransactionLog = {
         id: tx,
         description: 'Open state channel',
+        signed: true,
+        onChain: true,
+        timestamp: Date.now(),
+      };
+      useTransactionsStore().addUserTransaction(transactionLog);
+    }
+
+    // if we are signing the close channel tx
+    if (tag === 'channel_close') {
+      const transactionLog: TransactionLog = {
+        id: tx,
+        description: 'Close state channel',
         signed: true,
         onChain: true,
         timestamp: Date.now(),

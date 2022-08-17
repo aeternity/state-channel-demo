@@ -25,9 +25,10 @@ describe('Render Single Transaction Log', () => {
     });
 
     expect(
-      transactionComp.getByText(
-        `TXID ${mockTransactionLog.id} - ${mockTransactionLog.description}`
-      )
+      transactionComp.getByText(`TXID ${mockTransactionLog.id} |`)
+    ).toBeTruthy();
+    expect(
+      transactionComp.getByText(`${mockTransactionLog.description}`)
     ).toBeTruthy();
     expect(transactionComp.getByText('Signed')).toBeTruthy();
   });
@@ -37,9 +38,10 @@ describe('Render Single Transaction Log', () => {
     });
 
     expect(
-      transactionComp.getByText(
-        `TXID ${mockOnChainTransactionLog.id} - ${mockOnChainTransactionLog.description}`
-      )
+      transactionComp.getByText(`TXID ${mockOnChainTransactionLog.id} |`)
+    ).toBeTruthy();
+    expect(
+      transactionComp.getByText(`${mockOnChainTransactionLog.description}`)
     ).toBeTruthy();
     expect(transactionComp.getByText('Declined')).toBeTruthy();
     expect(transactionComp.getByText('on Chain')).toBeTruthy();

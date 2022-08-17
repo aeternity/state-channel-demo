@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useChannelStore } from '../../stores/channel';
 import { useTransactionsStore } from '../../stores/transactions';
 import SingleTransaction from '../transaction/transaction.vue';
 
@@ -10,7 +9,6 @@ const EXPAND_ICON = new URL('../../assets/svg/expand.svg', import.meta.url)
 const MINIMISE_ICON = new URL('../../assets/minimize.png', import.meta.url)
   .href;
 
-const channelStore = useChannelStore();
 const transactionStore = useTransactionsStore();
 const { userTransactions, botTransactions } = storeToRefs(transactionStore);
 
@@ -31,7 +29,6 @@ const isFullscreen = ref(false);
           <button
             class="expand mobile-only"
             aria-label="expand_button_mobile"
-            :disabled="!channelStore.channel?.isOpen"
             @click="isFullscreen = !isFullscreen"
           >
             <img
@@ -61,7 +58,6 @@ const isFullscreen = ref(false);
             <button
               class="expand"
               aria-label="expand_button"
-              :disabled="!channelStore.channel?.isOpen"
               @click="isFullscreen = !isFullscreen"
             >
               <img

@@ -5,15 +5,6 @@ import TransactionsList from './transaction-list.vue';
 
 describe('Render Transactions List', () => {
   expect(TransactionsList).toBeTruthy();
-  it('disables expand button when channel is not open', async () => {
-    const transactionsComp = render(TransactionsList, {
-      global: {
-        plugins: [createTestingPinia()],
-      },
-    });
-    const expandButton = transactionsComp.getByLabelText('expand_button');
-    expect(expandButton.getAttribute('disabled')).toBe('true');
-  });
 
   it('enables expand button when channel opens', async () => {
     const transactionsComp = render(TransactionsList, {
@@ -29,7 +20,6 @@ describe('Render Transactions List', () => {
     });
     const transactions = transactionsComp.getByTestId('transactions');
     const expandButton = transactionsComp.getByLabelText('expand_button');
-    expect(expandButton.getAttribute('disabled')).toBe('false');
     expect(expandButton.textContent).toBe('Expand');
 
     await fireEvent.click(expandButton);

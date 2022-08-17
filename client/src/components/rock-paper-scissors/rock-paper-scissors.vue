@@ -132,9 +132,9 @@ async function makeSelection(selection: Selections) {
         data-testid="btn-play-again"
       />
       <GenericButton
-        disabled="true /*TODO: remove me when end-screen is implemented*/"
         text="End game"
         data-testid="btn-end-game"
+        @click="gameChannel.channel?.closeChannel()"
       />
     </div>
   </div>
