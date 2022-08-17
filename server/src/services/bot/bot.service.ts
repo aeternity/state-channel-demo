@@ -100,7 +100,7 @@ export async function sendCallUpdateLog(
     default:
       throw new Error(`Unhandled method: ${data.function}`);
   }
-  void gameSession.channel.sendMessage(
+  await gameSession.channel.sendMessage(
     {
       type: 'add_bot_transaction_log',
       data: txLog,
@@ -152,12 +152,12 @@ export async function handleOpponentCallUpdate(
   gameSession: GameSession,
   tx: Encoded.Transaction,
 ) {
-  void sendCallUpdateLog(tx, update.call_data, gameSession);
   const nextCallDataToSend = await getNextCallData(
     update,
     gameSession.contractState.instance,
   );
   gameSession.contractState.callDataToSend = nextCallDataToSend;
+  await sendCallUpdateLog(tx, update.call_data, gameSession);
 }
 
 /**
@@ -240,9 +240,8 @@ export async function generateGameSession(
   await sdk.addAccount(new MemoryAccount({ keypair: botKeyPair }), {
     select: true,
   });
-  const bot = sdk;
 
-  const initiatorId = await bot.address();
+  const initiatorId = botKeyPair.publicKey;
   const responderId = playerAddress;
 
   await fundAccount(initiatorId);
@@ -280,7 +279,7 @@ export async function generateGameSession(
         const gameSession = gameSessionPool.get(initiatorId);
         void handleOpponentCallUpdate(options.updates[0], gameSession, tx);
       }
-      return bot.signTransaction(tx, {
+      return sdk.signTransaction(tx, {
         onAccount: initiatorId,
       });
     },

@@ -114,7 +114,10 @@ export class GameChannel {
       this.getSelectionHash(selection),
     ]);
     if (result?.accepted) this.game.round.userSelection = selection;
-    else throw new Error('Selection was not accepted');
+    else {
+      console.error(result);
+      throw new Error('Selection was not accepted');
+    }
   }
 
   setBotSelection(selection: Selections) {
@@ -205,28 +208,16 @@ export class GameChannel {
       if (!update.owner) throw new Error('Owner is not set');
       if (!isContractValid) throw new Error('Contract is not valid');
 
-      await this.buildContract(tx, update.owner);
-      const transactionLog: TransactionLog = {
-        id: tx,
-        description: 'Deploy contract',
-        signed: true,
-        onChain: false,
-        timestamp: Date.now(),
-      };
-      useTransactionsStore().addUserTransaction(transactionLog);
-    }
-
-    // if we are signing a bot transaction that calls the contract
-    if (
-      update?.op === 'OffChainCallContract' &&
-      update?.caller_id !== sdk.selectedAddress
-    ) {
-      await this.handleOpponentCallUpdate(update);
+      void this.buildContract(tx, update.owner);
     }
 
     // for both user and bot calls to the contract
     if (update?.op === 'OffChainCallContract') {
       await this.logCallUpdate(update.call_data, tx);
+      // if we are signing a bot transaction that calls the contract
+      if (update?.caller_id !== sdk.selectedAddress) {
+        await this.handleOpponentCallUpdate(update);
+      }
     }
 
     return sdk.signTransaction(tx);
@@ -263,11 +254,19 @@ export class GameChannel {
   async buildContract(tx: Encoded.Transaction, owner: Encoded.AccountAddress) {
     // @ts-expect-error ts-mismatch
     const contractCreationRound = unpackTx(tx).tx.round;
-    this.contractAddress = encodeContractAddress(owner, contractCreationRound);
     this.contract = await sdk.getContractInstance({
       source: contractSource,
     });
     await this.contract.compile();
+    this.contractAddress = encodeContractAddress(owner, contractCreationRound);
+    const transactionLog: TransactionLog = {
+      id: tx,
+      description: 'Deploy contract',
+      signed: true,
+      onChain: false,
+      timestamp: Date.now(),
+    };
+    useTransactionsStore().addUserTransaction(transactionLog);
   }
 
   async callContract(

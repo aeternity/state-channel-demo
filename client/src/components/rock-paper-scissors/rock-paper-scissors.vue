@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Selections } from '../../utils/game-channel/game-channel';
 import { useChannelStore } from '../../stores/channel';
 import GenericButton from '../generic-button/generic-button.vue';
 
 const gameChannel = useChannelStore();
 
+const selectionClicked = ref(false);
+
 const userHasSelected = computed(() => {
   return gameChannel.channel?.getUserSelection() != Selections.none
     ? true
     : false;
 });
+
+const selectionsAreDisabled = computed(() => {
+  return userHasSelected.value || selectionClicked.value;
+});
+
 const botIsMakingSelection = computed(() => {
   return gameChannel.channel?.getUserSelection() != Selections.none
     ? gameChannel.channel?.getUserSelection() === Selections.none
@@ -54,12 +61,13 @@ const status = computed(() => {
 });
 
 async function makeSelection(selection: Selections) {
+  selectionClicked.value = true;
   if (userHasSelected.value) return;
   try {
     await gameChannel.channel?.setUserSelection(selection);
+    selectionClicked.value = false;
   } catch (e) {
     console.info((e as Error).message);
-    return;
   }
 }
 </script>
@@ -81,30 +89,33 @@ async function makeSelection(selection: Selections) {
     </div>
     <div v-if="!gameChannel.channel?.game.round.isCompleted" class="selections">
       <button
+        :disabled="selectionsAreDisabled"
         class="button"
         :class="{
           'bot-selecting': botIsMakingSelection,
-          'user-selecting': !userHasSelected,
+          'user-selecting': !selectionsAreDisabled,
         }"
         @click="makeSelection(Selections.rock)"
       >
         ROCK
       </button>
       <button
+        :disabled="selectionsAreDisabled"
         class="button"
         :class="{
           'bot-selecting': botIsMakingSelection,
-          'user-selecting': !userHasSelected,
+          'user-selecting': !selectionsAreDisabled,
         }"
         @click="makeSelection(Selections.paper)"
       >
         PAPER
       </button>
       <button
+        :disabled="selectionsAreDisabled"
         class="button"
         :class="{
           'bot-selecting': botIsMakingSelection,
-          'user-selecting': !userHasSelected,
+          'user-selecting': !selectionsAreDisabled,
         }"
         @click="makeSelection(Selections.scissors)"
       >
@@ -115,8 +126,16 @@ async function makeSelection(selection: Selections) {
       v-if="gameChannel.channel?.game.round.isCompleted"
       class="round-controls"
     >
-      <GenericButton text="Play again" data-testid="btn-play-again" />
-      <GenericButton text="End game" data-testid="btn-play-again" />
+      <GenericButton
+        v-on:click="gameChannel.channel?.startNewRound()"
+        text="Play again"
+        data-testid="btn-play-again"
+      />
+      <GenericButton
+        disabled="true /*TODO: remove me when end-screen is implemented*/"
+        text="End game"
+        data-testid="btn-end-game"
+      />
     </div>
   </div>
 </template>

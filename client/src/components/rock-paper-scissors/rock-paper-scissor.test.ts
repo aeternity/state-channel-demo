@@ -1,5 +1,5 @@
 import { GameChannel, Selections } from '../../utils/game-channel/game-channel';
-import { render } from '@testing-library/vue';
+import { render, fireEvent } from '@testing-library/vue';
 import { describe, it, expect, vi } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
 import RockPaperScissors from './rock-paper-scissors.vue';
@@ -92,5 +92,42 @@ describe('Rock Paper Scissors Component', () => {
       'paper'
     );
     expect(gameChannelSpy).toBeCalled();
+  });
+
+  it('resets game state if user wants to play another round', async () => {
+    await gameChannel.setUserSelection(Selections.rock);
+    gameChannel.setBotSelection(Selections.paper);
+    gameChannel.game.round.isCompleted = true;
+    gameChannel.game.round.winner = 'ak_test';
+
+    const RockPaperScissorsEl = render(RockPaperScissors, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            initialState: {
+              channel: {
+                channel: gameChannel,
+              },
+            },
+          }),
+        ],
+      },
+    });
+
+    expect(
+      RockPaperScissorsEl.getByText("It's a draw").innerHTML
+    ).toBeDefined();
+
+    const resetButton = RockPaperScissorsEl.getByTestId('btn-play-again');
+
+    await fireEvent.click(resetButton);
+
+    const picks = ['ROCK', 'PAPER', 'SCISSORS'];
+
+    picks.forEach(async (pick) => {
+      expect(
+        (RockPaperScissorsEl.getByText(pick) as HTMLButtonElement).disabled
+      ).toBeFalsy();
+    });
   });
 });

@@ -2,9 +2,9 @@ import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { AeSdk, Node } from '@aeternity/aepp-sdk';
 import axios, { AxiosError } from 'axios';
 import BigNumber from 'bignumber.js';
+import { setTimeout } from 'timers/promises';
 import {
   COMPILER_URL,
-  FAUCET_PUBLIC_ADDRESS,
   FAUCET_ACCOUNT,
   IGNORE_NODE_VERSION,
   IS_USING_LOCAL_NODE,
@@ -27,14 +27,31 @@ export const sdk = new AeSdk({
 
 /**
  * ! LOCAL NODE USAGE ONLY
+ * a flag to indicate whether genesis account is currently funding or not.
+ * If the flag is true, a delay of 0.3s is added to the funding process
+ * in order to resolve account notch
+ */
+let isGenesisFunding = false;
+/**
+ * ! LOCAL NODE USAGE ONLY
  * a helper function to fund account
  */
-export const genesisFund = async (address: Encoded.AccountAddress) => {
+export const genesisFund = async (
+  address: Encoded.AccountAddress,
+): Promise<void> => {
+  if (isGenesisFunding) {
+    await setTimeout(300);
+    return genesisFund(address);
+  }
+  isGenesisFunding = true;
   if (!IS_USING_LOCAL_NODE) throw new Error('genesis fund is only for local node usage');
-  await sdk.addAccount(FAUCET_ACCOUNT, { select: true });
-  await sdk.awaitHeight(2);
-  await sdk.spend(10e18, address);
-  if (sdk.accounts[FAUCET_PUBLIC_ADDRESS]) sdk.removeAccount(FAUCET_PUBLIC_ADDRESS);
+  await sdk.awaitHeight(2, {
+    onAccount: FAUCET_ACCOUNT,
+  });
+  await sdk.spend(10e18, address, {
+    onAccount: FAUCET_ACCOUNT,
+  });
+  isGenesisFunding = false;
 };
 
 /**
