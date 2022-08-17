@@ -81,6 +81,7 @@ export class GameChannel {
   };
   contract?: ContractInstance;
   contractAddress?: Encoded.ContractAddress;
+  contractReady = false;
 
   // since gameChannel is reactive, we need to get the raw channel instance
   getChannelWithoutProxy() {
@@ -267,6 +268,7 @@ export class GameChannel {
       source: contractSource,
     });
     await this.contract.compile();
+    this.contractReady = true;
   }
 
   async callContract(

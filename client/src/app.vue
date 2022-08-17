@@ -40,14 +40,12 @@ onBeforeUnmount(async () => {
     <Header />
     <ChannelInitialization
       v-if="
-        !channelStore.channel?.isOpen || !channelStore.channel?.contractAddress
+        !channelStore.channel?.isOpen || !channelStore.channel.contractReady
       "
       @initializeChannel="initChannel()"
     />
     <RockPaperScissors
-      v-if="
-        channelStore.channel?.isOpen && channelStore.channel.contractAddress
-      "
+      v-if="channelStore.channel?.isOpen && channelStore.channel.contractReady"
     />
     <TransactionsList v-if="showTerminal" />
   </div>
