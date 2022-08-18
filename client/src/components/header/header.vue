@@ -2,7 +2,13 @@
 import { useChannelStore } from '../../stores/channel';
 import PlayerInfo from '../player-info/player-info.vue';
 import GameInfo from '../game-info/game-info.vue';
+import { resetApp } from '../../main';
+
 const channelStore = useChannelStore();
+
+function reset() {
+  resetApp();
+}
 </script>
 
 <template>
@@ -18,7 +24,7 @@ const channelStore = useChannelStore();
     <PlayerInfo name="Bot" :balance="channelStore.channel?.balances.bot" />
   </div>
   <div v-else class="header end-screen">
-    <img src="../../assets/logo.png" alt="?" />
+    <img src="../../assets/logo.png" alt="?" @click="reset()" />
   </div>
 </template>
 
@@ -39,6 +45,7 @@ const channelStore = useChannelStore();
   &.end-screen {
     img {
       width: 110px;
+      cursor: pointer;
     }
   }
 }

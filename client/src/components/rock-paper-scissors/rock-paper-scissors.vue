@@ -7,6 +7,7 @@ import GenericButton from '../generic-button/generic-button.vue';
 const gameChannel = useChannelStore();
 
 const selectionClicked = ref(false);
+const channelIsClosing = ref(false);
 
 const userHasSelected = computed(() => {
   return gameChannel.channel?.getUserSelection() != Selections.none
@@ -70,6 +71,11 @@ async function makeSelection(selection: Selections) {
     console.info((e as Error).message);
   }
 }
+
+function closeChannel() {
+  channelIsClosing.value = true;
+  gameChannel.channel?.closeChannel();
+}
 </script>
 
 <template>
@@ -127,14 +133,16 @@ async function makeSelection(selection: Selections) {
       class="round-controls"
     >
       <GenericButton
-        v-on:click="gameChannel.channel?.startNewRound()"
         text="Play again"
         data-testid="btn-play-again"
+        @click="gameChannel.channel?.startNewRound()"
+        :disabled="channelIsClosing"
       />
       <GenericButton
         text="End game"
         data-testid="btn-end-game"
-        @click="gameChannel.channel?.closeChannel()"
+        @click="closeChannel()"
+        :disabled="channelIsClosing"
       />
     </div>
   </div>
