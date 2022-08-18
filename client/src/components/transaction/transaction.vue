@@ -7,7 +7,7 @@ export interface TransactionLog {
   timestamp: number;
 }
 defineProps<{
-  transaction: TransactionLog;
+  transaction?: TransactionLog;
 }>();
 
 function formatDate(timestamp: number): string {
@@ -26,7 +26,11 @@ function formatTxId(id: string): string {
 </script>
 
 <template>
-  <div class="transaction" :class="{ 'on-chain': transaction.onChain }">
+  <div
+    class="transaction"
+    v-if="transaction"
+    :class="{ 'on-chain': transaction.onChain }"
+  >
     <span class="on-chain-pill" v-if="transaction.onChain">on Chain</span>
     <span :title="transaction.id">
       {{ `TXID ${formatTxId(transaction.id)} ` }} |
@@ -39,6 +43,7 @@ function formatTxId(id: string): string {
       <span> {{ transaction.signed ? 'Signed' : 'Declined' }}</span>
     </div>
   </div>
+  <div class="transaction" v-else>pending...</div>
 </template>
 
 <style scoped lang="scss">
