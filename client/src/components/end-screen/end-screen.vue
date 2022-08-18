@@ -12,7 +12,7 @@ const repoURL = 'https://github.com/aeternity/state-channel-demo';
 // TODO we need to create the correct url from the channel close tx
 // const explorerURL = 'https://explorer.testnet.aeternity.io/';
 
-const transactions = useTransactionsStore().userTransactions;
+const transactions = useTransactionsStore().userTransactions.flat();
 const seconds = (channel.channelCloseTime - channel.channelOpenTime) / 1000;
 const title = computed(() =>
   earnings.value.isZero()

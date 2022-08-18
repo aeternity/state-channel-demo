@@ -211,7 +211,7 @@ export class GameChannel {
         onChain: true,
         timestamp: Date.now(),
       };
-      useTransactionsStore().addUserTransaction(transactionLog);
+      useTransactionsStore().addUserTransaction(transactionLog, 0);
     }
 
     // if we are signing the close channel tx
@@ -223,7 +223,7 @@ export class GameChannel {
         onChain: true,
         timestamp: Date.now(),
       };
-      useTransactionsStore().addUserTransaction(transactionLog);
+      useTransactionsStore().addUserTransaction(transactionLog, 0);
     }
 
     // if we are signing a transaction that updates the contract
@@ -291,7 +291,7 @@ export class GameChannel {
       onChain: false,
       timestamp: Date.now(),
     };
-    useTransactionsStore().addUserTransaction(transactionLog);
+    useTransactionsStore().addUserTransaction(transactionLog, 0);
   }
 
   async callContract(
@@ -382,7 +382,10 @@ export class GameChannel {
         transactionLog.description = `Bot selected ${decodedCallData.arguments[0].value}`;
         break;
     }
-    useTransactionsStore().addUserTransaction(transactionLog);
+    useTransactionsStore().addUserTransaction(
+      transactionLog,
+      this.game.round.index
+    );
   }
 
   async revealRoundResult() {
@@ -433,7 +436,11 @@ export class GameChannel {
   private handleMessage(message: { type: string; data: TransactionLog }) {
     if (message.type === 'add_bot_transaction_log') {
       const txLog = message.data as TransactionLog;
-      useTransactionsStore().addBotTransaction(txLog);
+      const round =
+        txLog.onChain || txLog.description === 'Deploy contract'
+          ? 0
+          : this.game.round.index;
+      useTransactionsStore().addBotTransaction(txLog, round);
     }
   }
 }

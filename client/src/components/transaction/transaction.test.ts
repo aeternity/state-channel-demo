@@ -46,4 +46,9 @@ describe('Render Single Transaction Log', () => {
     expect(transactionComp.getByText('Declined')).toBeTruthy();
     expect(transactionComp.getByText('on Chain')).toBeTruthy();
   });
+  it('should display display message when no transaction log is passed', async () => {
+    const transactionComp = render(SingleTransaction);
+
+    expect(transactionComp.getByText('pending...')).toBeTruthy();
+  });
 });
