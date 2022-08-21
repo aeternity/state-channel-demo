@@ -13,7 +13,7 @@ export interface StoredState {
   channelId?: Encoded.Channel;
   fsmId?: string;
   channelConfig: ChannelOptions;
-  channelRound: number | null;
+  channelRound?: number;
   gameRound: GameRound;
   transactionLogs: {
     userTransactions: TransactionLog[][];
@@ -33,7 +33,6 @@ export function getSavedState() {
   } catch (e) {
     localStorage.removeItem('gameState');
     alert('Corrupted localStorage. App will reset.');
-
     resetApp();
   }
 }

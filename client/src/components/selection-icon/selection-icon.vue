@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Selections } from '../../utils/game-channel/game-channel';
+import { Selections } from '../../utils/game-channel/game-channel.types';
 
 const props = defineProps<{
   type: Selections;

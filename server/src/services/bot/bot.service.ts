@@ -207,7 +207,7 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
       waitMined: true,
     });
   } catch (e) {
-    // Sometimes the notch is used, yet the channel does shutdown.
+    // Sometimes the nonce is used, yet the channel does shutdown.
     logger.info(
       `Channel with initiator ${onAccount} was shutdown with error:`,
       await (e as any).verifyTx(),

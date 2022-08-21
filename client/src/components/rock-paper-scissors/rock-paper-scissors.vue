@@ -16,7 +16,7 @@ const userHasSelected = computed(() => {
     : false;
 });
 
-const showSelectionButtons = computed(() => {
+const isSelectingDisabled = computed(() => {
   return userHasSelected.value || selectionClicked.value;
 });
 
@@ -41,7 +41,7 @@ const botSelection = computed(() =>
 );
 
 const status = computed(() => {
-  if (!showSelectionButtons.value) {
+  if (!isSelectingDisabled.value) {
     return 'Choose one';
   }
   if (botIsMakingSelection.value) {
@@ -72,6 +72,7 @@ async function makeSelection(selection: Selections) {
 }
 
 function closeChannel() {
+  localStorage.clear();
   channelIsClosing.value = true;
   gameChannel.channel?.closeChannel();
 }
@@ -98,10 +99,10 @@ function closeChannel() {
         />
       </div>
     </div>
-    <div v-if="showSelectionButtons" class="selections">
+    <div v-if="!isSelectingDisabled" class="selections">
       <button
         data-testid="rock-btn"
-        :disabled="showSelectionButtons"
+        :disabled="isSelectingDisabled"
         class="button"
         @click="makeSelection(Selections.rock)"
       >
@@ -109,7 +110,7 @@ function closeChannel() {
       </button>
       <button
         data-testid="paper-btn"
-        :disabled="showSelectionButtons"
+        :disabled="isSelectingDisabled"
         class="button"
         @click="makeSelection(Selections.paper)"
       >
@@ -117,7 +118,7 @@ function closeChannel() {
       </button>
       <button
         data-testid="scissors-btn"
-        :disabled="showSelectionButtons"
+        :disabled="isSelectingDisabled"
         class="button"
         @click="makeSelection(Selections.scissors)"
       >

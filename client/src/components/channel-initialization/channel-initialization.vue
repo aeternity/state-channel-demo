@@ -3,24 +3,25 @@ import { computed, ref } from 'vue';
 import { default as Button } from '../generic-button/generic-button.vue';
 import LoadingAnimation from '../loading-animation/loading-animation.vue';
 import { useChannelStore } from '../../stores/channel';
+import ToggleButton from '../toggle-button/toggle-button.vue';
 
 const channelStore = useChannelStore();
 const openChannelInitiated = ref(false);
-const channelisOpening = computed(
+const hasSavedState = ref(!!localStorage.getItem('gameState'));
+const channelIsOpening = computed(
   () => channelStore.channel?.isOpening || openChannelInitiated.value
 );
 
 const emit = defineEmits(['initializeChannel']);
-const hasSavedState = !!localStorage.getItem('gameState');
 
 const title = computed(() => {
-  const prefix = hasSavedState ? 'Reconnecting - ' : '';
+  const prefix = hasSavedState.value ? 'Reconnecting - ' : '';
 
-  const contractRequiredAction = hasSavedState
+  const contractRequiredAction = hasSavedState.value
     ? 'compiled'
     : 'deployed & compiled';
 
-  const status = !channelisOpening.value
+  const status = !channelIsOpening.value
     ? 'Start the game by open state channel'
     : !channelStore.channel?.isFunded
     ? 'Funding accounts...'
@@ -41,46 +42,64 @@ async function openStateChannel(): Promise<void> {
   openChannelInitiated.value = true;
   emit('initializeChannel');
 }
+
+function toggleAutoplay() {
+  if (channelStore.channel) {
+    channelStore.channel.autoplay.enabled =
+      !channelStore.channel.autoplay.enabled;
+  }
+}
 </script>
 
 <template>
   <div class="open-channel">
     <div
-      class="title"
-      :style="{
-        'max-width': channelisOpening ? '100%' : '',
-      }"
+      class="container"
+      :class="{ shadow: !openChannelInitiated && !hasSavedState }"
     >
-      {{ title }}
-    </div>
-    <div class="info-wrapper" v-if="!channelisOpening">
-      <p class="info">
-        State channels refer to the process in which users transact with one
-        another directly outside of the blockchain, or ‘off-chain,’ and greatly
-        minimize their use of ‘on-chain’ operations.
+      <div
+        class="title"
+        :style="{
+          'max-width': channelIsOpening ? '100%' : '',
+        }"
+      >
+        {{ title }}
+      </div>
+      <div class="info-wrapper" v-if="!channelIsOpening">
+        <p class="info">
+          State channels refer to the process in which users transact with one
+          another directly outside of the blockchain, or ‘off-chain,’ and
+          greatly minimize their use of ‘on-chain’ operations.
+        </p>
+        <p class="info">
+          By clicking start game you are initiating state channel with our bot
+          and you make the possibilities of the game practically endless. After
+          the game is over, you can see every action recorded on the blockchain
+          by checking our explorer.
+        </p>
+        <div>
+          <Button
+            :disabled="channelIsOpening"
+            @click="openStateChannel()"
+            text="Start game"
+          />
+          <ToggleButton
+            id="autoplay"
+            v-on:change="toggleAutoplay"
+            label-enable-text="Autoplay"
+            label-disable-text="Autoplay"
+          />
+        </div>
+      </div>
+      <LoadingAnimation v-else-if="!channelStore.channel?.error" />
+      <p v-else>
+        {{ errorMessage }}
       </p>
-      <p class="info">
-        By clicking start game you are initiating state channel with our bot and
-        you make the possibilities of the game practically endless. After the
-        game is over, you can see every action recorded on the blockchain by
-        checking our explorer.
-      </p>
-      <Button
-        :disabled="channelisOpening"
-        @click="openStateChannel()"
-        text="Start game"
-      />
     </div>
-    <LoadingAnimation v-else-if="!channelStore.channel?.error" />
-    <p v-else>
-      {{ errorMessage }}
-    </p>
   </div>
 </template>
-
 <style scoped lang="scss">
 @import '../../mediaqueries.scss';
-
 .open-channel {
   grid-area: body;
   display: flex;
@@ -93,7 +112,6 @@ async function openStateChannel(): Promise<void> {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    width: min-content;
     border-radius: 25px;
     @include for-phone-only {
       width: unset;
@@ -106,6 +124,7 @@ async function openStateChannel(): Promise<void> {
       padding: 40px 150px;
     }
     &.shadow {
+      width: min-content;
       box-shadow: 0 4px 8px 0 rgb(0 0 0 / 20%), 0 1px 10px 0 rgb(0 0 0 / 15%);
     }
   }

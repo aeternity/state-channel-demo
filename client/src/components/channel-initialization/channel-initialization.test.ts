@@ -21,6 +21,38 @@ describe('Open State Channel Button', () => {
     channelComp.getByText('Funding accounts...');
   });
 
+  it('should have `Reconnecting` title when there is a stored gameState', async () => {
+    localStorage.setItem('gameState', '{}');
+    const channelComp = render(ChannelInitialization, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            initialState: {
+              channel: {
+                channel: {
+                  isOpen: true,
+                  isFunded: true,
+                },
+              },
+            },
+          }),
+        ],
+      },
+    });
+    const button = channelComp.getByText('Start game');
+    await fireEvent.click(button);
+    // button is hidden after clicking it
+    expect(() => {
+      channelComp.getByText('Start game');
+    }).toThrowError();
+
+    expect(
+      channelComp.getByText(
+        'Reconnecting - Waiting for contract to be compiled...'
+      )
+    ).toBeDefined();
+  });
+
   it('shows error message on error', async () => {
     const channelComp = render(ChannelInitialization, {
       global: {

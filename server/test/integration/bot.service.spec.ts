@@ -229,4 +229,42 @@ describe('botService', () => {
     await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
     await timeout(1500);
   });
+
+  it('bot solo closes channel when player leaves channel', async () => {
+    const playerSdk = await getSdk();
+
+    // The responder needs a contract instance in order to call contract
+    const contract = (await playerSdk.getContractInstance({
+      source: contractSource,
+    })) as RockPaperScissorsContract;
+    await contract.compile();
+
+    const responderId = await playerSdk.address();
+    const responderConfig = await botService.generateGameSession(
+      responderId,
+      'localhost',
+      3001,
+    );
+
+    const playerChannel = await Channel.initialize({
+      ...responderConfig,
+      role: 'responder',
+      sign: async (_tag: string, tx: Encoded.Transaction) => playerSdk.signTransaction(tx),
+    });
+
+    // wait for channel to be opened
+    await waitForChannelReady(playerChannel);
+    expect(playerChannel.status()).toBe('open');
+
+    // wait for contract to be deployed
+    await timeout(4000);
+
+    await playerChannel.leave();
+
+    await timeout(17000);
+
+    expect(
+      botService.gameSessionPool.get(responderConfig.initiatorId),
+    ).toBeUndefined();
+  });
 });

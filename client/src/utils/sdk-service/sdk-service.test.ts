@@ -110,7 +110,7 @@ describe('SDK', () => {
       await expect(
         verifyContractBytecode(contract.bytecode, contractSource)
       ).resolves.toBeTruthy();
-    });
+    }, 10000);
 
     it('returns false if proposed bytecode is wrong', async () => {
       const contract = await sdk.getContractInstance({

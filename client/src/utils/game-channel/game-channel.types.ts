@@ -10,6 +10,7 @@ export interface GameRound {
   winner?: Encoded.AccountAddress;
   isCompleted?: boolean;
   hasRevealed?: boolean;
+  userInAction: boolean;
 }
 
 export interface Update {
