@@ -13,8 +13,8 @@ import {
 describe('Show end screen', async () => {
   expect(EndScreen).toBeTruthy();
   const gameChannel = new GameChannel();
-  gameChannel.game.autoplay.enabled = true;
-  gameChannel.game.autoplay.elapsedTime = 1000;
+  gameChannel.autoplay.enabled = true;
+  gameChannel.autoplay.elapsedTime = 1000;
   gameChannel.balances.user = new BigNumber(10e18);
   gameChannel.channelConfig = {
     responderAmount: new BigNumber(5e18),

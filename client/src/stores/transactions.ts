@@ -21,5 +21,11 @@ export const useTransactionsStore = defineStore('transactions', {
       this.botTransactions[round] ??= [];
       this.botTransactions[round].push(transaction);
     },
+    setUserTransactions(transactions: TransactionLog[][]) {
+      this.userTransactions = transactions;
+    },
+    setBotTransactions(transactions: TransactionLog[][]) {
+      this.botTransactions = transactions;
+    },
   },
 });
