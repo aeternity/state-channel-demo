@@ -286,7 +286,7 @@ export class GameChannel {
     return sdk.signTransaction(tx);
   }
 
-  private registerEvents() {
+  registerEvents() {
     if (this.channelInstance) {
       this.getChannelWithoutProxy().on('statusChanged', (status) => {
         if (status === 'disconnected') {
