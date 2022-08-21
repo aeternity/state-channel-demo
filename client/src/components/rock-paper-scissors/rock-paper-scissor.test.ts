@@ -1,8 +1,9 @@
-import { GameChannel, Selections } from '../../utils/game-channel/game-channel';
+import { GameChannel } from '../../utils/game-channel/game-channel';
 import { render, fireEvent } from '@testing-library/vue';
 import { describe, it, expect, vi } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
 import RockPaperScissors from './rock-paper-scissors.vue';
+import { Selections } from '../../utils/game-channel/game-channel.types';
 
 describe('Rock Paper Scissors Component', () => {
   const gameChannel = new GameChannel();
@@ -69,7 +70,7 @@ describe('Rock Paper Scissors Component', () => {
   it('displays only user selection if game is not completed', async () => {
     await gameChannel.setUserSelection(Selections.rock);
     gameChannel.setBotSelection(Selections.paper);
-    gameChannel.game.round.isCompleted = true;
+    gameChannel.gameRound.isCompleted = true;
 
     const RockPaperScissorsEl = render(RockPaperScissors, {
       global: {
@@ -97,8 +98,8 @@ describe('Rock Paper Scissors Component', () => {
   it('resets game state if user wants to play another round', async () => {
     await gameChannel.setUserSelection(Selections.rock);
     gameChannel.setBotSelection(Selections.paper);
-    gameChannel.game.round.isCompleted = true;
-    gameChannel.game.round.winner = 'ak_test';
+    gameChannel.gameRound.isCompleted = true;
+    gameChannel.gameRound.winner = 'ak_test';
 
     const RockPaperScissorsEl = render(RockPaperScissors, {
       global: {

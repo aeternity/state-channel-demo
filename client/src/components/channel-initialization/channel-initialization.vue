@@ -4,19 +4,32 @@ import { default as Button } from '../generic-button/generic-button.vue';
 import LoadingAnimation from '../loading-animation/loading-animation.vue';
 import { useChannelStore } from '../../stores/channel';
 
-const openChannelInitiated = ref(false);
 const channelStore = useChannelStore();
-const emit = defineEmits(['initializeChannel']);
+const openChannelInitiated = ref(false);
+const channelisOpening = computed(
+  () => channelStore.channel?.isOpening || openChannelInitiated.value
+);
 
-const title = computed(() =>
-  !openChannelInitiated.value
+const emit = defineEmits(['initializeChannel']);
+const hasSavedState = !!localStorage.getItem('gameState');
+
+const title = computed(() => {
+  const prefix = hasSavedState ? 'Reconnecting - ' : '';
+
+  const contractRequiredAction = hasSavedState
+    ? 'compiled'
+    : 'deployed & compiled';
+
+  const status = !channelisOpening.value
     ? 'Start the game by open state channel'
     : !channelStore.channel?.isFunded
     ? 'Funding accounts...'
     : !channelStore.channel?.isOpen
     ? 'Setting ‘on-chain’ operations...'
-    : 'Waiting for contract to be deployed...'
-);
+    : ` Waiting for contract to be ${contractRequiredAction}...`;
+
+  return prefix + status;
+});
 
 const errorMessage = computed(() =>
   channelStore.channel?.error
@@ -35,12 +48,12 @@ async function openStateChannel(): Promise<void> {
     <div
       class="title"
       :style="{
-        'max-width': openChannelInitiated ? '100%' : '',
+        'max-width': channelisOpening ? '100%' : '',
       }"
     >
       {{ title }}
     </div>
-    <div class="info-wrapper" v-if="!openChannelInitiated">
+    <div class="info-wrapper" v-if="!channelisOpening">
       <p class="info">
         State channels refer to the process in which users transact with one
         another directly outside of the blockchain, or ‘off-chain,’ and greatly
@@ -53,7 +66,7 @@ async function openStateChannel(): Promise<void> {
         checking our explorer.
       </p>
       <Button
-        :disabled="openChannelInitiated"
+        :disabled="channelisOpening"
         @click="openStateChannel()"
         text="Start game"
       />

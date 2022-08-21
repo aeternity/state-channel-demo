@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Selections } from '../../utils/game-channel/game-channel';
+import { Selections } from '../../utils/game-channel/game-channel.types';
 import { useChannelStore } from '../../stores/channel';
 import GenericButton from '../generic-button/generic-button.vue';
 
@@ -34,10 +34,8 @@ const userSelection = computed(() =>
 );
 
 const botSelection = computed(() =>
-  gameChannel.channel?.game.round.botSelection != Selections.none
-    ? Selections[
-        gameChannel.channel?.game.round.botSelection ?? Selections.none
-      ]
+  gameChannel.channel?.gameRound.botSelection != Selections.none
+    ? Selections[gameChannel.channel?.gameRound.botSelection ?? Selections.none]
     : ''
 );
 
@@ -48,8 +46,8 @@ const status = computed(() => {
   if (botIsMakingSelection.value) {
     return 'Bot is selecting';
   }
-  if (gameChannel.channel?.game.round.isCompleted) {
-    switch (gameChannel.channel?.game.round.winner) {
+  if (gameChannel.channel?.gameRound.isCompleted) {
+    switch (gameChannel.channel?.gameRound.winner) {
       case gameChannel.channel.channelConfig?.responderId:
         return 'You won';
       case gameChannel.channel.channelConfig?.initiatorId:
@@ -86,14 +84,14 @@ function closeChannel() {
       </div>
       <h1 class="title">{{ status }}</h1>
       <div
-        v-if="gameChannel.channel?.game.round.isCompleted"
+        v-if="gameChannel.channel?.gameRound.isCompleted"
         class="finalized-selection bot"
         data-testid="botSelection"
       >
         {{ botSelection }}
       </div>
     </div>
-    <div v-if="!gameChannel.channel?.game.round.isCompleted" class="selections">
+    <div v-if="!gameChannel.channel?.gameRound.isCompleted" class="selections">
       <button
         :disabled="selectionsAreDisabled"
         class="button"
@@ -129,7 +127,7 @@ function closeChannel() {
       </button>
     </div>
     <div
-      v-if="gameChannel.channel?.game.round.isCompleted"
+      v-if="gameChannel.channel?.gameRound.isCompleted"
       class="round-controls"
     >
       <GenericButton

@@ -1,9 +1,11 @@
+import { BigNumber } from 'bignumber.js';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
-import { GameChannel, Selections } from './game-channel';
+import { GameChannel } from './game-channel';
 import { initSdk, sdk } from '../sdk-service/sdk-service';
 import contractSource from '@aeternity/rock-paper-scissors';
+import { Selections } from './game-channel.types';
 
 describe('GameChannel', async () => {
   const gameChannel = new GameChannel();
@@ -33,7 +35,7 @@ describe('GameChannel', async () => {
   it('creates game channel instance', async () => {
     expect(gameChannel).toBeTruthy();
     expect(gameChannel.getUserSelection()).toBe(Selections.none);
-    expect(gameChannel.game.round.botSelection).toBe(Selections.none);
+    expect(gameChannel.gameRound.botSelection).toBe(Selections.none);
   });
 
   it('can set/get selection for user', async () => {
@@ -98,8 +100,8 @@ describe('GameChannel', async () => {
 
       gameChannel.finishGameRound(winner);
 
-      expect(gameChannel.game.round.winner).toBe(winner);
-      expect(gameChannel.game.round.isCompleted).toBe(true);
+      expect(gameChannel.gameRound.winner).toBe(winner);
+      expect(gameChannel.gameRound.isCompleted).toBe(true);
       expect(updateBalancesSpy).toHaveBeenCalled();
     });
   });
@@ -107,7 +109,8 @@ describe('GameChannel', async () => {
   describe('startNewRound()', () => {
     it('increments round index and resets state', () => {
       const gameChannel = new GameChannel();
-      gameChannel.game.round = {
+      gameChannel.gameRound = {
+        stake: new BigNumber(10),
         index: 3,
         isCompleted: true,
         winner: 'ak_me',
@@ -117,7 +120,8 @@ describe('GameChannel', async () => {
       };
       gameChannel.startNewRound();
 
-      expect(gameChannel.game.round).toEqual({
+      expect(gameChannel.gameRound).toEqual({
+        stake: new BigNumber(10),
         index: 4,
         isCompleted: false,
         winner: undefined,
@@ -129,7 +133,7 @@ describe('GameChannel', async () => {
       gameChannel.startNewRound();
       gameChannel.startNewRound();
 
-      expect(gameChannel.game.round.index).toBe(6);
+      expect(gameChannel.gameRound.index).toBe(6);
     });
   });
 });

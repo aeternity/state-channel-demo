@@ -6,21 +6,17 @@ import { setTimeout } from 'timers/promises';
 import {
   COMPILER_URL,
   FAUCET_ACCOUNT,
-  IGNORE_NODE_VERSION,
   IS_USING_LOCAL_NODE,
-  NETWORK_ID,
   NODE_URL,
 } from './sdk.constants';
 import logger from '../../logger';
 
 export const sdk = new AeSdk({
-  networkId: NETWORK_ID,
   compilerUrl: COMPILER_URL,
-  ignoreVersion: IGNORE_NODE_VERSION,
   nodes: [
     {
-      name: 'test',
-      instance: new Node(NODE_URL, { ignoreVersion: IGNORE_NODE_VERSION }),
+      name: 'testnet',
+      instance: new Node(NODE_URL),
     },
   ],
 });

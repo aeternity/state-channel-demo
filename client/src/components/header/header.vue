@@ -16,8 +16,8 @@ function reset() {
     <PlayerInfo name="You" :balance="channelStore.channel?.balances.user" />
     <div class="center">
       <GameInfo
-        :stake="channelStore.channel?.game?.stake"
-        :round="channelStore.channel?.game?.round.index"
+        :stake="channelStore.channel?.gameRound?.stake"
+        :round="channelStore.channel?.gameRound?.index"
         v-if="channelStore.channel?.isOpen"
       />
     </div>

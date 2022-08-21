@@ -226,7 +226,7 @@ describe('botService', () => {
       expect(botBalance.eq(playerBalance));
     }
 
-    await playerChannel.leave();
+    await playerChannel.shutdown(playerSdk.signTransaction.bind(playerSdk));
     await timeout(1500);
   });
 });

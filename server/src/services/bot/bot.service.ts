@@ -1,4 +1,9 @@
-import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
+import {
+  Channel,
+  generateKeyPair,
+  MemoryAccount,
+  Tag,
+} from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
@@ -27,6 +32,11 @@ export async function addGameSession(
   channel: Channel,
   configuration: ChannelOptions,
 ) {
+  const balances = await channel.balances([
+    configuration.initiatorId,
+    configuration.responderId,
+  ]);
+
   const { instance, address } = await ContractService.deployContract(
     configuration.initiatorId,
     channel,
@@ -37,14 +47,24 @@ export async function addGameSession(
     },
   );
   gameSessionPool.set(configuration.initiatorId, {
-    channel,
-    contractState: {
-      instance,
-      address,
+    channelWrapper: {
+      instance: channel,
+      state: await channel.state(),
+      poi: await channel.poi({
+        accounts: [configuration.initiatorId, configuration.responderId],
+      }),
+      balances: {
+        initiatorAmount: new BigNumber(balances[configuration.initiatorId]),
+        responderAmount: new BigNumber(balances[configuration.responderId]),
+      },
     },
     participants: {
       responderId: configuration.responderId,
       initiatorId: configuration.initiatorId,
+    },
+    contractState: {
+      instance,
+      address,
     },
   });
   logger.info(
@@ -100,7 +120,7 @@ export async function sendCallUpdateLog(
     default:
       throw new Error(`Unhandled method: ${data.function}`);
   }
-  await gameSession.channel.sendMessage(
+  await gameSession.channelWrapper.instance.sendMessage(
     {
       type: 'add_bot_transaction_log',
       data: txLog,
@@ -142,6 +162,61 @@ export async function handleChannelClose(onAccount: Encoded.AccountAddress) {
   sdk.removeAccount(onAccount);
 }
 
+async function handleChannelDied(onAccount: Encoded.AccountAddress) {
+  const gameSession = gameSessionPool.get(onAccount);
+
+  let channelId;
+  try {
+    channelId = gameSession.channelWrapper.instance.id() as Encoded.Channel;
+  } catch (e) {
+    return handleChannelClose(onAccount);
+  }
+
+  const closeSoloTx = await sdk.buildTx(Tag.ChannelCloseSoloTx, {
+    channelId,
+    fromId: onAccount,
+    // @ts-ignore
+    poi: gameSession.channelWrapper.poi,
+    payload: gameSession.channelWrapper.state.signedTx,
+  });
+
+  let signedTx = await sdk.signTransaction(closeSoloTx, {
+    onAccount,
+  });
+
+  await sdk.sendTransaction(signedTx, {
+    onAccount,
+    verify: true,
+    waitMined: true,
+  });
+
+  const settleTx = await sdk.buildTx(Tag.ChannelSettleTx, {
+    channelId: gameSession.channelWrapper.instance.id() as Encoded.Channel,
+    fromId: onAccount,
+    initiatorAmountFinal: gameSession.channelWrapper.balances.initiatorAmount,
+    responderAmountFinal: gameSession.channelWrapper.balances.responderAmount,
+  });
+
+  signedTx = await sdk.signTransaction(settleTx, {
+    onAccount,
+  });
+  try {
+    await sdk.sendTransaction(signedTx, {
+      onAccount,
+      verify: true,
+      waitMined: true,
+    });
+  } catch (e) {
+    // Sometimes the notch is used, yet the channel does shutdown.
+    logger.info(
+      `Channel with initiator ${onAccount} was shutdown with error:`,
+      await (e as any).verifyTx(),
+    );
+  } finally {
+    await handleChannelClose(onAccount);
+  }
+}
+
 /**
  * Triggered when channel operation is `OffChainCallContract`.
  * Decodes the call data provided by the opponent and generates
@@ -165,7 +240,7 @@ export async function handleOpponentCallUpdate(
  */
 async function respondToContractCall(gameSession: GameSession) {
   if (gameSession.contractState.callDataToSend == null) return;
-  await gameSession.channel.callContract(
+  await gameSession.channelWrapper.instance.callContract(
     {
       amount: GAME_STAKE,
       contract: gameSession.contractState.address,
@@ -200,8 +275,13 @@ export async function registerEvents(
   configuration: ChannelOptions,
 ) {
   channelInstance.on('statusChanged', (status) => {
-    if (status === 'closed' || status === 'died') {
+    if (status === 'closed') {
       void handleChannelClose(configuration.initiatorId);
+    }
+
+    if (status === 'died') {
+      logger.info(`channel with initiator ${configuration.initiatorId} died.`);
+      void handleChannelDied(configuration.initiatorId);
     }
 
     if (status === 'open') {
@@ -219,6 +299,32 @@ export async function registerEvents(
 
   channelInstance.on('stateChanged', () => {
     const gameSession = gameSessionPool.get(configuration.initiatorId);
+
+    if (gameSession?.contractState?.address) {
+      void channelInstance.state().then(async (state) => {
+        gameSession.channelWrapper.state = state;
+        const balances = await gameSession.channelWrapper.instance.balances([
+          gameSession.participants.initiatorId,
+          gameSession.participants.responderId,
+        ]);
+        gameSession.channelWrapper.balances = {
+          initiatorAmount: new BigNumber(
+            balances[gameSession.participants.initiatorId],
+          ),
+          responderAmount: new BigNumber(
+            balances[gameSession.participants.responderId],
+          ),
+        };
+      });
+      void channelInstance
+        .poi({
+          accounts: [configuration.initiatorId, configuration.responderId],
+          contracts: [gameSession.contractState.address],
+        })
+        .then((poi) => {
+          gameSession.channelWrapper.poi = poi;
+        });
+    }
     if (gameSession?.contractState?.callDataToSend) {
       setImmediate(() => {
         void respondToContractCall(gameSession);
@@ -237,9 +343,7 @@ export async function generateGameSession(
   playerNodePort: number,
 ) {
   const botKeyPair = generateKeyPair();
-  await sdk.addAccount(new MemoryAccount({ keypair: botKeyPair }), {
-    select: true,
-  });
+  await sdk.addAccount(new MemoryAccount({ keypair: botKeyPair }));
 
   const initiatorId = botKeyPair.publicKey;
   const responderId = playerAddress;
@@ -278,7 +382,7 @@ export async function generateGameSession(
       if (tag === 'shutdown_sign_ack') {
         // we are signing the channel close transaction
         const gameSession = gameSessionPool.get(initiatorId);
-        void gameSession.channel.sendMessage(
+        void gameSession.channelWrapper.instance.sendMessage(
           {
             type: 'add_bot_transaction_log',
             data: {

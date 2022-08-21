@@ -28,7 +28,9 @@ const showTerminal = computed(
 
 onMounted(async () => {
   await initSdk();
-  channelStore.channel = new GameChannel();
+  const channel = new GameChannel();
+  channelStore.channel = channel;
+  await channelStore.channel.restoreGameState();
 });
 
 onBeforeUnmount(async () => {
