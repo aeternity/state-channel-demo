@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { Selections } from '../../utils/game-channel/game-channel';
 import { useChannelStore } from '../../stores/channel';
 import GenericButton from '../generic-button/generic-button.vue';
+import SelectionIcon from '../selection-icon/selection-icon.vue';
 
 const gameChannel = useChannelStore();
 
@@ -15,7 +16,7 @@ const userHasSelected = computed(() => {
     : false;
 });
 
-const selectionsAreDisabled = computed(() => {
+const showSelectionButtons = computed(() => {
   return userHasSelected.value || selectionClicked.value;
 });
 
@@ -42,7 +43,7 @@ const botSelection = computed(() =>
 );
 
 const status = computed(() => {
-  if (!userHasSelected.value) {
+  if (!showSelectionButtons.value) {
     return 'Choose one';
   }
   if (botIsMakingSelection.value) {
@@ -82,7 +83,10 @@ function closeChannel() {
   <div class="rock-paper-scissors">
     <div class="header">
       <div class="finalized-selection" data-testid="userSelection">
-        {{ userSelection }}
+        <SelectionIcon
+          v-if="userSelection !== Selections.none && userSelection !== ''"
+          :type="userSelection"
+        />
       </div>
       <h1 class="title">{{ status }}</h1>
       <div
@@ -90,42 +94,36 @@ function closeChannel() {
         class="finalized-selection bot"
         data-testid="botSelection"
       >
-        {{ botSelection }}
+        <SelectionIcon
+          v-if="botSelection !== Selections.none && botSelection !== ''"
+          :type="botSelection"
+        />
       </div>
     </div>
-    <div v-if="!gameChannel.channel?.game.round.isCompleted" class="selections">
+    <div v-if="!showSelectionButtons" class="selections">
       <button
-        :disabled="selectionsAreDisabled"
+        data-testid="rock-btn"
+        :disabled="showSelectionButtons"
         class="button"
-        :class="{
-          'bot-selecting': botIsMakingSelection,
-          'user-selecting': !selectionsAreDisabled,
-        }"
         @click="makeSelection(Selections.rock)"
       >
-        ROCK
+        <SelectionIcon :type="Selections.rock" />
       </button>
       <button
-        :disabled="selectionsAreDisabled"
+        data-testid="paper-btn"
+        :disabled="showSelectionButtons"
         class="button"
-        :class="{
-          'bot-selecting': botIsMakingSelection,
-          'user-selecting': !selectionsAreDisabled,
-        }"
         @click="makeSelection(Selections.paper)"
       >
-        PAPER
+        <SelectionIcon :type="Selections.paper" />
       </button>
       <button
-        :disabled="selectionsAreDisabled"
+        data-testid="scissors-btn"
+        :disabled="showSelectionButtons"
         class="button"
-        :class="{
-          'bot-selecting': botIsMakingSelection,
-          'user-selecting': !selectionsAreDisabled,
-        }"
         @click="makeSelection(Selections.scissors)"
       >
-        SCISSORS
+        <SelectionIcon :type="Selections.scissors" />
       </button>
     </div>
     <div
@@ -152,15 +150,18 @@ function closeChannel() {
 @import '../../mediaqueries.scss';
 
 .header {
-  width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
   margin-bottom: 20px;
+  @include for-phone-only {
+    width: 100%;
+  }
 
   & > .finalized-selection {
     text-align: center;
     text-transform: uppercase;
+    justify-self: center;
     font-size: 60px;
     font-weight: 600;
     color: var(--pink);
@@ -183,21 +184,22 @@ function closeChannel() {
     text-align: center;
     margin: 0px;
     @include for-phone-only {
+      width: 100%;
       font-size: 28px;
     }
     @include for-tablet-portrait-up {
       font-size: 34px;
+      width: 250px;
     }
     @include for-tablet-landscape-up {
       font-size: 40px;
+      width: 290px;
     }
   }
 }
 
 .selections {
   display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
   justify-content: space-around;
   align-items: center;
 
@@ -207,31 +209,17 @@ function closeChannel() {
   & > .button {
     font-size: 50px;
     font-family: 'Clash Display', sans-serif;
-    width: 250px;
     border: none;
     background-color: transparent;
-    @include for-tablet-portrait-up {
-      font-size: 50px;
-    }
-    @include for-tablet-landscape-up {
-      font-size: 55px;
-      width: 260px;
-    }
-    @include for-desktop-up {
-      font-size: 60px;
-      width: 300px;
-    }
-  }
-  & > .button.user-selecting {
+    padding: 0;
+    margin: 0 10px;
     cursor: pointer;
-    &:hover {
-      color: var(--pink);
-      font-weight: 500;
+    .selection-icon {
+      transition: background-color 0.1s ease-in-out;
+      &:hover {
+        background-color: var(--green);
+      }
     }
-  }
-  & > .button.bot-selecting {
-    color: var(--green);
-    cursor: default;
   }
 }
 .rock-paper-scissors {

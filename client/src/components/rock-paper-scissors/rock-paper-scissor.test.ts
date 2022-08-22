@@ -29,13 +29,15 @@ describe('Rock Paper Scissors Component', () => {
     });
 
     expect(RockPaperScissorsEl.getByText('Choose one')).toBeTruthy();
-    const rockBtn = RockPaperScissorsEl.getByText('ROCK');
-    const paperBtn = RockPaperScissorsEl.getByText('PAPER');
-    const scissorsBtn = RockPaperScissorsEl.getByText('SCISSORS');
+    const rockBtn = RockPaperScissorsEl.getByTestId('rock-btn');
+    const paperBtn = RockPaperScissorsEl.getByTestId('paper-btn');
+    const scissorsBtn = RockPaperScissorsEl.getByTestId('scissors-btn');
     expect(rockBtn).toBeTruthy();
     expect(paperBtn).toBeTruthy();
     expect(scissorsBtn).toBeTruthy();
-    expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe('');
+    expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe(
+      '<!--v-if-->'
+    );
     expect(() => RockPaperScissorsEl.getByTestId('botSelection')).toThrow();
   });
 
@@ -57,9 +59,9 @@ describe('Rock Paper Scissors Component', () => {
       },
     });
 
-    expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe(
-      'rock'
-    );
+    expect(
+      RockPaperScissorsEl.getByTestId('userSelection').innerHTML
+    ).toContain('rock');
     expect(() => RockPaperScissorsEl.getByTestId('botsSelection')).toThrow();
     expect(() => RockPaperScissorsEl.getByText("Bot's selection")).toThrow();
 
@@ -85,17 +87,17 @@ describe('Rock Paper Scissors Component', () => {
       },
     });
 
-    expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe(
-      'rock'
-    );
-    expect(RockPaperScissorsEl.getByTestId('botSelection').innerHTML).toBe(
+    expect(
+      RockPaperScissorsEl.getByTestId('userSelection').innerHTML
+    ).toContain('rock');
+    expect(RockPaperScissorsEl.getByTestId('botSelection').innerHTML).toContain(
       'paper'
     );
     expect(gameChannelSpy).toBeCalled();
   });
 
   it('resets game state if user wants to play another round', async () => {
-    await gameChannel.setUserSelection(Selections.rock);
+    await gameChannel.setUserSelection(Selections.paper);
     gameChannel.setBotSelection(Selections.paper);
     gameChannel.game.round.isCompleted = true;
     gameChannel.game.round.winner = 'ak_test';
@@ -122,11 +124,11 @@ describe('Rock Paper Scissors Component', () => {
 
     await fireEvent.click(resetButton);
 
-    const picks = ['ROCK', 'PAPER', 'SCISSORS'];
+    const picks = ['rock-btn', 'paper-btn', 'scissors-btn'];
 
     picks.forEach(async (pick) => {
       expect(
-        (RockPaperScissorsEl.getByText(pick) as HTMLButtonElement).disabled
+        (RockPaperScissorsEl.getByTestId(pick) as HTMLButtonElement).disabled
       ).toBeFalsy();
     });
   });

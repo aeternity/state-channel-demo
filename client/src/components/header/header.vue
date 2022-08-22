@@ -27,7 +27,7 @@ async function reset() {
     <PlayerInfo name="Bot" :balance="channelStore.channel?.balances.bot" />
   </div>
   <div v-else class="header end-screen">
-    <img src="../../assets/logo.png" alt="?" @click="reset()" />
+    <img src="../../assets/images/logo.png" alt="?" @click="reset()" />
   </div>
 </template>
 

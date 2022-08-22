@@ -129,6 +129,7 @@ function continueAutoplay() {
   justify-content: space-between;
   align-items: center;
   margin-top: 10px;
+  flex-wrap: wrap;
   .button {
     margin-left: 0;
   }
