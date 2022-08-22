@@ -6,13 +6,16 @@ import { resetApp } from '../../main';
 
 const channelStore = useChannelStore();
 
-function reset() {
+async function reset() {
+  if (channelStore.channel?.isOpen) {
+    await channelStore.channel?.closeChannel();
+  }
   resetApp();
 }
 </script>
 
 <template>
-  <div class="header" v-if="!channelStore.channel?.isClosedByUser">
+  <div class="header" v-if="!channelStore.channel?.shouldShowEndScreen">
     <PlayerInfo name="You" :balance="channelStore.channel?.balances.user" />
     <div class="center">
       <GameInfo

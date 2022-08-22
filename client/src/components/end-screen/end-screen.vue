@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { default as Button } from '../generic-button/generic-button.vue';
 import { useChannelStore } from '../../stores/channel';
 import BigNumber from 'bignumber.js';
@@ -30,6 +30,19 @@ const earnings = computed(() => {
   if (!initialBalance || !balance) return new BigNumber(0);
   return balance.minus(initialBalance);
 });
+
+const hasInsuffientBalance = computed(() => {
+  const balance = channel?.balances.user as BigNumber;
+  return balance.isLessThan(1e18);
+});
+
+function closeChannel() {
+  channel?.closeChannel();
+}
+
+function continueAutoplay() {
+  channel.continueAutoplay();
+}
 </script>
 
 <template>
@@ -43,6 +56,23 @@ const earnings = computed(() => {
     <div class="links">
       <Button :url="repoURL" text="Fork a repo" />
       <Button text="Check Explorer" disabled />
+      <Button
+        v-if="channel.game.autoplay.enabled"
+        text="Continue Autoplay"
+        :disabled="channel.channelIsClosing || hasInsuffientBalance"
+        @click="continueAutoplay()"
+        :title="
+          hasInsuffientBalance
+            ? 'You don\'t have enough AE to continue autoplay'
+            : ''
+        "
+      />
+      <Button
+        v-if="channel.game.autoplay.enabled"
+        text="Close Channel"
+        :disabled="channel.channelIsClosing"
+        @click="closeChannel()"
+      />
     </div>
   </div>
 </template>

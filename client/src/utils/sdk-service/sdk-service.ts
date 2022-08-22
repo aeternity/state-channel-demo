@@ -35,6 +35,7 @@ export async function initSdk() {
 }
 
 export async function returnCoinsToFaucet() {
+  if (!sdk) return;
   const userBalance = await sdk.getBalance(
     sdk.selectedAddress as Encoded.AccountAddress
   );

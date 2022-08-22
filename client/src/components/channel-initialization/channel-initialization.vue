@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { default as Button } from '../generic-button/generic-button.vue';
 import LoadingAnimation from '../loading-animation/loading-animation.vue';
 import { useChannelStore } from '../../stores/channel';
+import ToggleButton from '../toggle-button/toggle-button.vue';
 
 const openChannelInitiated = ref(false);
 const channelStore = useChannelStore();
@@ -27,6 +28,13 @@ const errorMessage = computed(() =>
 async function openStateChannel(): Promise<void> {
   openChannelInitiated.value = true;
   emit('initializeChannel');
+}
+
+function toggleAutoplay() {
+  if (channelStore.channel) {
+    channelStore.channel.game.autoplay.enabled =
+      !channelStore.channel.game.autoplay.enabled;
+  }
 }
 </script>
 
@@ -58,6 +66,12 @@ async function openStateChannel(): Promise<void> {
             :disabled="openChannelInitiated"
             @click="openStateChannel()"
             text="Start game"
+          />
+          <ToggleButton
+            id="autoplay"
+            v-on:change="toggleAutoplay"
+            label-enable-text="Autoplay"
+            label-disable-text="Autoplay"
           />
         </div>
       </div>
