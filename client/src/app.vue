@@ -63,7 +63,7 @@ onBeforeUnmount(async () => {
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
 
-  .container {
+  > .container {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: 20% 50% 30%;
