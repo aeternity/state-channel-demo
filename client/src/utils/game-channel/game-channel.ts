@@ -29,6 +29,12 @@ import {
   storeGameState,
 } from '../local-storage/local-storage';
 
+function timeout(ms: number) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('timeout succeeded')), ms);
+  });
+}
+
 export class GameChannel {
   channelConfig?: ChannelOptions;
   channelInstance?: Channel;
@@ -164,11 +170,6 @@ export class GameChannel {
    * hangs for a while, therefore we add a timeout
    */
   async checkIfChannelIsEstablished() {
-    function timeout(ms: number) {
-      return new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('timeout succeeded')), ms);
-      });
-    }
     const statePromise = this.getChannelWithoutProxy().state();
 
     try {
@@ -185,6 +186,7 @@ export class GameChannel {
     this.channelInstance = await Channel.reconnect(
       {
         ...this.channelConfig,
+        debug: true,
         role: 'responder',
         // @ts-expect-error ts-mismatch
         sign: this.signTx.bind(this),
@@ -311,6 +313,7 @@ export class GameChannel {
           !this.gameRound.hasRevealed
         ) {
           this.gameRound.hasRevealed = true;
+          this.saveStateToLocalStorage();
           nextTick(() => this.revealRoundResult());
         }
       });
@@ -442,12 +445,11 @@ export class GameChannel {
   }
 
   async getRoundContractCall(caller: Encoded.AccountAddress, round: number) {
-    if (!this.channelConfig) throw new Error('No channel configuration');
     if (!this.contract) throw new Error('Contract is not set');
     if (!this.contractAddress) throw new Error('Contract address is not set');
 
     return await this.getChannelWithoutProxy().getContractCall({
-      caller: caller,
+      caller,
       contract: this.contractAddress,
       round,
     });
@@ -459,16 +461,18 @@ export class GameChannel {
       [this.gameRound.hashKey, this.gameRound.userSelection],
       0 // reveal method is not payable, so we use 0
     );
+    return this.handleRoundResult();
+  }
 
-    const currentRound = this?.getChannelWithoutProxy().round();
-
-    if (!this.channelConfig) throw new Error('No channel configuration');
-    if (!currentRound) throw new Error('No current round');
+  async handleRoundResult() {
+    if (!this.channelConfig)
+      throw new Error('Channel Configuration is undefined');
+    if (!this.channelRound) throw new Error('No current round');
     if (!this.contract) throw new Error('Contract is not set');
 
     const result = await this.getRoundContractCall(
       this.channelConfig.responderId,
-      currentRound
+      this.channelRound
     );
 
     const winner = this.contract.calldata.decode(
@@ -530,6 +534,32 @@ export class GameChannel {
     storeGameState(stateToSave);
   }
 
+  /**
+   * ! Workaround.
+   * If no caller is provided, responder is used.
+   * If it hangs, we retry once more with the initiator.
+   * the channel.getContractCall() method may result in a hanging
+   * promise, without rejecting. Therefore we consider it rejected on a timeout.
+   */
+  // @ts-expect-error timeout typing
+  async tryFetchingLastContractCall(caller?: Encoded.AccountAddress) {
+    if (!this.channelConfig)
+      throw new Error('Channel configuration is undefined');
+
+    if (!this.channelRound) throw new Error('Channel round is undefined');
+    if (!caller) caller = this.channelConfig?.responderId;
+    try {
+      const promise = this.getRoundContractCall(caller, this.channelRound);
+      return await Promise.race([promise, timeout(1000)]);
+    } catch (e) {
+      if (caller === this.channelConfig?.responderId)
+        return this.tryFetchingLastContractCall(
+          this.channelConfig?.initiatorId
+        );
+      throw e;
+    }
+  }
+
   async restoreGameState() {
     const savedState = getSavedState();
     if (!savedState) return;
@@ -554,5 +584,26 @@ export class GameChannel {
       savedState.channelConfig?.initiatorId
     );
     await this.updateBalances();
+
+    if (savedState.gameRound.userSelection === Selections.none) return;
+    try {
+      const lastContractCall = await this.tryFetchingLastContractCall();
+      const decodedCall = this.contract?.decodeEvents(lastContractCall.log);
+
+      if (decodedCall?.[0].name === 'Player1Moved')
+        return this.revealRoundResult();
+
+      if (
+        decodedCall?.[1].name === 'Player0Revealed' &&
+        !savedState.gameRound.isCompleted
+      ) {
+        return this.handleRoundResult();
+      }
+    } catch (e) {
+      alert(
+        'Error while trying to get the last contract call. App will reset.'
+      );
+      resetApp();
+    }
   }
 }

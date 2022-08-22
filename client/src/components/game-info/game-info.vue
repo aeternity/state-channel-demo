@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { BigNumber } from 'bignumber.js';
+import { resetApp } from '../../main';
 
 defineProps<{
   stake?: Omit<BigNumber, '_isBigNumber'>;
@@ -17,6 +18,7 @@ defineProps<{
       <span class="info-seperator" v-if="round"> / </span>
       <span v-if="round">ROUND: {{ round }}</span>
     </div>
+    <button @click="resetApp()">Reset App</button>
   </div>
 </template>
 
