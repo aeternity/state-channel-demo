@@ -32,36 +32,40 @@ async function openStateChannel(): Promise<void> {
 
 <template>
   <div class="open-channel">
-    <div
-      class="title"
-      :style="{
-        'max-width': openChannelInitiated ? '100%' : '',
-      }"
-    >
-      {{ title }}
-    </div>
-    <div class="info-wrapper" v-if="!openChannelInitiated">
-      <p class="info">
-        State channels refer to the process in which users transact with one
-        another directly outside of the blockchain, or ‘off-chain,’ and greatly
-        minimize their use of ‘on-chain’ operations.
+    <div class="container" :class="{ shadow: !openChannelInitiated }">
+      <div
+        class="title"
+        :style="{
+          'max-width': openChannelInitiated ? '100%' : '',
+        }"
+      >
+        {{ title }}
+      </div>
+      <div class="info-wrapper" v-if="!openChannelInitiated">
+        <p class="info">
+          State channels refer to the process in which users transact with one
+          another directly outside of the blockchain, or ‘off-chain,’ and
+          greatly minimize their use of ‘on-chain’ operations.
+        </p>
+        <p class="info">
+          By clicking start game you are initiating state channel with our bot
+          and you make the possibilities of the game practically endless. After
+          the game is over, you can see every action recorded on the blockchain
+          by checking our explorer.
+        </p>
+        <div>
+          <Button
+            :disabled="openChannelInitiated"
+            @click="openStateChannel()"
+            text="Start game"
+          />
+        </div>
+      </div>
+      <LoadingAnimation v-else-if="!channelStore.channel?.error" />
+      <p v-else>
+        {{ errorMessage }}
       </p>
-      <p class="info">
-        By clicking start game you are initiating state channel with our bot and
-        you make the possibilities of the game practically endless. After the
-        game is over, you can see every action recorded on the blockchain by
-        checking our explorer.
-      </p>
-      <Button
-        :disabled="openChannelInitiated"
-        @click="openStateChannel()"
-        text="Start game"
-      />
     </div>
-    <LoadingAnimation v-else-if="!channelStore.channel?.error" />
-    <p v-else>
-      {{ errorMessage }}
-    </p>
   </div>
 </template>
 
@@ -75,6 +79,27 @@ async function openStateChannel(): Promise<void> {
   justify-content: flex-start;
   align-items: center;
   padding: var(--padding);
+  .container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    width: min-content;
+    border-radius: 25px;
+    @include for-phone-only {
+      width: unset;
+      padding: 10px;
+    }
+    @include for-tablet-portrait-up {
+      padding: 20px 40px;
+    }
+    @include for-tablet-landscape-up {
+      padding: 40px 150px;
+    }
+    &.shadow {
+      box-shadow: 0 4px 8px 0 rgb(0 0 0 / 20%), 0 1px 10px 0 rgb(0 0 0 / 15%);
+    }
+  }
 }
 .title {
   min-width: 400px;
