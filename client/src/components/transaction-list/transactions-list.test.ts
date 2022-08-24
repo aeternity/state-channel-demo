@@ -2,6 +2,10 @@ import { fireEvent, render } from '@testing-library/vue';
 import { describe, it, expect } from 'vitest';
 import { createTestingPinia } from '@pinia/testing';
 import TransactionsList from './transaction-list.vue';
+import {
+  mockUserTransactions,
+  mockBotTransactions,
+} from '../../../tests/mocks';
 
 describe('Render Transactions List', () => {
   expect(TransactionsList).toBeTruthy();
@@ -39,74 +43,8 @@ describe('Render Transactions List', () => {
             initialState: {
               channel: { channel: { isOpen: true } },
               transactions: {
-                userTransactions: [
-                  [
-                    {
-                      id: '1',
-                      description: 'User Initial Transaction',
-                      signed: true,
-                      onChain: true,
-                      timestamp: Date.now(),
-                    },
-                    {
-                      id: '2',
-                      description: 'User Deploy Contract Transaction',
-                      signed: true,
-                      onChain: true,
-                      timestamp: Date.now(),
-                    },
-                    {
-                      id: '4',
-                      description: 'User Shutdown Transaction',
-                      signed: true,
-                      onChain: true,
-                      timestamp: Date.now(),
-                    },
-                  ],
-                  [
-                    {
-                      id: '3',
-                      description: 'User Round 1 Transaction',
-                      signed: true,
-                      onChain: false,
-                      timestamp: Date.now(),
-                    },
-                  ],
-                ],
-                botTransactions: [
-                  [
-                    {
-                      id: '1',
-                      description: 'Bot Initial Transaction',
-                      signed: true,
-                      onChain: true,
-                      timestamp: Date.now(),
-                    },
-                    {
-                      id: '2',
-                      description: 'Bot Deploy Contract Transaction',
-                      signed: true,
-                      onChain: false,
-                      timestamp: Date.now(),
-                    },
-                    {
-                      id: '4',
-                      description: 'Bot Shutdown Transaction',
-                      signed: true,
-                      onChain: true,
-                      timestamp: Date.now(),
-                    },
-                  ],
-                  [
-                    {
-                      id: '3',
-                      description: 'Bot Round 1 Transaction',
-                      signed: true,
-                      onChain: false,
-                      timestamp: Date.now(),
-                    },
-                  ],
-                ],
+                userTransactions: mockUserTransactions,
+                botTransactions: mockBotTransactions,
               },
             },
           }),

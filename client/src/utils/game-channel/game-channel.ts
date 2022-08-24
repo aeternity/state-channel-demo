@@ -49,8 +49,8 @@ export class GameChannel {
   isOpen = false;
   isFunded = false;
   shouldShowEndScreen = false;
-  channelOpenTime = -1;
-  channelCloseTime = -1;
+  timerStartTime = -1;
+  lastOffChainTxTime = -1;
   channelIsClosing = false;
   error?: {
     status: number;
@@ -69,6 +69,7 @@ export class GameChannel {
       enabled: boolean;
       rounds: number;
       extraRounds: number; // extra rounds to play when continuing autoplay
+      elapsedTime: number; // time elapsed while autoplay is playing
     };
     stake?: BigNumber;
     round: {
@@ -85,6 +86,7 @@ export class GameChannel {
       enabled: false,
       rounds: 10,
       extraRounds: 10,
+      elapsedTime: 0,
     },
     round: {
       index: 1,
@@ -174,8 +176,6 @@ export class GameChannel {
     this.channelConfig = config;
     this.isFunded = true;
 
-    // ? Do we start counting before the funding or after?
-    this.channelOpenTime = Date.now();
     this.channelInstance = await Channel.initialize({
       ...this.channelConfig,
       role: 'responder',
@@ -186,6 +186,7 @@ export class GameChannel {
           ? import.meta.env.VITE_WS_URL
           : this.channelConfig.url,
     });
+    this.timerStartTime = Date.now();
     this.registerEvents();
   }
 
@@ -200,7 +201,6 @@ export class GameChannel {
         await returnCoinsToFaucet();
         this.shouldShowEndScreen = true;
         this.isOpen = false;
-        this.channelCloseTime = Date.now();
       });
   }
 
@@ -249,6 +249,7 @@ export class GameChannel {
 
     // for both user and bot calls to the contract
     if (update?.op === 'OffChainCallContract') {
+      this.lastOffChainTxTime = Date.now();
       await this.logCallUpdate(update.call_data, tx);
       // if we are signing a bot transaction that calls the contract
       if (update?.caller_id !== sdk.selectedAddress) {
@@ -443,7 +444,8 @@ export class GameChannel {
         this.startNewRound();
       // otherwise, show results
       else {
-        this.channelCloseTime = Date.now();
+        this.game.autoplay.elapsedTime +=
+          this.lastOffChainTxTime - this.timerStartTime;
         this.shouldShowEndScreen = true;
       }
     }
@@ -469,6 +471,7 @@ export class GameChannel {
   continueAutoplay() {
     this.game.autoplay.rounds += this.game.autoplay.extraRounds;
     this.shouldShowEndScreen = false;
+    this.timerStartTime = Date.now();
     this.startNewRound();
   }
 
