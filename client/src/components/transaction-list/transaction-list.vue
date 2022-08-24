@@ -52,7 +52,7 @@ onUpdated(() => {
       </div>
       <div class="transactions-list" v-if="botTransactions.length > 0">
         <!-- Channel initialization tx logs -->
-        <Accordion data-testid="channel-init-tx-logs">
+        <Accordion :isOpen="true" data-testid="channel-init-tx-logs">
           <template v-slot:title>
             <div class="round">Channel Initialization</div>
           </template>
@@ -91,6 +91,7 @@ onUpdated(() => {
         </Accordion>
         <!-- Channel shutdown tx logs -->
         <Accordion
+          :isOpen="true"
           data-testid="channel-shutdown-tx-logs"
           v-if="specialUserTx[2] || specialBotTx[2]"
         >

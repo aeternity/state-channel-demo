@@ -5,12 +5,8 @@ import Header from './components/header/header.vue';
 import RockPaperScissors from './components/rock-paper-scissors/rock-paper-scissors.vue';
 import EndScreen from './components/end-screen/end-screen.vue';
 import { useChannelStore } from './stores/channel';
-import { onBeforeUnmount, onMounted, computed } from 'vue';
-import {
-  initSdk,
-  returnCoinsToFaucet,
-  sdk,
-} from './utils/sdk-service/sdk-service';
+import { onMounted, computed } from 'vue';
+import { initSdk } from './utils/sdk-service/sdk-service';
 import { GameChannel } from './utils/game-channel/game-channel';
 
 const channelStore = useChannelStore();
@@ -23,32 +19,36 @@ async function initChannel() {
 }
 
 const showTerminal = computed(
-  () => channelStore.channel?.isOpen || channelStore.channel?.isClosedByUser
+  () =>
+    channelStore.channel?.isOpen || channelStore.channel?.shouldShowEndScreen
+);
+
+const showingAutoplayTxLogs = computed(
+  () =>
+    channelStore.channel?.game.autoplay.enabled &&
+    channelStore.channel?.contractAddress &&
+    !channelStore.channel?.shouldShowEndScreen
 );
 
 onMounted(async () => {
   await initSdk();
   channelStore.channel = new GameChannel();
 });
-
-onBeforeUnmount(async () => {
-  if (sdk) {
-    await returnCoinsToFaucet();
-  }
-});
 </script>
 
 <template>
-  <div class="container">
+  <div class="container" :class="{ noSelections: showingAutoplayTxLogs }">
     <Header />
-    <EndScreen v-if="channelStore.channel?.isClosedByUser" />
+    <EndScreen v-if="channelStore.channel?.shouldShowEndScreen" />
     <ChannelInitialization
       v-else-if="
         !channelStore.channel?.isOpen || !channelStore.channel?.contractAddress
       "
       @initializeChannel="initChannel()"
     />
-    <RockPaperScissors v-else />
+    <RockPaperScissors
+      v-else-if="!channelStore.channel.game.autoplay.enabled"
+    />
     <TransactionsList v-if="showTerminal" />
   </div>
 </template>
@@ -78,6 +78,9 @@ onBeforeUnmount(async () => {
     @include for-phone-only {
       min-height: 100vh;
       height: unset;
+    }
+    &.noSelections {
+      grid-template-rows: 20% 5% 75%;
     }
   }
 }

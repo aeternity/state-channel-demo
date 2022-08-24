@@ -48,9 +48,10 @@ export class GameChannel {
   channelInstance?: Channel;
   isOpen = false;
   isFunded = false;
-  isClosedByUser = false;
+  shouldShowEndScreen = false;
   channelOpenTime = -1;
   channelCloseTime = -1;
+  channelIsClosing = false;
   error?: {
     status: number;
     statusText: string;
@@ -64,6 +65,11 @@ export class GameChannel {
     bot: undefined,
   };
   game: {
+    autoplay: {
+      enabled: boolean;
+      rounds: number;
+      extraRounds: number; // extra rounds to play when continuing autoplay
+    };
     stake?: BigNumber;
     round: {
       index: number;
@@ -75,6 +81,11 @@ export class GameChannel {
       hasRevealed?: boolean;
     };
   } = {
+    autoplay: {
+      enabled: false,
+      rounds: 10,
+      extraRounds: 10,
+    },
     round: {
       index: 1,
       userSelection: Selections.none,
@@ -182,12 +193,12 @@ export class GameChannel {
     if (!this.channelInstance) {
       throw new Error('Channel is not open');
     }
-    this.getChannelWithoutProxy()
-      .shutdown((tx: Encoded.Transaction) => {
-        return this.signTx('channel_close', tx);
-      })
-      .then(() => {
-        this.isClosedByUser = true;
+    this.channelIsClosing = true;
+    await this.getChannelWithoutProxy()
+      .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
+      .then(async () => {
+        await returnCoinsToFaucet();
+        this.shouldShowEndScreen = true;
         this.isOpen = false;
         this.channelCloseTime = Date.now();
       });
@@ -251,9 +262,6 @@ export class GameChannel {
   private registerEvents() {
     if (this.channelInstance) {
       this.getChannelWithoutProxy().on('statusChanged', (status) => {
-        if (status === 'disconnected') {
-          returnCoinsToFaucet();
-        }
         if (status === 'open') {
           this.isOpen = true;
           this.updateBalances();
@@ -292,6 +300,11 @@ export class GameChannel {
       timestamp: Date.now(),
     };
     useTransactionsStore().addUserTransaction(transactionLog, 0);
+
+    // if autoplay is enabled, make user selection automatically
+    if (this.game.autoplay.enabled) {
+      this.setUserSelection(this.getRandomSelection());
+    }
   }
 
   async callContract(
@@ -422,6 +435,18 @@ export class GameChannel {
     this.game.round.winner = winner;
     this.game.round.isCompleted = true;
     await this.updateBalances();
+
+    // if autoplay is enabled
+    if (this.game.autoplay.enabled) {
+      // if not last round, start next round
+      if (this.game.round.index < this.game.autoplay.rounds)
+        this.startNewRound();
+      // otherwise, show results
+      else {
+        this.channelCloseTime = Date.now();
+        this.shouldShowEndScreen = true;
+      }
+    }
   }
 
   startNewRound() {
@@ -431,6 +456,20 @@ export class GameChannel {
     this.game.round.isCompleted = false;
     this.game.round.hasRevealed = false;
     this.game.round.winner = undefined;
+
+    // if autoplay is enabled, make user selection automatically
+    if (
+      this.game.autoplay.enabled &&
+      this.game.round.index <= this.game.autoplay.rounds
+    ) {
+      this.setUserSelection(this.getRandomSelection());
+    }
+  }
+
+  continueAutoplay() {
+    this.game.autoplay.rounds += this.game.autoplay.extraRounds;
+    this.shouldShowEndScreen = false;
+    this.startNewRound();
   }
 
   private handleMessage(message: { type: string; data: TransactionLog }) {
@@ -442,5 +481,10 @@ export class GameChannel {
           : this.game.round.index;
       useTransactionsStore().addBotTransaction(txLog, round);
     }
+  }
+
+  private getRandomSelection(): Selections {
+    const randomSelection = Math.floor(Math.random() * 3);
+    return Object.values(Selections)[randomSelection];
   }
 }

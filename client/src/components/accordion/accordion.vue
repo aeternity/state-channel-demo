@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const isOpen = ref(true);
+const props = defineProps<{
+  isOpen?: boolean;
+}>();
+
+const isOpen = ref(props.isOpen ?? false);
 function toggleAccordion() {
   isOpen.value = !isOpen.value;
 }
