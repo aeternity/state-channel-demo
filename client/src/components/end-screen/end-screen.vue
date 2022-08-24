@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { default as Button } from '../generic-button/generic-button.vue';
 import { useChannelStore } from '../../stores/channel';
 import BigNumber from 'bignumber.js';
@@ -12,8 +12,10 @@ const repoURL = 'https://github.com/aeternity/state-channel-demo';
 // TODO we need to create the correct url from the channel close tx
 // const explorerURL = 'https://explorer.testnet.aeternity.io/';
 
-const transactions = useTransactionsStore().userTransactions.flat();
-const seconds = (channel.channelCloseTime - channel.channelOpenTime) / 1000;
+const transactions = useTransactionsStore()
+  .userTransactions.flat()
+  .filter((tx) => tx.onChain === false);
+const seconds = channel.game.autoplay.elapsedTime / 1000;
 const title = computed(() =>
   earnings.value.isZero()
     ? "You didn't win or lose anything"
@@ -21,8 +23,17 @@ const title = computed(() =>
     ? `You won ${earnings.value.dividedBy(1e18).toFormat(2)} AE`
     : `You lost ${earnings.value.abs().dividedBy(1e18).toFormat(2)} AE`
 );
-const text = computed(
-  () => `${transactions.length} state-channel transactions in ${seconds}sec`
+const txPerSecText = computed(
+  () =>
+    `${transactions.length} off-chain transaction${
+      transactions.length > 1 ? 's' : ''
+    } ${channel.game.autoplay.enabled ? `in ${seconds}sec` : ''}`
+);
+const roundsPlayed = computed(
+  () =>
+    `${channel.game.round.index} round${
+      channel.game.round.index > 1 ? 's' : ''
+    } played`
 );
 const earnings = computed(() => {
   const initialBalance = channel?.channelConfig?.responderAmount as BigNumber;
@@ -51,7 +62,10 @@ function continueAutoplay() {
       {{ title }}
     </div>
     <div class="text">
-      {{ text }}
+      {{ roundsPlayed }}
+    </div>
+    <div class="text">
+      {{ txPerSecText }}
     </div>
     <div class="links">
       <Button :url="repoURL" text="Fork a repo" />

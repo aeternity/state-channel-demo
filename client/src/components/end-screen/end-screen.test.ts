@@ -5,12 +5,16 @@ import EndScreen from './end-screen.vue';
 import { createTestingPinia } from '@pinia/testing';
 import { GameChannel } from '../../utils/game-channel/game-channel';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
+import {
+  mockBotTransactions,
+  mockUserTransactions,
+} from '../../../tests/mocks';
 
 describe('Show end screen', async () => {
   expect(EndScreen).toBeTruthy();
   const gameChannel = new GameChannel();
-  gameChannel.channelOpenTime = 1000;
-  gameChannel.channelCloseTime = 2000;
+  gameChannel.game.autoplay.enabled = true;
+  gameChannel.game.autoplay.elapsedTime = 1000;
   gameChannel.balances.user = new BigNumber(10e18);
   gameChannel.channelConfig = {
     responderAmount: new BigNumber(5e18),
@@ -26,7 +30,8 @@ describe('Show end screen', async () => {
                 channel: gameChannel,
               },
               transactions: {
-                userTransactions: [0, 1, 2, 3],
+                userTransactions: mockUserTransactions,
+                botTransactions: mockBotTransactions,
               },
             },
           }),
@@ -34,9 +39,8 @@ describe('Show end screen', async () => {
       },
     });
     expect(endScreen.getByText('You won 5.00 AE')).toBeTruthy();
-    expect(
-      endScreen.getByText('4 state-channel transactions in 1sec')
-    ).toBeTruthy();
+    expect(endScreen.getByText('1 round played')).toBeTruthy();
+    expect(endScreen.getByText('1 off-chain transaction in 1sec')).toBeTruthy();
   });
 
   it('should display the end screen when bot wins', async () => {
@@ -50,7 +54,8 @@ describe('Show end screen', async () => {
                 channel: gameChannel,
               },
               transactions: {
-                userTransactions: [0, 1, 2],
+                userTransactions: mockUserTransactions,
+                botTransactions: mockBotTransactions,
               },
             },
           }),
@@ -58,9 +63,7 @@ describe('Show end screen', async () => {
       },
     });
     expect(endScreen.getByText('You lost 2.00 AE')).toBeTruthy();
-    expect(
-      endScreen.getByText('3 state-channel transactions in 1sec')
-    ).toBeTruthy();
+    expect(endScreen.getByText('1 off-chain transaction in 1sec')).toBeTruthy();
   });
 
   it('should display the end screen when nobody wins', async () => {
@@ -74,7 +77,8 @@ describe('Show end screen', async () => {
                 channel: gameChannel,
               },
               transactions: {
-                userTransactions: [0, 1, 2],
+                userTransactions: mockUserTransactions,
+                botTransactions: mockBotTransactions,
               },
             },
           }),
@@ -82,8 +86,6 @@ describe('Show end screen', async () => {
       },
     });
     expect(endScreen.getByText("You didn't win or lose anything")).toBeTruthy();
-    expect(
-      endScreen.getByText('3 state-channel transactions in 1sec')
-    ).toBeTruthy();
+    expect(endScreen.getByText('1 off-chain transaction in 1sec')).toBeTruthy();
   });
 });
