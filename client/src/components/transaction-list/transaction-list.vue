@@ -7,8 +7,10 @@ import Accordion from '../accordion/accordion.vue';
 
 const EXPAND_ICON = new URL('../../assets/svg/expand.svg', import.meta.url)
   .href;
-const MINIMISE_ICON = new URL('../../assets/minimize.png', import.meta.url)
-  .href;
+const MINIMISE_ICON = new URL(
+  '../../assets/images/minimize.png',
+  import.meta.url
+).href;
 
 const terminalEl = ref<Element>();
 const transactionStore = useTransactionsStore();

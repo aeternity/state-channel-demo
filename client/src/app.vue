@@ -75,10 +75,6 @@ onMounted(async () => {
       'transactions';
     height: 100vh;
 
-    @include for-phone-only {
-      min-height: 100vh;
-      height: unset;
-    }
     &.noSelections {
       grid-template-rows: 20% 5% 75%;
     }
