@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Selections } from '../../utils/game-channel/game-channel';
+import { Selections } from '../../utils/game-channel/game-channel.types';
 import { useChannelStore } from '../../stores/channel';
 import GenericButton from '../generic-button/generic-button.vue';
 import SelectionIcon from '../selection-icon/selection-icon.vue';
@@ -16,7 +16,7 @@ const userHasSelected = computed(() => {
     : false;
 });
 
-const showSelectionButtons = computed(() => {
+const isSelectingDisabled = computed(() => {
   return userHasSelected.value || selectionClicked.value;
 });
 
@@ -35,22 +35,20 @@ const userSelection = computed(() =>
 );
 
 const botSelection = computed(() =>
-  gameChannel.channel?.game.round.botSelection != Selections.none
-    ? Selections[
-        gameChannel.channel?.game.round.botSelection ?? Selections.none
-      ]
+  gameChannel.channel?.gameRound.botSelection != Selections.none
+    ? Selections[gameChannel.channel?.gameRound.botSelection ?? Selections.none]
     : ''
 );
 
 const status = computed(() => {
-  if (!showSelectionButtons.value) {
+  if (!isSelectingDisabled.value) {
     return 'Choose one';
   }
   if (botIsMakingSelection.value) {
     return 'Bot is selecting';
   }
-  if (gameChannel.channel?.game.round.isCompleted) {
-    switch (gameChannel.channel?.game.round.winner) {
+  if (gameChannel.channel?.gameRound.isCompleted) {
+    switch (gameChannel.channel?.gameRound.winner) {
       case gameChannel.channel.channelConfig?.responderId:
         return 'You won';
       case gameChannel.channel.channelConfig?.initiatorId:
@@ -74,6 +72,7 @@ async function makeSelection(selection: Selections) {
 }
 
 function closeChannel() {
+  localStorage.clear();
   channelIsClosing.value = true;
   gameChannel.channel?.closeChannel();
 }
@@ -90,7 +89,7 @@ function closeChannel() {
       </div>
       <h1 class="title">{{ status }}</h1>
       <div
-        v-if="gameChannel.channel?.game.round.isCompleted"
+        v-if="gameChannel.channel?.gameRound.isCompleted"
         class="finalized-selection bot"
         data-testid="botSelection"
       >
@@ -100,10 +99,10 @@ function closeChannel() {
         />
       </div>
     </div>
-    <div v-if="!showSelectionButtons" class="selections">
+    <div v-if="!isSelectingDisabled" class="selections">
       <button
         data-testid="rock-btn"
-        :disabled="showSelectionButtons"
+        :disabled="isSelectingDisabled"
         class="button"
         @click="makeSelection(Selections.rock)"
       >
@@ -111,7 +110,7 @@ function closeChannel() {
       </button>
       <button
         data-testid="paper-btn"
-        :disabled="showSelectionButtons"
+        :disabled="isSelectingDisabled"
         class="button"
         @click="makeSelection(Selections.paper)"
       >
@@ -119,7 +118,7 @@ function closeChannel() {
       </button>
       <button
         data-testid="scissors-btn"
-        :disabled="showSelectionButtons"
+        :disabled="isSelectingDisabled"
         class="button"
         @click="makeSelection(Selections.scissors)"
       >
@@ -127,7 +126,7 @@ function closeChannel() {
       </button>
     </div>
     <div
-      v-if="gameChannel.channel?.game.round.isCompleted"
+      v-if="gameChannel.channel?.gameRound.isCompleted"
       class="round-controls"
     >
       <GenericButton

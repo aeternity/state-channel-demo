@@ -5,19 +5,32 @@ import LoadingAnimation from '../loading-animation/loading-animation.vue';
 import { useChannelStore } from '../../stores/channel';
 import ToggleButton from '../toggle-button/toggle-button.vue';
 
-const openChannelInitiated = ref(false);
 const channelStore = useChannelStore();
+const openChannelInitiated = ref(false);
+const hasSavedState = ref(!!localStorage.getItem('gameState'));
+const channelIsOpening = computed(
+  () => channelStore.channel?.isOpening || openChannelInitiated.value
+);
+
 const emit = defineEmits(['initializeChannel']);
 
-const title = computed(() =>
-  !openChannelInitiated.value
+const title = computed(() => {
+  const prefix = hasSavedState.value ? 'Reconnecting - ' : '';
+
+  const contractRequiredAction = hasSavedState.value
+    ? 'compiled'
+    : 'deployed & compiled';
+
+  const status = !channelIsOpening.value
     ? 'Start the game by open state channel'
     : !channelStore.channel?.isFunded
     ? 'Funding accounts...'
     : !channelStore.channel?.isOpen
     ? 'Setting ‘on-chain’ operations...'
-    : 'Waiting for contract to be deployed...'
-);
+    : ` Waiting for contract to be ${contractRequiredAction}...`;
+
+  return prefix + status;
+});
 
 const errorMessage = computed(() =>
   channelStore.channel?.error
@@ -32,24 +45,27 @@ async function openStateChannel(): Promise<void> {
 
 function toggleAutoplay() {
   if (channelStore.channel) {
-    channelStore.channel.game.autoplay.enabled =
-      !channelStore.channel.game.autoplay.enabled;
+    channelStore.channel.autoplay.enabled =
+      !channelStore.channel.autoplay.enabled;
   }
 }
 </script>
 
 <template>
   <div class="open-channel">
-    <div class="container" :class="{ shadow: !openChannelInitiated }">
+    <div
+      class="container"
+      :class="{ shadow: !openChannelInitiated && !hasSavedState }"
+    >
       <div
         class="title"
         :style="{
-          'max-width': openChannelInitiated ? '100%' : '',
+          'max-width': channelIsOpening ? '100%' : '',
         }"
       >
         {{ title }}
       </div>
-      <div class="info-wrapper" v-if="!openChannelInitiated">
+      <div class="info-wrapper" v-if="!channelIsOpening">
         <p class="info">
           State channels refer to the process in which users transact with one
           another directly outside of the blockchain, or ‘off-chain,’ and
@@ -63,7 +79,7 @@ function toggleAutoplay() {
         </p>
         <div>
           <Button
-            :disabled="openChannelInitiated"
+            :disabled="channelIsOpening"
             @click="openStateChannel()"
             text="Start game"
           />
@@ -82,10 +98,8 @@ function toggleAutoplay() {
     </div>
   </div>
 </template>
-
 <style scoped lang="scss">
 @import '../../mediaqueries.scss';
-
 .open-channel {
   grid-area: body;
   display: flex;
@@ -98,7 +112,6 @@ function toggleAutoplay() {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    width: min-content;
     border-radius: 25px;
     @include for-phone-only {
       width: unset;
@@ -111,6 +124,7 @@ function toggleAutoplay() {
       padding: 40px 150px;
     }
     &.shadow {
+      width: min-content;
       box-shadow: 0 4px 8px 0 rgb(0 0 0 / 20%), 0 1px 10px 0 rgb(0 0 0 / 15%);
     }
   }

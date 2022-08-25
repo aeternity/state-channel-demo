@@ -15,7 +15,7 @@ const repoURL = 'https://github.com/aeternity/state-channel-demo';
 const transactions = useTransactionsStore()
   .userTransactions.flat()
   .filter((tx) => tx.onChain === false);
-const seconds = channel.game.autoplay.elapsedTime / 1000;
+const seconds = channel.autoplay.elapsedTime / 1000;
 const title = computed(() =>
   earnings.value.isZero()
     ? "You didn't win or lose anything"
@@ -27,12 +27,12 @@ const txPerSecText = computed(
   () =>
     `${transactions.length} off-chain transaction${
       transactions.length > 1 ? 's' : ''
-    } ${channel.game.autoplay.enabled ? `in ${seconds}sec` : ''}`
+    } ${channel.autoplay.enabled ? `in ${seconds}sec` : ''}`
 );
 const roundsPlayed = computed(
   () =>
-    `${channel.game.round.index} round${
-      channel.game.round.index > 1 ? 's' : ''
+    `${channel.gameRound.index} round${
+      channel.gameRound.index > 1 ? 's' : ''
     } played`
 );
 const earnings = computed(() => {
@@ -71,7 +71,7 @@ function continueAutoplay() {
       <Button :url="repoURL" text="Fork a repo" />
       <Button text="Check Explorer" disabled />
       <Button
-        v-if="channel.game.autoplay.enabled"
+        v-if="channel.autoplay.enabled"
         text="Continue Autoplay"
         :disabled="channel.channelIsClosing || hasInsuffientBalance"
         @click="continueAutoplay()"
@@ -82,7 +82,7 @@ function continueAutoplay() {
         "
       />
       <Button
-        v-if="channel.game.autoplay.enabled"
+        v-if="channel.autoplay.enabled"
         text="Close Channel"
         :disabled="channel.channelIsClosing"
         @click="closeChannel()"

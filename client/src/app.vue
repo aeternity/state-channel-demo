@@ -25,14 +25,16 @@ const showTerminal = computed(
 
 const showingAutoplayTxLogs = computed(
   () =>
-    channelStore.channel?.game.autoplay.enabled &&
+    channelStore.channel?.autoplay.enabled &&
     channelStore.channel?.contractAddress &&
     !channelStore.channel?.shouldShowEndScreen
 );
 
 onMounted(async () => {
   await initSdk();
-  channelStore.channel = new GameChannel();
+  const channel = new GameChannel();
+  channelStore.channel = channel;
+  await channelStore.channel.restoreGameState();
 });
 </script>
 
@@ -46,9 +48,7 @@ onMounted(async () => {
       "
       @initializeChannel="initChannel()"
     />
-    <RockPaperScissors
-      v-else-if="!channelStore.channel.game.autoplay.enabled"
-    />
+    <RockPaperScissors v-else-if="!channelStore.channel.autoplay.enabled" />
     <TransactionsList v-if="showTerminal" />
   </div>
 </template>
