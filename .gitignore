@@ -2,3 +2,4 @@ docker-compose.override.yml
 node_modules/
 .env.production
 Makefile
+docker/data

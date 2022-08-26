@@ -4,6 +4,9 @@ import { route } from './route';
 
 export const app = express();
 
-app.use(cors());
+const corsOptions = process.env.NODE_ENV === 'development'
+  ? null
+  : { origin: [/\.aeternity\.com$/, /\.aepps\.com$/] };
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/', route);
