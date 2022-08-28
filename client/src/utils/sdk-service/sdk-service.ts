@@ -20,6 +20,12 @@ const FAUCET_PUBLIC_ADDRESS = import.meta.env
 export let sdk: AeSdk;
 export const keypair = generateKeyPair();
 
+export async function refreshSdkAccount() {
+  if (sdk.selectedAddress) sdk.removeAccount(sdk.selectedAddress);
+  const account = new MemoryAccount({ keypair: generateKeyPair() });
+  await sdk.addAccount(account, { select: true });
+}
+
 export async function getNewSdk() {
   const account = new MemoryAccount({ keypair });
   const node = new Node(NODE_URL);

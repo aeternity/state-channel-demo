@@ -11,8 +11,8 @@ import { BigNumber } from 'bignumber.js';
 import { nextTick, toRaw } from 'vue';
 import {
   decodeCallData,
-  initSdk,
   keypair,
+  refreshSdkAccount,
   returnCoinsToFaucet,
   sdk,
   verifyContractBytecode,
@@ -146,7 +146,7 @@ export class GameChannel {
     if (res.status != 200) {
       if (data.error.includes('greylisted')) {
         console.log('Greylisted account, retrying with new account');
-        initSdk();
+        await refreshSdkAccount();
         return this.fetchChannelConfig();
       } else
         this.error = {
@@ -166,6 +166,7 @@ export class GameChannel {
     this.isFunded = true;
     this.channelInstance = await Channel.initialize({
       ...this.channelConfig,
+      debug: true,
       role: 'responder',
       // @ts-expect-error ts-mismatch
       sign: this.signTx.bind(this),
