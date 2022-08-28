@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { SignatureType } from '../../utils/game-channel/game-channel.types';
+
 export interface TransactionLog {
   id: string;
   onChain: boolean;
   description: string;
-  signed: boolean;
+  signed: SignatureType;
   timestamp: number;
 }
 defineProps<{
@@ -40,7 +42,7 @@ function formatTxId(id: string): string {
     </span>
     <div class="info">
       <span>{{ formatDate(transaction.timestamp) }} | </span>
-      <span> {{ transaction.signed ? 'Signed' : 'Declined' }}</span>
+      <span> {{ transaction.signed }}</span>
     </div>
   </div>
   <div class="transaction" v-else>pending...</div>

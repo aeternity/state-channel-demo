@@ -25,10 +25,15 @@ export interface GameSession {
   };
 }
 
+export enum SignatureType {
+  proposed = 'Signed (proposed)',
+  confirmed = 'Co-signed (confirmed)',
+  declined = 'Declined',
+}
 export interface TransactionLog {
   id: string;
   onChain: boolean;
   description: string;
-  signed: boolean;
+  signed: SignatureType;
   timestamp: number;
 }

@@ -20,7 +20,7 @@ import {
 } from '../sdk';
 import { fundAccount } from '../sdk/sdk.service';
 import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
-import { GameSession, TransactionLog } from './bot.interface';
+import { GameSession, SignatureType, TransactionLog } from './bot.interface';
 
 export const gameSessionPool = new Map<string, GameSession>();
 let openStateChannelTxLog: TransactionLog;
@@ -99,7 +99,7 @@ export async function sendCallUpdateLog(
   const txLog: TransactionLog = {
     id: tx,
     description: `${data.function}()`,
-    signed: true,
+    signed: SignatureType.confirmed,
     onChain: false,
     timestamp: Date.now(),
   };
@@ -113,6 +113,7 @@ export async function sendCallUpdateLog(
       break;
     }
     case Methods.player1_move: {
+      txLog.signed = SignatureType.proposed;
       const selection = data.arguments[0].value.toString();
       txLog.description = `Bot selected ${selection}`;
       break;
@@ -375,7 +376,7 @@ export async function generateGameSession(
           description: 'Open state channel',
           id: tx,
           onChain: true,
-          signed: true,
+          signed: SignatureType.proposed,
           timestamp: Date.now(),
         };
       }
@@ -389,7 +390,7 @@ export async function generateGameSession(
               description: 'Close state channel',
               id: tx,
               onChain: true,
-              signed: true,
+              signed: SignatureType.confirmed,
               timestamp: Date.now(),
             },
           },

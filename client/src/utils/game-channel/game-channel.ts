@@ -22,7 +22,13 @@ import SHA from 'sha.js';
 import { useTransactionsStore } from '../../stores/transactions';
 import { TransactionLog } from '../../components/transaction/transaction.vue';
 import { resetApp } from '../../main';
-import { GameRound, Methods, Selections, Update } from './game-channel.types';
+import {
+  GameRound,
+  Methods,
+  Selections,
+  SignatureType,
+  Update,
+} from './game-channel.types';
 import {
   getSavedState,
   StoredState,
@@ -258,7 +264,7 @@ export class GameChannel {
       const transactionLog: TransactionLog = {
         id: tx,
         description: 'Open state channel',
-        signed: true,
+        signed: SignatureType.confirmed,
         onChain: true,
         timestamp: Date.now(),
       };
@@ -270,7 +276,7 @@ export class GameChannel {
       const transactionLog: TransactionLog = {
         id: tx,
         description: 'Close state channel',
-        signed: true,
+        signed: SignatureType.proposed,
         onChain: true,
         timestamp: Date.now(),
       };
@@ -355,7 +361,7 @@ export class GameChannel {
     const transactionLog: TransactionLog = {
       id: tx,
       description: 'Deploy contract',
-      signed: true,
+      signed: SignatureType.confirmed,
       onChain: false,
       timestamp: Date.now(),
     };
@@ -440,7 +446,7 @@ export class GameChannel {
     const transactionLog: TransactionLog = {
       id: tx,
       description: `User called ${decodedCallData.function}()`,
-      signed: true,
+      signed: SignatureType.proposed,
       onChain: false,
       timestamp: Date.now(),
     };
@@ -452,6 +458,7 @@ export class GameChannel {
         transactionLog.description = `User revealed his selection: ${decodedCallData.arguments[1].value}`;
         break;
       case Methods.player1_move:
+        transactionLog.signed = SignatureType.confirmed;
         transactionLog.description = `Bot selected ${decodedCallData.arguments[0].value}`;
         break;
     }
