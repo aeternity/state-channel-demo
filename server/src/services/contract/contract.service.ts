@@ -3,7 +3,7 @@ import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import logger from '../../logger';
-import { TransactionLog } from '../bot/bot.interface';
+import { SignatureType, TransactionLog } from '../bot/bot.interface';
 import { decodeCallData, sdk, Update } from '../sdk';
 import {
   CONTRACT_CONFIGURATION,
@@ -65,7 +65,7 @@ export async function deployContract(
         onChain: false,
         description: 'Deploy contract',
         timestamp: Date.now(),
-        signed: true,
+        signed: SignatureType.proposed,
       };
       void channel.sendMessage(
         {

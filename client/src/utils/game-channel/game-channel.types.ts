@@ -39,3 +39,9 @@ export enum Selections {
   scissors = 'scissors',
   none = 'none',
 }
+
+export enum SignatureType {
+  proposed = 'Signed (proposed)',
+  confirmed = 'Co-signed (confirmed)',
+  declined = 'Declined',
+}
