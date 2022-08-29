@@ -57,7 +57,7 @@ function toggleAccordion() {
   margin: 3px 0;
 
   &:hover {
-    background-color: #f4f4f4;
+    background-color: var(--gray);
   }
 }
 .arrow {

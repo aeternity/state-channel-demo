@@ -16,6 +16,9 @@ describe('Rock Paper Scissors Component', () => {
     });
   it('displays Rock Paper Scissors buttons', async () => {
     const RockPaperScissorsEl = render(RockPaperScissors, {
+      props: {
+        isPlayerUser: true,
+      },
       global: {
         plugins: [
           createTestingPinia({
@@ -39,7 +42,9 @@ describe('Rock Paper Scissors Component', () => {
     expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe(
       '<!--v-if-->'
     );
-    expect(() => RockPaperScissorsEl.getByTestId('botSelection')).toThrow();
+    expect(RockPaperScissorsEl.getByTestId('botSelection').innerHTML).toBe(
+      '<!--v-if-->'
+    );
   });
 
   it('displays only user selection if result is not revealed', async () => {
@@ -47,6 +52,9 @@ describe('Rock Paper Scissors Component', () => {
     gameChannel.setBotSelection(Selections.paper);
 
     const RockPaperScissorsEl = render(RockPaperScissors, {
+      props: {
+        isPlayerUser: true,
+      },
       global: {
         plugins: [
           createTestingPinia({
@@ -69,12 +77,31 @@ describe('Rock Paper Scissors Component', () => {
     expect(gameChannelSpy).toBeCalled();
   });
 
-  it('displays only user selection if game is not completed', async () => {
+  it('displays both selections if game is completed', async () => {
     await gameChannel.setUserSelection(Selections.rock);
     gameChannel.setBotSelection(Selections.paper);
     gameChannel.gameRound.isCompleted = true;
 
-    const RockPaperScissorsEl = render(RockPaperScissors, {
+    const UserRockPaperScissorsEl = render(RockPaperScissors, {
+      props: {
+        isPlayerUser: true,
+      },
+      global: {
+        plugins: [
+          createTestingPinia({
+            initialState: {
+              channel: {
+                channel: gameChannel,
+              },
+            },
+          }),
+        ],
+      },
+    });
+    const BotRockPaperScissorsEl = render(RockPaperScissors, {
+      props: {
+        isPlayerUser: false,
+      },
       global: {
         plugins: [
           createTestingPinia({
@@ -89,11 +116,11 @@ describe('Rock Paper Scissors Component', () => {
     });
 
     expect(
-      RockPaperScissorsEl.getByTestId('userSelection').innerHTML
+      UserRockPaperScissorsEl.getAllByTestId('userSelection')[0].innerHTML
     ).toContain('rock');
-    expect(RockPaperScissorsEl.getByTestId('botSelection').innerHTML).toContain(
-      'paper'
-    );
+    expect(
+      BotRockPaperScissorsEl.getAllByTestId('botSelection')[1].innerHTML
+    ).toContain('paper');
     expect(gameChannelSpy).toBeCalled();
   });
 
@@ -104,6 +131,9 @@ describe('Rock Paper Scissors Component', () => {
     gameChannel.gameRound.winner = 'ak_test';
 
     const RockPaperScissorsEl = render(RockPaperScissors, {
+      props: {
+        isPlayerUser: true,
+      },
       global: {
         plugins: [
           createTestingPinia({

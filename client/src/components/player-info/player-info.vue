@@ -10,9 +10,9 @@ defineProps<{
 <template>
   <div class="player-info">
     <span class="name">{{ name }}</span>
-    <span class="balance" data-testid="balance" v-if="balance"
-      >{{ balance.dividedBy(1e18).toFormat(2) }} ae</span
-    >
+    <span class="balance" data-testid="balance" v-if="balance">
+      {{ balance.dividedBy(1e18).toFormat(2) }} ae
+    </span>
   </div>
 </template>
 
@@ -20,22 +20,28 @@ defineProps<{
 @import '../../mediaqueries.scss';
 
 .player-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: 'empty name balance';
+  align-items: baseline;
+  gap: 0px 0px;
 
   .name {
+    grid-area: name;
     font-size: 50px;
     font-weight: bold;
+    text-align: center;
     @include for-phone-only {
       font-size: 34px;
     }
   }
 
   .balance {
+    grid-area: balance;
     font-size: 30px;
     text-align: right;
+    margin-right: 20px;
     font-weight: 500;
     color: var(--pink);
     @include for-phone-only {

@@ -7,10 +7,6 @@ import { useTransactionsStore } from '../../stores/transactions';
 import { GameChannel } from '../../utils/game-channel/game-channel';
 
 const channel = useChannelStore().channel as GameChannel;
-const repoURL = 'https://github.com/aeternity/state-channel-demo';
-
-// TODO we need to create the correct url from the channel close tx
-// const explorerURL = 'https://explorer.testnet.aeternity.io/';
 
 const transactions = useTransactionsStore()
   .userTransactions.flat()
@@ -67,9 +63,7 @@ function continueAutoplay() {
     <div class="text">
       {{ txPerSecText }}
     </div>
-    <div class="links">
-      <Button :url="repoURL" text="Fork a repo" />
-      <Button text="Check Explorer" disabled />
+    <div class="buttons">
       <Button
         v-if="channel.autoplay.enabled"
         text="Continue Autoplay"
@@ -123,7 +117,7 @@ function continueAutoplay() {
   }
 }
 
-.links {
+.buttons {
   display: flex;
   flex-direction: row;
   justify-content: space-between;

@@ -234,14 +234,32 @@ export class GameChannel {
     if (!this.channelInstance) {
       throw new Error('Channel is not open');
     }
-    this.channelIsClosing = true;
-    await this.getChannelWithoutProxy()
-      .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
-      .then(async () => {
-        await returnCoinsToFaucet();
-        this.shouldShowEndScreen = true;
-        this.isOpen = false;
-      });
+
+    const channelClosing = new Promise((resolve) => {
+      if (
+        !this.contractAddress ||
+        !this.isOpen ||
+        !this.isFunded ||
+        this.gameRound.userInAction ||
+        this.channelIsClosing
+      ) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+    await channelClosing.then(async (canClose) => {
+      if (!canClose) return;
+      this.channelIsClosing = true;
+      await this.getChannelWithoutProxy()
+        .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
+        .then(async () => {
+          await returnCoinsToFaucet();
+          this.shouldShowEndScreen = true;
+          this.isOpen = false;
+        });
+    });
+    return channelClosing;
   }
 
   async signTx(
@@ -285,9 +303,10 @@ export class GameChannel {
       if (!isContractValid) throw new Error('Contract is not valid');
 
       // @ts-expect-error ts-mismatch
-      void this.buildContract(unpackTx(tx).tx.round, update.owner).then(() =>
-        this.logContractDeployment(tx)
-      );
+      void this.buildContract(unpackTx(tx).tx.round, update.owner).then(() => {
+        this.logContractDeployment(tx);
+        this.saveStateToLocalStorage();
+      });
     }
 
     // for both user and bot calls to the contract

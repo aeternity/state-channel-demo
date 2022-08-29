@@ -120,7 +120,7 @@ onUpdated(() => {
 
 .transactions {
   grid-area: transactions;
-  background-color: #f4f4f4;
+  background-color: var(--gray);
   padding: var(--padding);
   padding-bottom: min(20px, var(--padding));
   max-width: 100%;
@@ -146,7 +146,7 @@ onUpdated(() => {
     position: sticky;
     top: 0;
     z-index: 1;
-    background-color: #f4f4f4;
+    background-color: var(--gray);
     .title {
       width: 50%;
       font-weight: 500;
