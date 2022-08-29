@@ -151,6 +151,7 @@ function sendOpenStateChannelTxLog(
  * Returns funds to the faucet and removes the game session from the pool
  */
 export async function handleChannelClose(onAccount: Encoded.AccountAddress) {
+  removeGameSession(onAccount);
   try {
     await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
       onAccount,
@@ -159,7 +160,6 @@ export async function handleChannelClose(onAccount: Encoded.AccountAddress) {
   } catch (e) {
     logger.error({ e }, 'failed to return funds to faucet');
   }
-  removeGameSession(onAccount);
   sdk.removeAccount(onAccount);
 }
 
@@ -283,6 +283,13 @@ export async function registerEvents(
     if (status === 'died') {
       logger.info(`channel with initiator ${configuration.initiatorId} died.`);
       void handleChannelDied(configuration.initiatorId);
+    }
+
+    if (status === 'error') {
+      logger.error(
+        `channel with initiator ${configuration.initiatorId} threw error.`,
+      );
+      void removeGameSession(configuration.initiatorId);
     }
 
     if (status === 'open') {

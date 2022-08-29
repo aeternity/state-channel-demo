@@ -38,41 +38,6 @@ describe('fundThroughFaucet()', () => {
     expect(axiosSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should retry by default 200 time when error code is different than 425', async () => {
-    mockedAxios.post.mockRejectedValue(
-      new AxiosError('Unavailable', '500', null, null, {
-        status: 500,
-        statusText: 'Unavailable',
-        headers: {},
-        config: {},
-        request: {},
-        data: [],
-      }),
-    );
-    await expect(fundThroughFaucet(accountMock)).rejects.toThrow();
-    expect(axiosSpy).toHaveBeenCalledTimes(201);
-  });
-
-  it('should retry 3 times maxRetries:3', async () => {
-    mockedAxios.post.mockRejectedValue(
-      new AxiosError('Unavailable', '500', null, null, {
-        status: 500,
-        statusText: 'Unavailable',
-        headers: {},
-        config: {},
-        request: {},
-        data: [],
-      }),
-    );
-
-    await expect(
-      fundThroughFaucet(accountMock, {
-        maxRetries: 3,
-      }),
-    ).rejects.toThrow();
-    expect(axiosSpy).toHaveBeenCalledTimes(4);
-  });
-
   it('should not throw an error if account has enough coins', async () => {
     mockedAxios.post.mockRejectedValue(
       new AxiosError('Greylist', '425', null, null, {

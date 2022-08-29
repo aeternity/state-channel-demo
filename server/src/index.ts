@@ -7,7 +7,7 @@ const start = (port: string | number) => {
       logger.info(`Bot service running at port ${port}`);
     });
   } catch (err) {
-    console.error(err);
+    logger.error(`Fatal error: ${err.toString()}`);
     process.exit();
   }
 };
