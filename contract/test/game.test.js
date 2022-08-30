@@ -152,6 +152,12 @@ describe( 'GameContract', () => {
                     "not_player1"
                 )
             } )
+            it( 'fails because no_hash', async () => {
+                await failsWith(
+                    () => contract.methods.player1_move( "rock", withP1() ),
+                    "no_hash"
+                )
+            } )
             describe( "after player1_move", () => {
                 //let player0 to add hash
                 beforeEach( async () => {
@@ -208,14 +214,6 @@ describe( 'GameContract', () => {
                     )
                 } )
             } )
-            describe('separate test because of dev-mode crash',()=>{
-                it( 'fails because no_hash', async () => {
-                    await failsWith(
-                        () => contract.methods.player1_move( "rock", withP1() ),
-                        "no_hash"
-                    )
-                } )
-            })
         } )
         describe( "reveal", () => {
             it( 'fails because not player0', async () => {
