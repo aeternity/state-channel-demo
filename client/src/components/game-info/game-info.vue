@@ -35,6 +35,9 @@ defineProps<{
     @include for-phone-only {
       font-size: 34px;
     }
+    @include for-tablet-portrait-up {
+      font-size: 40px;
+    }
   }
 
   .info {
@@ -44,6 +47,9 @@ defineProps<{
     @include for-phone-only {
       font-size: 16px;
       text-align: center;
+    }
+    @include for-tablet-portrait-up {
+      font-size: 20px;
     }
   }
   .stake,

@@ -1,22 +1,51 @@
 <script setup lang="ts">
 import { useChannelStore } from '../../stores/channel';
-import PlayerInfo from '../player-info/player-info.vue';
+import { default as Button } from '../generic-button/generic-button.vue';
 import GameInfo from '../game-info/game-info.vue';
 import { resetApp } from '../../main';
+import { computed } from 'vue';
 
 const channelStore = useChannelStore();
+const repoURL = 'https://github.com/aeternity/state-channel-demo';
+
+const canCloseChannel = computed(() => {
+  return (
+    channelStore.channel?.contractAddress &&
+    channelStore.channel.isOpen &&
+    channelStore.channel.isFunded &&
+    !channelStore.channel.gameRound.userInAction &&
+    !channelStore.channel.channelIsClosing
+  );
+});
+const canResetApp = computed(() => {
+  return (
+    !channelStore.channel?.isOpen && channelStore.channel?.shouldShowEndScreen
+  );
+});
 
 async function reset() {
-  if (channelStore.channel?.isOpen) {
-    await channelStore.channel?.closeChannel();
+  // if channel is already closed and we are on the end-screen,
+  // just reset the app
+  if (canResetApp.value) resetApp();
+
+  // if we want to reset the app mid-game,
+  // we need to close the channel and then reset the app
+  if (canCloseChannel.value) {
+    channelStore.channel
+      ?.closeChannel()
+      .then((didClose) => (didClose ? resetApp() : null));
   }
-  resetApp();
 }
 </script>
 
 <template>
-  <div class="header" v-if="!channelStore.channel?.shouldShowEndScreen">
-    <PlayerInfo name="You" :balance="channelStore.channel?.balances.user" />
+  <div class="header">
+    <img
+      src="../../assets/images/logo.png"
+      :class="{ clickable: canCloseChannel || canResetApp }"
+      alt="Aeternity"
+      @click="reset()"
+    />
     <div class="center">
       <GameInfo
         :stake="channelStore.channel?.gameRound?.stake"
@@ -24,10 +53,21 @@ async function reset() {
         v-if="channelStore.channel?.isOpen"
       />
     </div>
-    <PlayerInfo name="Bot" :balance="channelStore.channel?.balances.bot" />
-  </div>
-  <div v-else class="header end-screen">
-    <img src="../../assets/images/logo.png" alt="?" @click="reset()" />
+    <div
+      v-if="
+        channelStore.channel?.isOpen ||
+        channelStore.channel?.shouldShowEndScreen
+      "
+      class="links"
+    >
+      <Button :url="repoURL" text="Fork repo" />
+      <Button text="Check Explorer" disabled />
+      <Button
+        text="End Game"
+        :disabled="!canCloseChannel"
+        @click="channelStore.channel?.closeChannel()"
+      />
+    </div>
   </div>
 </template>
 
@@ -36,11 +76,17 @@ async function reset() {
 
 .header {
   grid-area: header;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
   padding: var(--padding);
   padding-bottom: 5px;
+  img {
+    width: 110px;
+    &.clickable {
+      cursor: pointer;
+    }
+  }
   @include for-phone-only {
     height: 15%;
   }
@@ -50,6 +96,17 @@ async function reset() {
       width: 110px;
       cursor: pointer;
     }
+  }
+}
+
+.links {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  .button {
+    margin-left: 0;
   }
 }
 </style>

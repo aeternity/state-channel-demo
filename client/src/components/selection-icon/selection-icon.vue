@@ -19,11 +19,18 @@ const icon = new URL(`../../assets/images/${props.type}.png`, import.meta.url)
 @import '../../mediaqueries.scss';
 
 .selection-icon {
-  background-color: rgb(234, 234, 234);
+  user-select: none;
+  background-color: var(--gray);
   border-radius: 15px;
-  padding: 20px;
+  padding: 10px;
   img {
-    width: 100px;
+    width: 80px;
+  }
+  @include for-big-desktop-up {
+    padding: 20px;
+    img {
+      width: 100px;
+    }
   }
   @include for-phone-only {
     padding: 10px;
