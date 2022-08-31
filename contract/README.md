@@ -9,14 +9,13 @@
 $ npm install
 ```
 
-## Container
+## Environment
 ```
-# to deploy
-npx aeproject env init
+# to start containers (node version > 6.6.0 required to avoid devmode rollback crash)
+npx aeproject env --nodeVersion v6.6.0 --compilerVersion v6.1.0
 
-# to stop container
+# to stop containers
 npx aeproject env --stop
-
 ```
 
 ## Running the tests
