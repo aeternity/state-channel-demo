@@ -1,13 +1,15 @@
 <script setup lang="ts">
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { SignatureType } from '../../utils/game-channel/game-channel.types';
 
 export interface TransactionLog {
-  id: string;
+  id: Encoded.TxHash;
   onChain: boolean;
   description: string;
   signed: SignatureType;
   timestamp: number;
 }
+
 defineProps<{
   transaction?: TransactionLog;
 }>();

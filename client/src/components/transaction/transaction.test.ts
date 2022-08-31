@@ -4,14 +4,14 @@ import { SignatureType } from '../../utils/game-channel/game-channel.types';
 import SingleTransaction, { TransactionLog } from './transaction.vue';
 
 const mockTransactionLog: TransactionLog = {
-  id: 'tx_123',
+  id: 'th_123',
   description: 'Test Tx',
   signed: SignatureType.proposed,
   onChain: false,
   timestamp: Date.now(),
 };
 const mockOnChainTransactionLog: TransactionLog = {
-  id: 'tx_123',
+  id: 'th_123',
   description: 'Test Tx',
   signed: SignatureType.declined,
   onChain: true,

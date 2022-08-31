@@ -18,6 +18,7 @@ const FAUCET_PUBLIC_ADDRESS = import.meta.env
   .VITE_FAUCET_PUBLIC_ADDRESS as Encoded.AccountAddress;
 
 export let sdk: AeSdk;
+export let node: Node;
 export const keypair = generateKeyPair();
 
 export async function refreshSdkAccount() {
@@ -28,7 +29,7 @@ export async function refreshSdkAccount() {
 
 export async function getNewSdk() {
   const account = new MemoryAccount({ keypair });
-  const node = new Node(NODE_URL);
+  node = new Node(NODE_URL);
   const newSdk = new AeSdk({
     nodes: [{ name: 'testnet', instance: node }],
     compilerUrl: COMPILER_URL,

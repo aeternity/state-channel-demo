@@ -1,4 +1,5 @@
 import {
+  buildTxHash,
   Channel,
   generateKeyPair,
   MemoryAccount,
@@ -97,7 +98,7 @@ export async function sendCallUpdateLog(
     gameSession.contractState.instance.bytecode,
   );
   const txLog: TransactionLog = {
-    id: tx,
+    id: buildTxHash(tx),
     description: `${data.function}()`,
     signed: SignatureType.confirmed,
     onChain: false,
@@ -381,7 +382,7 @@ export async function generateGameSession(
         // we are signing the channel open transaction
         openStateChannelTxLog = {
           description: 'Open state channel',
-          id: tx,
+          id: buildTxHash(tx),
           onChain: true,
           signed: SignatureType.proposed,
           timestamp: Date.now(),
@@ -395,7 +396,7 @@ export async function generateGameSession(
             type: 'add_bot_transaction_log',
             data: {
               description: 'Close state channel',
-              id: tx,
+              id: buildTxHash(tx),
               onChain: true,
               signed: SignatureType.confirmed,
               timestamp: Date.now(),

@@ -1,4 +1,4 @@
-import { Channel } from '@aeternity/aepp-sdk';
+import { buildTxHash, Channel } from '@aeternity/aepp-sdk';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
@@ -61,7 +61,7 @@ export async function deployContract(
     },
     async (tx) => {
       const log: TransactionLog = {
-        id: tx,
+        id: buildTxHash(tx),
         onChain: false,
         description: 'Deploy contract',
         timestamp: Date.now(),

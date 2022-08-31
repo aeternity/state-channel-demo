@@ -31,7 +31,7 @@ export enum SignatureType {
   declined = 'Declined',
 }
 export interface TransactionLog {
-  id: string;
+  id: Encoded.TxHash;
   onChain: boolean;
   description: string;
   signed: SignatureType;
