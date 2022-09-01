@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia';
 import { useTransactionsStore } from '../../stores/transactions';
 import SingleTransaction from '../transaction/transaction.vue';
 import Accordion from '../accordion/accordion.vue';
+import Notification from '../notification/notification.vue';
 
 const EXPAND_ICON = new URL('../../assets/svg/expand.svg', import.meta.url)
   .href;
@@ -15,6 +16,8 @@ const MINIMISE_ICON = new URL(
 const terminalEl = ref<Element>();
 const transactionStore = useTransactionsStore();
 const { userTransactions, botTransactions } = storeToRefs(transactionStore);
+
+const didReconnect = !!localStorage.getItem('gameState');
 
 // Channel-open, channel-close and contract-deploy transaction logs
 const specialBotTx = botTransactions.value[0];
@@ -52,7 +55,15 @@ onUpdated(() => {
           <span> {{ isFullscreen ? 'Minimize' : 'Expand' }} </span>
         </button>
       </div>
-      <div class="transactions-list" v-if="botTransactions.length > 0">
+      <div
+        class="transactions-list"
+        v-if="Object.keys(botTransactions).length > 0"
+      >
+        <Notification
+          v-if="didReconnect"
+          type="info"
+          text="After reconnecting only the last 5 rounds are saved."
+        />
         <!-- Channel initialization tx logs -->
         <Accordion :isOpen="true" data-testid="channel-init-tx-logs">
           <template v-slot:title>
@@ -72,20 +83,24 @@ onUpdated(() => {
         <!-- Tx logs for each game round -->
         <Accordion
           data-testid="game-round-tx-logs"
-          v-for="(round, roundIdx) in botTransactions.slice(1)"
-          :key="roundIdx"
+          v-for="roundKey in Object.keys(botTransactions).filter(
+            (round) => round !== '0'
+          )"
+          :key="roundKey"
         >
           <template v-slot:title>
-            <div class="round">Round {{ roundIdx + 1 }}</div>
+            <div class="round">Round {{ roundKey }}</div>
           </template>
           <template v-slot:content>
             <div
               class="transaction-pair"
-              v-for="(transaction, txIdx) in round"
+              v-for="(transaction, txIdx) in botTransactions[
+                parseInt(roundKey)
+              ]"
               :key="transaction.id"
             >
               <SingleTransaction
-                :transaction="userTransactions.slice(1)[roundIdx][txIdx]"
+                :transaction="userTransactions[parseInt(roundKey)][txIdx]"
               />
               <SingleTransaction :transaction="transaction" />
             </div>

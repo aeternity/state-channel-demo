@@ -19,7 +19,10 @@ import {
 } from '../sdk-service/sdk-service';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import SHA from 'sha.js';
-import { useTransactionsStore } from '../../stores/transactions';
+import {
+  TransactionLogGroup,
+  useTransactionsStore,
+} from '../../stores/transactions';
 import { TransactionLog } from '../../components/transaction/transaction.vue';
 import { resetApp } from '../../main';
 import {
@@ -599,12 +602,28 @@ export class GameChannel {
       channelRound: this.channelRound,
       gameRound: { ...this.gameRound },
       transactionLogs: {
-        userTransactions: useTransactionsStore().userTransactions,
-        botTransactions: useTransactionsStore().botTransactions,
+        userTransactions: this.getTrimmedTransactions(
+          useTransactionsStore().userTransactions
+        ),
+        botTransactions: this.getTrimmedTransactions(
+          useTransactionsStore().botTransactions
+        ),
       },
       contractCreationChannelRound: this.contractCreationChannelRound,
     };
     storeGameState(stateToSave);
+  }
+
+  getTrimmedTransactions(logs: TransactionLogGroup): TransactionLogGroup {
+    if (Object.keys(logs).length <= 6) return logs;
+
+    const trimmedLogs = Object.assign({}, logs);
+    for (const key of Object.keys(trimmedLogs)) {
+      if (!(parseInt(key) === 0 || Object.keys(logs).slice(-5).includes(key))) {
+        delete trimmedLogs[parseInt(key)];
+      }
+    }
+    return trimmedLogs;
   }
 
   /**

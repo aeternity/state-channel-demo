@@ -3,14 +3,28 @@ import { computed } from 'vue';
 import { default as Button } from '../generic-button/generic-button.vue';
 import { useChannelStore } from '../../stores/channel';
 import BigNumber from 'bignumber.js';
-import { useTransactionsStore } from '../../stores/transactions';
 import { GameChannel } from '../../utils/game-channel/game-channel';
+import { TransactionLog } from '../transaction/transaction.vue';
+import { useTransactionsStore } from '../../stores/transactions';
 
 const channel = useChannelStore().channel as GameChannel;
 
-const transactions = useTransactionsStore()
-  .userTransactions.flat()
-  .filter((tx) => tx.onChain === false);
+let offChainTxNo = 0;
+const didReconnect = !!localStorage.getItem('gameState');
+if (didReconnect) {
+  // since we're not saving all the logs we can't just count the current transaction logs.
+  offChainTxNo = channel.gameRound.index * 3 + 1;
+  if (channel.gameRound.index === 1 && !channel.gameRound.isCompleted) {
+    offChainTxNo -= 3;
+  }
+} else {
+  for (const round of Object.values(useTransactionsStore().userTransactions)) {
+    offChainTxNo += round.filter(
+      (tx: TransactionLog) => tx.onChain === false
+    ).length;
+  }
+}
+
 const seconds = channel.autoplay.elapsedTime / 1000;
 const title = computed(() =>
   earnings.value.isZero()
@@ -21,9 +35,9 @@ const title = computed(() =>
 );
 const txPerSecText = computed(
   () =>
-    `${transactions.length} off-chain transaction${
-      transactions.length > 1 ? 's' : ''
-    } ${channel.autoplay.enabled ? `in ${seconds}sec` : ''}`
+    `${offChainTxNo} off-chain transaction${offChainTxNo > 1 ? 's' : ''} ${
+      channel.autoplay.enabled ? `in ${seconds}sec` : ''
+    }`
 );
 const roundsPlayed = computed(
   () =>
