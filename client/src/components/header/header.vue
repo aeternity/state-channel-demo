@@ -4,9 +4,20 @@ import { default as Button } from '../generic-button/generic-button.vue';
 import GameInfo from '../game-info/game-info.vue';
 import { resetApp } from '../../main';
 import { computed } from 'vue';
+import {
+  IS_USING_LOCAL_NODE,
+  NODE_URL,
+} from '../../utils/sdk-service/sdk-service';
 
 const channelStore = useChannelStore();
-const repoURL = 'https://github.com/aeternity/state-channel-demo';
+const repoUrl = 'https://github.com/aeternity/state-channel-demo';
+
+const explorerUrl = computed(() => {
+  if (IS_USING_LOCAL_NODE) {
+    return `${NODE_URL}/v2/channels/${channelStore.channel?.channelId}`;
+  } else
+    return `https://testnet.aenalytics.org/accounts/${channelStore.channel?.channelConfig?.responderId}`;
+});
 
 const canCloseChannel = computed(() => {
   return (
@@ -60,8 +71,12 @@ async function reset() {
       "
       class="links"
     >
-      <Button :url="repoURL" text="Fork repo" />
-      <Button text="Check Explorer" disabled />
+      <Button :url="repoUrl" text="Fork repo" />
+      <Button
+        :url="explorerUrl"
+        text="Check Explorer"
+        :disabled="explorerUrl"
+      />
       <Button
         text="End Game"
         :disabled="!canCloseChannel"
@@ -89,6 +104,9 @@ async function reset() {
   }
   @include for-phone-only {
     height: 15%;
+  }
+  @include for-big-desktop-up {
+    align-items: flex-start;
   }
 
   &.end-screen {

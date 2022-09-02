@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { TransactionLog } from '../components/transaction/transaction.vue';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 
 interface TransactionsStore {
   userTransactions: Array<Array<TransactionLog>>;
@@ -26,6 +27,17 @@ export const useTransactionsStore = defineStore('transactions', {
     },
     setBotTransactions(transactions: TransactionLog[][]) {
       this.botTransactions = transactions;
+    },
+    updateOpenChannelTransactions(newId: Encoded.TxHash) {
+      const userTxIdx = this.userTransactions[0].findIndex(
+        (transaction) => transaction.description === 'Open state channel'
+      );
+      if (userTxIdx !== -1) this.userTransactions[0][userTxIdx].id = newId;
+
+      const botTxIdx = this.botTransactions[0].findIndex(
+        (transaction) => transaction.description === 'Open state channel'
+      );
+      if (botTxIdx !== -1) this.botTransactions[0][botTxIdx].id = newId;
     },
   },
 });

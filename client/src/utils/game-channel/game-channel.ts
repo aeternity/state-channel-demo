@@ -1,7 +1,9 @@
 import {
+  buildTxHash,
   Channel,
   encodeContractAddress,
   MemoryAccount,
+  poll,
   unpackTx,
 } from '@aeternity/aepp-sdk';
 import contractSource from '@aeternity/rock-paper-scissors';
@@ -12,6 +14,7 @@ import { nextTick, toRaw } from 'vue';
 import {
   decodeCallData,
   keypair,
+  node,
   refreshSdkAccount,
   returnCoinsToFaucet,
   sdk,
@@ -277,11 +280,12 @@ export class GameChannel {
     }
   ): Promise<Encoded.Transaction> {
     const update = options?.updates?.[0];
+    const txHash = buildTxHash(tx);
 
     // if we are signing the open channel tx
     if (tag === 'responder_sign') {
       const transactionLog: TransactionLog = {
-        id: tx,
+        id: txHash,
         description: 'Open state channel',
         signed: SignatureType.confirmed,
         onChain: true,
@@ -293,7 +297,7 @@ export class GameChannel {
     // if we are signing the close channel tx
     if (tag === 'channel_close') {
       const transactionLog: TransactionLog = {
-        id: tx,
+        id: txHash,
         description: 'Close state channel',
         signed: SignatureType.proposed,
         onChain: true,
@@ -311,7 +315,7 @@ export class GameChannel {
 
       // @ts-expect-error ts-mismatch
       void this.buildContract(unpackTx(tx).tx.round, update.owner).then(() => {
-        this.logContractDeployment(tx);
+        this.logContractDeployment(txHash);
         this.saveStateToLocalStorage();
       });
     }
@@ -319,7 +323,7 @@ export class GameChannel {
     // for both user and bot calls to the contract
     if (update?.op === 'OffChainCallContract') {
       this.lastOffChainTxTime = Date.now();
-      await this.logCallUpdate(update.call_data, tx);
+      await this.logCallUpdate(update.call_data, txHash);
       // if we are signing a bot transaction that calls the contract
       if (update?.caller_id !== sdk.selectedAddress) {
         await this.handleOpponentCallUpdate(update);
@@ -359,6 +363,16 @@ export class GameChannel {
         const msg = JSON.parse(message.info);
         this.handleMessage(msg);
       });
+      this.getChannelWithoutProxy().on('onChainTx', async (onChainTx) => {
+        const onChainTxhash = buildTxHash(onChainTx);
+        const polledTx = await poll(onChainTxhash, {
+          onNode: node,
+        });
+        // @ts-expect-error ts-mismatch
+        if (polledTx.tx.type === 'ChannelCreateTx') {
+          useTransactionsStore().updateOpenChannelTransactions(onChainTxhash);
+        }
+      });
     }
   }
 
@@ -377,9 +391,9 @@ export class GameChannel {
     );
   }
 
-  logContractDeployment(tx: Encoded.Transaction) {
+  logContractDeployment(th: Encoded.TxHash) {
     const transactionLog: TransactionLog = {
-      id: tx,
+      id: th,
       description: 'Deploy contract',
       signed: SignatureType.confirmed,
       onChain: false,
@@ -453,10 +467,7 @@ export class GameChannel {
     }
   }
 
-  async logCallUpdate(
-    callData: Encoded.ContractBytearray,
-    tx: Encoded.Transaction
-  ) {
+  async logCallUpdate(callData: Encoded.ContractBytearray, th: Encoded.TxHash) {
     if (!this.contract) throw new Error('Contract is not set');
     if (!this.contract.bytecode) throw new Error('Contract is not compiled');
     const decodedCallData = await decodeCallData(
@@ -464,7 +475,7 @@ export class GameChannel {
       this.contract.bytecode
     );
     const transactionLog: TransactionLog = {
-      id: tx,
+      id: th,
       description: `User called ${decodedCallData.function}()`,
       signed: SignatureType.proposed,
       onChain: false,
