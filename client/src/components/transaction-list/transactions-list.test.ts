@@ -16,7 +16,7 @@ describe('Render Transactions List', () => {
         plugins: [
           createTestingPinia({
             initialState: {
-              channel: { channel: { isOpen: true } },
+              channel: { channel: { isOpen: true, gameRound: { index: 0 } } },
             },
           }),
         ],
@@ -41,7 +41,7 @@ describe('Render Transactions List', () => {
         plugins: [
           createTestingPinia({
             initialState: {
-              channel: { channel: { isOpen: true } },
+              channel: { channel: { isOpen: true, gameRound: { index: 1 } } },
               transactions: {
                 userTransactions: mockUserTransactions,
                 botTransactions: mockBotTransactions,

@@ -32,7 +32,7 @@ function formatTxId(id: string): string {
 <template>
   <div
     class="transaction"
-    v-if="transaction"
+    v-if="transaction && transaction.id"
     :class="{ 'on-chain': transaction.onChain }"
   >
     <span class="on-chain-pill" v-if="transaction.onChain">on Chain</span>
@@ -46,6 +46,9 @@ function formatTxId(id: string): string {
       <span>{{ formatDate(transaction.timestamp) }} | </span>
       <span> {{ transaction.signed }}</span>
     </div>
+  </div>
+  <div class="transaction error" v-else-if="transaction && !transaction?.id">
+    Something went wrong
   </div>
   <div class="transaction" v-else>pending...</div>
 </template>
@@ -74,6 +77,9 @@ function formatTxId(id: string): string {
   }
   .info {
     margin-left: 20px;
+  }
+  &.error {
+    color: var(--pink);
   }
 }
 .on-chain {

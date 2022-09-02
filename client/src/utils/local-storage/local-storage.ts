@@ -1,8 +1,8 @@
 import { GameRound } from '../game-channel/game-channel.types';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { TransactionLog } from '../../components/transaction/transaction.vue';
 import { resetApp } from '../../main';
+import { TransactionLogGroup } from '../../stores/transactions';
 
 export interface StoredState {
   // In a real application, this should be more private
@@ -16,8 +16,8 @@ export interface StoredState {
   channelRound?: number;
   gameRound: GameRound;
   transactionLogs: {
-    userTransactions: TransactionLog[][];
-    botTransactions: TransactionLog[][];
+    userTransactions: TransactionLogGroup;
+    botTransactions: TransactionLogGroup;
   };
   contractCreationChannelRound: number;
 }
