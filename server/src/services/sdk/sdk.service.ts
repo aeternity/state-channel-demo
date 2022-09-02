@@ -1,6 +1,6 @@
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { AeSdk, Node } from '@aeternity/aepp-sdk';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import BigNumber from 'bignumber.js';
 import { setTimeout } from 'timers/promises';
 import {
@@ -56,33 +56,15 @@ export const genesisFund = async (
  */
 export async function fundThroughFaucet(
   account: Encoded.AccountAddress,
-  options: {
-    maxRetries?: number;
-  } = {
-    maxRetries: 200,
-  },
 ): Promise<void> {
   const FAUCET_URL = 'https://faucet.aepps.com';
   try {
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
     return logger.info(`Funded account ${account} through Faucet`);
   } catch (error) {
-    if (error instanceof AxiosError && error.response.status === 425) {
-      const errorMessage = `account ${account} is greylisted.`;
-      logger.error(errorMessage);
-      throw new Error(errorMessage);
-    } else if (options.maxRetries > 0) {
-      logger.warn(
-        `Faucet is currently unavailable. Retrying at maximum ${options.maxRetries} more times`,
-      );
-      return fundThroughFaucet(account, {
-        maxRetries: options.maxRetries - 1,
-      });
-    }
-    logger.error({ error }, 'failed to fund account through faucet');
-    throw new Error(
-      `failed to fund account through faucet. details: ${error.toString()}`,
-    );
+    const errorMessage = `account ${account} is greylisted.`;
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
   }
 }
 
@@ -92,9 +74,7 @@ export async function fundThroughFaucet(
 export async function fundAccount(account: Encoded.AccountAddress) {
   if (!IS_USING_LOCAL_NODE) {
     try {
-      await fundThroughFaucet(account, {
-        maxRetries: 20,
-      });
+      await fundThroughFaucet(account);
     } catch (error) {
       if (
         new BigNumber(await sdk.getBalance(account)).gt(new BigNumber('4.5e18'))
