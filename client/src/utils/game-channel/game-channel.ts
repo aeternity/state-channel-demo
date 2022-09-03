@@ -264,6 +264,7 @@ export class GameChannel {
     await channelClosing.then(async (canClose) => {
       if (!canClose) return;
       this.channelIsClosing = true;
+      localStorage.clear();
       await this.getChannelWithoutProxy()
         .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
         .then(async () => {
