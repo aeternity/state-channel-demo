@@ -4,10 +4,16 @@ import { default as Button } from '../generic-button/generic-button.vue';
 import LoadingAnimation from '../loading-animation/loading-animation.vue';
 import { useChannelStore } from '../../stores/channel';
 import ToggleButton from '../toggle-button/toggle-button.vue';
+import { getSavedState } from '../../utils/local-storage/local-storage';
 
 const channelStore = useChannelStore();
 const openChannelInitiated = ref(false);
-const hasSavedState = ref(!!localStorage.getItem('gameState'));
+const hasSavedState = computed(() => {
+  const savedState = getSavedState();
+  // in case user was in action, we're clearing the localStorage
+  // and we consider reconnecting unavailable.
+  return savedState && !savedState?.gameRound?.userInAction;
+});
 const channelIsOpening = computed(
   () => channelStore.channel?.isOpening || openChannelInitiated.value
 );
