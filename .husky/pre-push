@@ -1,8 +1,0 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-cd client
-npm run test-prepush
-
-cd ../server
-npm run test-prepush
