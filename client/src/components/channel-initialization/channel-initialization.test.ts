@@ -22,7 +22,14 @@ describe('Open State Channel Button', () => {
   });
 
   it('should have `Reconnecting` title when there is a stored gameState', async () => {
-    localStorage.setItem('gameState', '{}');
+    localStorage.setItem(
+      'gameState',
+      JSON.stringify({
+        keypair: {},
+        channelRound: 10,
+        contractCreationChannelRound: 1,
+      })
+    );
     const channelComp = render(ChannelInitialization, {
       global: {
         plugins: [

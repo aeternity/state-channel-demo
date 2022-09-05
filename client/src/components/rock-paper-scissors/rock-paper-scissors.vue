@@ -65,7 +65,6 @@ async function makeSelection(selection: Selections) {
 }
 
 function closeChannel() {
-  localStorage.clear();
   channelIsClosing.value = true;
   gameChannel.channel?.closeChannel();
 }
