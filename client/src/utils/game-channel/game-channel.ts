@@ -349,6 +349,11 @@ export class GameChannel {
           if (!this.fsmId) this.fsmId = this.getChannelWithoutProxy().fsmId();
           this.updateBalances();
         }
+
+        if (status === 'closed' || status === 'died') {
+          alert('Node crashed and channel has closed. App will reset.');
+          resetApp();
+        }
       });
 
       this.getChannelWithoutProxy().on('stateChanged', () => {
