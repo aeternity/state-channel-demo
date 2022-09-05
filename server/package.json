@@ -14,8 +14,7 @@
     "test:cov": "jest --coverage",
     "test:watch": "jest --watch",
     "prepare": "cd .. && husky install .husky",
-    "lint-backend": "lint-staged",
-    "test-prepush": "npm run test"
+    "lint-backend": "lint-staged"
   },
   "lint-staged": {
     "*.{js,ts}": [
