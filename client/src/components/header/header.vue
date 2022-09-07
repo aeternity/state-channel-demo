@@ -4,19 +4,23 @@ import { default as Button } from '../generic-button/generic-button.vue';
 import GameInfo from '../game-info/game-info.vue';
 import { resetApp } from '../../main';
 import { computed } from 'vue';
-import {
-  IS_USING_LOCAL_NODE,
-  NODE_URL,
-} from '../../utils/sdk-service/sdk-service';
+import { IS_USING_LOCAL_NODE } from '../../utils/sdk-service/sdk-service';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
+
+const props = defineProps<{
+  responderId?: Encoded.AccountAddress;
+}>();
 
 const channelStore = useChannelStore();
 const repoUrl = 'https://github.com/aeternity/state-channel-demo';
 
 const explorerUrl = computed(() => {
   if (IS_USING_LOCAL_NODE) {
-    return `${NODE_URL}/v2/channels/${channelStore.channel?.channelId}`;
-  } else
-    return `https://testnet.aenalytics.org/accounts/${channelStore.channel?.channelConfig?.responderId}`;
+    return undefined;
+  }
+  const responderId =
+    props.responderId ?? channelStore.channel?.channelConfig?.responderId;
+  return `https://testnet.aenalytics.org/accounts/${responderId}`;
 });
 
 const canCloseChannel = computed(() => {
@@ -30,7 +34,8 @@ const canCloseChannel = computed(() => {
 });
 const canResetApp = computed(() => {
   return (
-    !channelStore.channel?.isOpen && channelStore.channel?.shouldShowEndScreen
+    !channelStore.channel ||
+    (!channelStore.channel?.isOpen && channelStore.channel?.shouldShowEndScreen)
   );
 });
 
@@ -67,7 +72,8 @@ async function reset() {
     <div
       v-if="
         channelStore.channel?.isOpen ||
-        channelStore.channel?.shouldShowEndScreen
+        channelStore.channel?.shouldShowEndScreen ||
+        !channelStore.channel
       "
       class="links"
     >
@@ -75,9 +81,10 @@ async function reset() {
       <Button
         :url="explorerUrl"
         text="Check Explorer"
-        :disabled="explorerUrl"
+        disabled="!explorerUrl"
       />
       <Button
+        v-if="channelStore.channel"
         text="End Game"
         :disabled="!canCloseChannel"
         @click="channelStore.channel?.closeChannel()"
@@ -123,6 +130,8 @@ async function reset() {
   justify-content: space-between;
   align-items: center;
   margin-top: 10px;
+  width: fit-content;
+  justify-self: flex-end;
   .button {
     margin-left: 0;
   }
