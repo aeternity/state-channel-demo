@@ -4,6 +4,7 @@ import {
   encodeContractAddress,
   MemoryAccount,
   poll,
+  Tag,
   unpackTx,
 } from '@aeternity/aepp-sdk';
 import contractSource from '@aeternity/rock-paper-scissors';
@@ -60,6 +61,7 @@ export class GameChannel {
   timerStartTime = -1;
   lastOffChainTxTime = -1;
   channelIsClosing = false;
+  savedResultsOnChainTxHash?: Encoded.TxHash;
   error?: {
     status: number;
     statusText: string;
@@ -268,6 +270,7 @@ export class GameChannel {
       await this.getChannelWithoutProxy()
         .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
         .then(async () => {
+          await this.saveResultsOnChain();
           await returnCoinsToFaucet();
           this.shouldShowEndScreen = true;
           this.isOpen = false;
@@ -598,6 +601,29 @@ export class GameChannel {
           : this.gameRound.index;
       useTransactionsStore().addBotTransaction(txLog, round);
     }
+  }
+
+  async saveResultsOnChain() {
+    if (!this.channelConfig) throw new Error('Channel config is not set');
+
+    const initialBalance = this.channelConfig?.responderAmount as BigNumber;
+    const balance = this.balances.user as BigNumber;
+    const earnings = balance.minus(initialBalance);
+
+    const data = {
+      rounds: this.gameRound.index,
+      isLastRoundCompleted: this.gameRound.isCompleted,
+      elapsedTime: this.autoplay.elapsedTime,
+      earnings: earnings,
+      responderId: this.channelConfig.responderId,
+    };
+
+    const message = JSON.stringify(data);
+
+    const result = await sdk.spend(0, this.channelConfig.initiatorId, {
+      payload: message,
+    });
+    this.savedResultsOnChainTxHash = result.hash;
   }
 
   saveStateToLocalStorage() {

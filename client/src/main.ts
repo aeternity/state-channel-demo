@@ -9,6 +9,7 @@ app.use(pinia);
 if (process.env.NODE_ENV !== 'test') app.mount('#app');
 
 export function resetApp() {
+  window.location.search = '';
   localStorage.removeItem('gameState');
   app.unmount();
   app = createApp(App);

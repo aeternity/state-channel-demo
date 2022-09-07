@@ -207,7 +207,7 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
     // Sometimes the nonce is used, yet the channel does shutdown.
     logger.info(
       `Channel with initiator ${onAccount} was shutdown with error:`,
-      await (e as any)?.verifyTx?.(),
+      (await (e as any)?.verifyTx?.()) || e,
     );
   } finally {
     await handleChannelClose(onAccount);

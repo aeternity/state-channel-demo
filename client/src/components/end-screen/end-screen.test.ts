@@ -88,4 +88,25 @@ describe('Show end screen', async () => {
     expect(endScreen.getByText("You didn't win or lose anything")).toBeTruthy();
     expect(endScreen.getByText('1 off-chain transaction in 1sec')).toBeTruthy();
   });
+
+  it('should display the results from shared link', async () => {
+    const props = {
+      resultsFromSharedLink: {
+        rounds: 10,
+        isLastRoundCompleted: true,
+        elapsedTime: 1234,
+        earnings: new BigNumber(10e18),
+      },
+    };
+    const endScreen = render(EndScreen, {
+      props,
+      global: {
+        plugins: [createTestingPinia()],
+      },
+    });
+    expect(endScreen.getByText('The player won 10.00 AE')).toBeTruthy();
+    expect(
+      endScreen.getByText('31 off-chain transactions in 1.234sec')
+    ).toBeTruthy();
+  });
 });

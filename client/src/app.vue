@@ -5,13 +5,16 @@ import Header from './components/header/header.vue';
 import EndScreen from './components/end-screen/end-screen.vue';
 import { useChannelStore } from './stores/channel';
 import { onMounted, computed, ref } from 'vue';
-import { initSdk } from './utils/sdk-service/sdk-service';
+import { initSdk, NODE_URL } from './utils/sdk-service/sdk-service';
 import { GameChannel } from './utils/game-channel/game-channel';
 import GameScreen from './components/game-screen/game-screen.vue';
+import { decode, Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Node } from '@aeternity/aepp-sdk';
 
 const channelStore = useChannelStore();
 
 const isOnMobile = ref(false);
+const error = ref();
 
 async function initChannel() {
   if (!channelStore.channel) {
@@ -32,15 +35,36 @@ const showingAutoplayTxLogs = computed(
     !channelStore.channel?.shouldShowEndScreen
 );
 
+// check if we have a transaction hash in the url
+const urlParams = new URLSearchParams(window.location.search);
+const th = urlParams.get('th') as Encoded.TxHash;
+const resultsFromSharedLink = ref();
+
 onMounted(async () => {
   // check if is on mobile
   isOnMobile.value = window.innerWidth < 768;
   if (isOnMobile.value) return;
 
-  await initSdk();
-  const channel = new GameChannel();
-  channelStore.channel = channel;
-  await channelStore.channel.restoreGameState();
+  if (th) {
+    // if we have a th, we need to show the end-screen
+    const node = new Node(NODE_URL);
+    node
+      .getTransactionByHash(th)
+      .then((tx) => {
+        resultsFromSharedLink.value = JSON.parse(
+          decode(tx.tx.payload as Encoded.Bytearray).toString()
+        );
+      })
+      .catch((e) => {
+        console.error(e);
+        error.value = e;
+      });
+  } else {
+    await initSdk();
+    const channel = new GameChannel();
+    channelStore.channel = channel;
+    await channelStore.channel.restoreGameState();
+  }
 });
 </script>
 
@@ -54,15 +78,34 @@ onMounted(async () => {
     class="container"
     :class="{ noSelections: showingAutoplayTxLogs }"
   >
-    <Header />
-    <EndScreen v-if="channelStore.channel?.shouldShowEndScreen" />
+    <Header :responderId="resultsFromSharedLink?.responderId" />
+    <div class="error" v-if="error">
+      <p>
+        {{
+          error.message.includes('Invalid hash')
+            ? "The given transaction hash doesn't exist"
+            : 'Something went wrong.'
+        }}
+      </p>
+      <p>
+        {{ error }}
+      </p>
+    </div>
+    <EndScreen
+      v-else-if="
+        channelStore.channel?.shouldShowEndScreen || resultsFromSharedLink
+      "
+      :resultsFromSharedLink="resultsFromSharedLink"
+    />
     <ChannelInitialization
       v-else-if="
-        !channelStore.channel?.isOpen || !channelStore.channel?.contractAddress
+        !th &&
+        (!channelStore.channel?.isOpen ||
+          !channelStore.channel?.contractAddress)
       "
       @initializeChannel="initChannel()"
     />
-    <GameScreen v-else-if="!channelStore.channel.autoplay.enabled" />
+    <GameScreen v-else-if="!th && !channelStore.channel?.autoplay.enabled" />
     <TransactionsList v-if="showTerminal" />
   </div>
 </template>
@@ -91,6 +134,15 @@ onMounted(async () => {
 
     &.noSelections {
       grid-template-rows: 20% 5% 75%;
+    }
+    > .error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      font-size: 25px;
+      text-align: center;
     }
     @include for-big-desktop-up {
       grid-template-rows: 20% 50% 30%;
