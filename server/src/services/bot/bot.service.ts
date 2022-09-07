@@ -173,46 +173,41 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
   } catch (e) {
     return handleChannelClose(onAccount);
   }
-
-  const closeSoloTx = await sdk.buildTx(Tag.ChannelCloseSoloTx, {
-    channelId,
-    fromId: onAccount,
-    // @ts-ignore
-    poi: gameSession.channelWrapper.poi,
-    payload: gameSession.channelWrapper.state.signedTx,
-  });
-
-  let signedTx = await sdk.signTransaction(closeSoloTx, {
-    onAccount,
-  });
-
-  await sdk.sendTransaction(signedTx, {
-    onAccount,
-    verify: true,
-    waitMined: true,
-  });
-
-  const settleTx = await sdk.buildTx(Tag.ChannelSettleTx, {
-    channelId: gameSession.channelWrapper.instance.id() as Encoded.Channel,
-    fromId: onAccount,
-    initiatorAmountFinal: gameSession.channelWrapper.balances.initiatorAmount,
-    responderAmountFinal: gameSession.channelWrapper.balances.responderAmount,
-  });
-
-  signedTx = await sdk.signTransaction(settleTx, {
-    onAccount,
-  });
   try {
+    const closeSoloTx = await sdk.buildTx(Tag.ChannelCloseSoloTx, {
+      channelId,
+      fromId: onAccount,
+      // @ts-ignore
+      poi: gameSession.channelWrapper.poi,
+      payload: gameSession.channelWrapper.state.signedTx,
+    });
+
+    let signedTx = await sdk.signTransaction(closeSoloTx, {
+      onAccount,
+    });
+
     await sdk.sendTransaction(signedTx, {
       onAccount,
-      verify: true,
-      waitMined: true,
+    });
+
+    const settleTx = await sdk.buildTx(Tag.ChannelSettleTx, {
+      channelId: gameSession.channelWrapper.instance.id() as Encoded.Channel,
+      fromId: onAccount,
+      initiatorAmountFinal: gameSession.channelWrapper.balances.initiatorAmount,
+      responderAmountFinal: gameSession.channelWrapper.balances.responderAmount,
+    });
+
+    signedTx = await sdk.signTransaction(settleTx, {
+      onAccount,
+    });
+    await sdk.sendTransaction(signedTx, {
+      onAccount,
     });
   } catch (e) {
     // Sometimes the nonce is used, yet the channel does shutdown.
     logger.info(
       `Channel with initiator ${onAccount} was shutdown with error:`,
-      await (e as any).verifyTx(),
+      await (e as any)?.verifyTx?.(),
     );
   } finally {
     await handleChannelClose(onAccount);
