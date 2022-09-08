@@ -11,7 +11,7 @@ export const IGNORE_NODE_VERSION = env[ENVIRONMENT]?.IGNORE_VERSION === 'true'
   ?? process.env.IGNORE_VERSION === 'true';
 export const FAUCET_PUBLIC_ADDRESS = env[ENVIRONMENT]?.FAUCET_PUBLIC_ADDRESS
   ?? (process.env.FAUCET_PUBLIC_ADDRESS as Encoded.AccountAddress);
-export const IS_USING_LOCAL_NODE = !NODE_URL?.includes('testnet.aeternity.io');
+export const IS_USING_LOCAL_NODE = !NODE_URL?.includes('testnet');
 // ! LOCAL NODE USAGE ONLY
 const FAUCET_SECRET_KEY = (ENVIRONMENT === 'development' && env[ENVIRONMENT]?.FAUCET_SECRET_KEY)
   || process.env.FAUCET_SECRET_KEY;
