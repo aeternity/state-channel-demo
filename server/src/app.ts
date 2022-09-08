@@ -7,7 +7,11 @@ export const app = express();
 const corsOptions = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'testnet'
   ? null
   : {
-    origin: [/\.aeternity\.com\/?$/, /\.aepps\.com\/?$/],
+    origin: [
+      /\.aeternity\.com\/?$/,
+      /\.aepps\.com\/?$/,
+      /.*\.aepps\.com\/rock-paper-scissors\/?$/,
+    ],
   };
 
 app.use(cors(corsOptions));

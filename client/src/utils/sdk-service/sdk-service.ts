@@ -12,7 +12,7 @@ export const NODE_URL =
 export const COMPILER_URL =
   import.meta.env.VITE_COMPILER_URL ?? 'http://localhost:3080';
 export const IS_USING_LOCAL_NODE = !import.meta.env.VITE_NODE_URL.includes(
-  'testnet.aeternity.io'
+  'testnet'
 );
 const FAUCET_PUBLIC_ADDRESS = import.meta.env
   .VITE_FAUCET_PUBLIC_ADDRESS as Encoded.AccountAddress;
