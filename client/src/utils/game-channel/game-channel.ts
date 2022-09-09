@@ -19,6 +19,7 @@ import {
   refreshSdkAccount,
   returnCoinsToFaucet,
   sdk,
+  timeout,
   verifyContractBytecode,
 } from '../sdk-service/sdk-service';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
@@ -41,12 +42,6 @@ import {
   StoredState,
   storeGameState,
 } from '../local-storage/local-storage';
-
-function timeout(ms: number) {
-  return new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('timeout succeeded')), ms);
-  });
-}
 
 export class GameChannel {
   channelConfig?: ChannelOptions;

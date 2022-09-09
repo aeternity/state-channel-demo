@@ -2,7 +2,8 @@ import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { AeSdk, Node } from '@aeternity/aepp-sdk';
 import axios from 'axios';
 import BigNumber from 'bignumber.js';
-import { setTimeout } from 'timers/promises';
+import { setTimeout as freezeTimeout } from 'timers/promises';
+import { DecodedCalldata } from '@aeternity/aepp-sdk/es/apis/compiler';
 import {
   COMPILER_URL,
   FAUCET_ACCOUNT,
@@ -21,6 +22,11 @@ export const sdk = new AeSdk({
   ],
 });
 
+export function timeout(ms: number) {
+  // eslint-disable-next-line no-promise-executor-return
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * ! LOCAL NODE USAGE ONLY
  * a flag to indicate whether genesis account is currently funding or not.
@@ -36,7 +42,7 @@ export const genesisFund = async (
   address: Encoded.AccountAddress,
 ): Promise<void> => {
   if (isGenesisFunding) {
-    await setTimeout(300);
+    await freezeTimeout(300);
     return genesisFund(address);
   }
   isGenesisFunding = true;
@@ -96,9 +102,22 @@ export async function fundAccount(account: Encoded.AccountAddress) {
 export async function decodeCallData(
   calldata: Encoded.ContractBytearray,
   bytecode: string,
-) {
-  return sdk.compilerApi.decodeCalldataBytecode({
-    calldata,
-    bytecode,
-  });
+  hasRetried = false,
+): Promise<DecodedCalldata> {
+  try {
+    const decodedCalldata = await sdk.compilerApi.decodeCalldataBytecode({
+      calldata,
+      bytecode,
+    });
+
+    return decodedCalldata;
+  } catch (e) {
+    logger.warn('Compiler is unavailable, retrying to decode calldata');
+    if (!hasRetried) {
+      await timeout(2000);
+      return decodeCallData(calldata, bytecode, true);
+    }
+    logger.error('Compiler is unavailable and retrying failed.', e);
+    throw e;
+  }
 }

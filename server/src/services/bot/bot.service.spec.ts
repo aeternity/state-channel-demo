@@ -2,9 +2,9 @@ import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
-import { mockChannel, timeout } from '../../../test';
+import { mockChannel } from '../../../test';
 import { ContractService } from '../contract';
-import { sdk } from '../sdk';
+import { sdk, timeout } from '../sdk';
 import botService from './index';
 
 jest.setTimeout(10000);

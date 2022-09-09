@@ -4,6 +4,7 @@ import {
   generateKeyPair,
   MemoryAccount,
 } from '@aeternity/aepp-sdk';
+import { DecodedCalldata } from '@aeternity/aepp-sdk/es/apis/compiler';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 
@@ -83,16 +84,34 @@ export async function verifyContractBytecode(
   return isEqual;
 }
 
+export function timeout(ms: number) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('timeout succeeded')), ms);
+  });
+}
+
 /**
  * @category sdk-wrapper
  * Wrapper function to decode callData.
  */
 export async function decodeCallData(
   calldata: Encoded.ContractBytearray,
-  bytecode: string
-) {
-  return sdk.compilerApi.decodeCalldataBytecode({
-    calldata,
-    bytecode,
-  });
+  bytecode: string,
+  hasRetried = false
+): Promise<DecodedCalldata> {
+  try {
+    const decodedCalldata = await sdk.compilerApi.decodeCalldataBytecode({
+      calldata,
+      bytecode,
+    });
+
+    return decodedCalldata;
+  } catch (e) {
+    if (!hasRetried) {
+      console.log('Compiler is unavailable, retrying to decode callData');
+      await timeout(2000);
+      return decodeCallData(calldata, bytecode, true);
+    }
+    throw e;
+  }
 }
