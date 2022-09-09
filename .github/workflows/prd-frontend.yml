@@ -54,6 +54,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
 
+      - name: Get commit sha on push
+        if: github.event_name == 'push'
+        id: git-sha
+        shell: bash
+        run: |
+          echo "::set-output name=git-sha::$(git rev-parse --short HEAD)"
+
       - name: Extract metadata for docker
         if: |
           github.event_name == 'push' ||
