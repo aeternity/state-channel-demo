@@ -1,25 +1,32 @@
-import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  getNewSdk,
-  FAUCET_ACCOUNT,
-  verifyContractBytecode,
-  initSdk,
-  sdk,
-} from '../../utils/sdk-service/sdk-service';
-import { createTestingPinia } from '@pinia/testing';
-import { GameChannel } from '../../utils/game-channel/game-channel';
-import contractSource from '@aeternity/rock-paper-scissors';
-import SHA from 'sha.js';
 import { Channel } from '@aeternity/aepp-sdk';
-import { waitForChannelReady } from '../../../tests/utils';
+import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
+import contractSource from '@aeternity/rock-paper-scissors';
+import { createTestingPinia } from '@pinia/testing';
+import SHA from 'sha.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GameChannel } from '../../utils/game-channel/game-channel';
+import {
+  initSdk,
+  refreshSdkAccount,
+  sdk,
+  verifyContractBytecode,
+} from '../../utils/sdk-service/sdk-service';
 
 describe('SDK', () => {
   let gameChannel: GameChannel;
+  const channelInitializeSpy = vi.spyOn(Channel, 'initialize');
+
+  channelInitializeSpy.mockResolvedValue({
+    on: () => ({}),
+  } as unknown as Channel);
 
   beforeEach(async () => {
     await initSdk();
+    await refreshSdkAccount();
     gameChannel = new GameChannel();
+    const fetchConfigSpy = vi.spyOn(gameChannel, 'fetchChannelConfig');
+
+    fetchConfigSpy.mockResolvedValue({} as ChannelOptions);
   });
 
   it('creates and returns an SDK instance', async () => {
@@ -41,7 +48,6 @@ describe('SDK', () => {
     );
   });
   it('cannot call contract when contract is not deployed', async () => {
-    const gameChannel = new GameChannel();
     createTestingPinia({
       initialState: {
         channel: {
@@ -49,8 +55,7 @@ describe('SDK', () => {
         },
       },
     });
-
-    gameChannel.channelInstance = {} as Channel;
+    await gameChannel.initializeChannel();
 
     expect(gameChannel.contract).toBeFalsy();
     await expect(gameChannel.callContract('init', [])).rejects.toThrowError(
@@ -63,8 +68,6 @@ describe('SDK', () => {
       accepted: true,
       signedTx: 'tx_mock',
     });
-
-    gameChannel.channelInstance = {} as Channel;
 
     createTestingPinia({
       initialState: {
@@ -94,6 +97,8 @@ describe('SDK', () => {
         false => ()
     `;
     const gameChannel = new GameChannel();
+    const fetchConfigSpy = vi.spyOn(gameChannel, 'fetchChannelConfig');
+    fetchConfigSpy.mockResolvedValue({} as ChannelOptions);
 
     vi.spyOn(gameChannel, 'callContract').mockResolvedValue({
       accepted: true,
@@ -123,55 +128,5 @@ describe('SDK', () => {
         verifyContractBytecode(contract.bytecode, wrongSource)
       ).resolves.toBeFalsy();
     });
-  });
-
-  describe('integration', () => {
-    it('creates game channel instance, initializes Channel and returns coins to faucet on channel closing', async () => {
-      const gameChannel = new GameChannel();
-      await gameChannel.initializeChannel();
-      createTestingPinia({
-        initialState: {
-          channel: {
-            channel: gameChannel,
-          },
-        },
-      });
-      await waitForChannelReady(gameChannel.getChannelWithoutProxy());
-      const client = sdk;
-      const ae = await getNewSdk();
-
-      expect(client?.selectedAddress).toBeTruthy();
-      expect(gameChannel.getStatus()).toBe('open');
-
-      if (FAUCET_ACCOUNT) {
-        await ae.addAccount(FAUCET_ACCOUNT, { select: true });
-      }
-      const balance_before = await client.getBalance(
-        client.selectedAddress as Encoded.AccountAddress
-      );
-      expect(BigInt(balance_before)).toBeGreaterThan(0);
-
-      const faucet_balance_before = await ae.getBalance(
-        ae.selectedAddress as Encoded.AccountAddress
-      );
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      await gameChannel.closeChannel();
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      expect(gameChannel.getChannelWithoutProxy().status()).toBe(
-        'disconnected'
-      );
-
-      const balance_after = await client.getBalance(
-        client.selectedAddress as Encoded.AccountAddress
-      );
-      const faucet_balance_after = await ae.getBalance(
-        ae.selectedAddress as Encoded.AccountAddress
-      );
-      expect(balance_after).toBe('0');
-      expect(BigInt(faucet_balance_after)).toBeGreaterThan(
-        BigInt(faucet_balance_before)
-      );
-    }, 20000);
   });
 });
