@@ -126,6 +126,7 @@ describe('GameChannel', async () => {
         isCompleted: true,
         winner: 'ak_me',
         userInAction: false,
+        botActed: true,
         userSelection: Selections.paper,
         botSelection: Selections.rock,
         hasRevealed: true,
@@ -137,6 +138,7 @@ describe('GameChannel', async () => {
         index: 4,
         isCompleted: false,
         winner: undefined,
+        botActed: false,
         userSelection: Selections.none,
         botSelection: Selections.none,
         userInAction: false,
@@ -271,6 +273,7 @@ describe('GameChannel', async () => {
         userSelection: Selections.none,
         botSelection: Selections.none,
         isCompleted: false,
+        botActed: false,
       });
     });
 
@@ -278,6 +281,7 @@ describe('GameChannel', async () => {
       gameChannel.gameRound = {
         stake: new BigNumber(10),
         userInAction: false,
+        botActed: false,
         index: 3,
         isCompleted: true,
         winner: 'ak_me' as Encoded.AccountAddress,

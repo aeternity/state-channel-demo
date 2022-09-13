@@ -4,21 +4,20 @@ import {
   generateKeyPair,
   MemoryAccount,
   Tag,
+  unpackTx,
 } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
+import { ContractEvents } from '../contract/contract.constants';
 import logger from '../../logger';
 import {
   ContractService,
   CONTRACT_CONFIGURATION,
   GAME_STAKE,
-  Methods,
 } from '../contract';
 import { getNextCallData } from '../contract/contract.service';
-import {
-  FAUCET_PUBLIC_ADDRESS, sdk, Update, decodeCallData,
-} from '../sdk';
+import { FAUCET_PUBLIC_ADDRESS, sdk, Update } from '../sdk';
 import { fundAccount } from '../sdk/sdk.service';
 import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
 import { GameSession, SignatureType, TransactionLog } from './bot.interface';
@@ -90,37 +89,36 @@ export function removeGameSession(onAccount: Encoded.AccountAddress) {
  */
 export async function sendCallUpdateLog(
   tx: Encoded.Transaction,
-  callData: Encoded.ContractBytearray,
+  event: {
+    name: string;
+    value: string;
+  },
   gameSession: GameSession,
 ) {
-  const data = await decodeCallData(
-    callData,
-    gameSession.contractState.instance.bytecode,
-  );
   const txLog: TransactionLog = {
     id: buildTxHash(tx),
-    description: `${data.function}()`,
+    description: `${event.name}`,
     signed: SignatureType.confirmed,
     onChain: false,
     timestamp: Date.now(),
   };
-  switch (data.function) {
-    case Methods.provide_hash:
+  switch (event.name) {
+    case ContractEvents.player0ProvidedHash:
       txLog.description = 'User hashed his selection';
       break;
-    case Methods.reveal: {
-      const selection = data.arguments[1].value.toString();
+    case ContractEvents.player0Revealed: {
+      const selection = event.value;
       txLog.description = `User revealed his selection: ${selection}`;
       break;
     }
-    case Methods.player1_move: {
+    case ContractEvents.player1Moved: {
       txLog.signed = SignatureType.proposed;
-      const selection = data.arguments[0].value.toString();
+      const selection = event.value;
       txLog.description = `Bot selected ${selection}`;
       break;
     }
     default:
-      throw new Error(`Unhandled method: ${data.function}`);
+      throw new Error(`Unhandled contract event: ${event.name}`);
   }
   await gameSession.channelWrapper.instance.sendMessage(
     {
@@ -215,24 +213,6 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
 }
 
 /**
- * Triggered when channel operation is `OffChainCallContract`.
- * Decodes the call data provided by the opponent and generates
- * the next calldata to be sent to the opponent.
- */
-export async function handleOpponentCallUpdate(
-  update: Update,
-  gameSession: GameSession,
-  tx: Encoded.Transaction,
-) {
-  const nextCallDataToSend = await getNextCallData(
-    update,
-    gameSession.contractState.instance,
-  );
-  gameSession.contractState.callDataToSend = nextCallDataToSend;
-  await sendCallUpdateLog(tx, update.call_data, gameSession);
-}
-
-/**
  * Calls contract if game session has available data to send
  */
 async function respondToContractCall(gameSession: GameSession) {
@@ -245,9 +225,12 @@ async function respondToContractCall(gameSession: GameSession) {
       callData: gameSession.contractState.callDataToSend,
     },
     async (tx: Encoded.Transaction) => {
-      void sendCallUpdateLog(
+      await sendCallUpdateLog(
         tx,
-        gameSession.contractState.callDataToSend,
+        {
+          name: ContractEvents.player1Moved,
+          value: gameSession.contractState.botMove,
+        },
         gameSession,
       );
       return sdk.signTransaction(tx, {
@@ -256,6 +239,44 @@ async function respondToContractCall(gameSession: GameSession) {
     },
   );
   gameSession.contractState.callDataToSend = null;
+}
+
+/**
+ * Triggered when channel operation is `OffChainCallContract`.
+ * Decodes the call data provided by the opponent and generates
+ * the next calldata to be sent to the opponent.
+ */
+export async function handleOpponentCallUpdate(
+  gameSession: GameSession,
+  tx: Encoded.Transaction,
+) {
+  const result = await gameSession.channelWrapper.instance.getContractCall({
+    caller: gameSession.participants.responderId,
+    contract: gameSession.contractState.address,
+    round: gameSession.channelWrapper.instance.round(),
+  });
+
+  const decodedEvents = gameSession.contractState.instance.decodeEvents(
+    // @ts-expect-error ts mismatch
+    result.log,
+  );
+  const nextCallData = await getNextCallData(
+    decodedEvents,
+    gameSession.contractState.instance,
+  );
+  const nextCallDataToSend = nextCallData?.calldata;
+  gameSession.contractState.botMove = nextCallData?.move;
+  await sendCallUpdateLog(
+    tx,
+    {
+      name: decodedEvents.at(-1).name,
+      value: (decodedEvents.at(-1).args as unknown[])[0] as string,
+    },
+    gameSession,
+  );
+  gameSession.contractState.callDataToSend = nextCallDataToSend;
+  gameSession.contractState.lastCaller = gameSession.participants.initiatorId;
+  await respondToContractCall(gameSession);
 }
 
 /**
@@ -301,7 +322,7 @@ export async function registerEvents(
     }
   });
 
-  channelInstance.on('stateChanged', () => {
+  channelInstance.on('stateChanged', (tx: Encoded.Transaction) => {
     const gameSession = gameSessionPool.get(configuration.initiatorId);
 
     if (gameSession?.contractState?.address) {
@@ -329,10 +350,16 @@ export async function registerEvents(
           gameSession.channelWrapper.poi = poi;
         });
     }
-    if (gameSession?.contractState?.callDataToSend) {
-      setImmediate(() => {
-        void respondToContractCall(gameSession);
-      });
+
+    const unpackedTx = unpackTx(tx);
+    // @ts-expect-error ts mismatch
+    const transaction = unpackedTx?.tx?.encodedTx;
+
+    if (
+      gameSession?.contractState?.lastCaller === configuration.responderId
+      && transaction?.txType === Tag.ChannelOffChainTx
+    ) {
+      void handleOpponentCallUpdate(gameSession, tx);
     }
   });
 }
@@ -383,9 +410,9 @@ export async function generateGameSession(
           timestamp: Date.now(),
         };
       }
+      const gameSession = gameSessionPool.get(initiatorId);
       if (tag === 'shutdown_sign_ack') {
         // we are signing the channel close transaction
-        const gameSession = gameSessionPool.get(initiatorId);
         void gameSession.channelWrapper.instance.sendMessage(
           {
             type: 'add_bot_transaction_log',
@@ -401,8 +428,7 @@ export async function generateGameSession(
         );
       }
       if (options?.updates[0]?.op === 'OffChainCallContract') {
-        const gameSession = gameSessionPool.get(initiatorId);
-        void handleOpponentCallUpdate(options.updates[0], gameSession, tx);
+        gameSession.contractState.lastCaller = options?.updates[0]?.caller_id;
       }
       return sdk.signTransaction(tx, {
         onAccount: initiatorId,
