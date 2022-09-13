@@ -11,7 +11,7 @@ export interface GameRound {
   isCompleted?: boolean;
   hasRevealed?: boolean;
   userInAction: boolean;
-  botActed: boolean;
+  shouldHandleBotAction: boolean;
 }
 
 export interface Update {

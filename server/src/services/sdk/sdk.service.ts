@@ -102,3 +102,23 @@ export async function decodeCallData(
     bytecode,
   });
 }
+
+/**
+ * Since we create accounts on the fly and we fund them
+ * with faucet, our node may not be yet aware of their existence.
+ * Therefore, check if the node is aware by calling its API.
+ */
+export async function pollForAccount(
+  address: Encoded.AccountAddress,
+  maxTries = 10,
+): Promise<boolean> {
+  try {
+    return !!(await sdk.api.getAccountByPubkey(address));
+  } catch (error) {
+    if (maxTries > 0) {
+      await setTimeout(1000);
+      return pollForAccount(address, maxTries - 1);
+    }
+    throw error;
+  }
+}

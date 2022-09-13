@@ -90,7 +90,7 @@ export class GameChannel {
     userSelection: Selections.none,
     botSelection: Selections.none,
     isCompleted: false,
-    botActed: false,
+    shouldHandleBotAction: false,
     userInAction: false,
   };
   contract?: ContractInstance;
@@ -308,7 +308,12 @@ export class GameChannel {
     // if we are signing a transaction that updates the contract
     if (update?.op === 'OffChainNewContract' && update?.code && update?.owner) {
       const proposedBytecode = update.code;
-      const isContractValid = await verifyContractBytecode(proposedBytecode);
+      let isContractValid = false;
+      try {
+        isContractValid = await verifyContractBytecode(proposedBytecode);
+      } catch (e) {
+        console.warn('Compiler threw an error on verification', e);
+      }
       if (!update.owner) throw new Error('Owner is not set');
       if (!isContractValid) throw new Error('Contract is not valid');
 
@@ -324,7 +329,7 @@ export class GameChannel {
       this.lastOffChainTxTime = Date.now();
       // if we are signing a bot transaction that calls the contract
       if (update?.caller_id !== sdk.selectedAddress) {
-        this.gameRound.botActed = true;
+        this.gameRound.shouldHandleBotAction = true;
       }
     }
 
@@ -353,8 +358,8 @@ export class GameChannel {
         this.channelRound = channel.round() ?? undefined;
         if (this.isOpen) this.saveStateToLocalStorage();
 
-        if (this.gameRound.botActed) {
-          this.gameRound.botActed = false;
+        if (this.gameRound.shouldHandleBotAction) {
+          this.gameRound.shouldHandleBotAction = false;
           this.handleOpponentCall(tx);
         }
       });
@@ -591,7 +596,7 @@ export class GameChannel {
     this.gameRound.index++;
     this.gameRound.userSelection = Selections.none;
     this.gameRound.botSelection = Selections.none;
-    this.gameRound.botActed = false;
+    this.gameRound.shouldHandleBotAction = false;
     this.gameRound.isCompleted = false;
     this.gameRound.hasRevealed = false;
     this.gameRound.winner = undefined;

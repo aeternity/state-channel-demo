@@ -18,7 +18,7 @@ import {
 } from '../contract';
 import { getNextCallData } from '../contract/contract.service';
 import { FAUCET_PUBLIC_ADDRESS, sdk, Update } from '../sdk';
-import { fundAccount } from '../sdk/sdk.service';
+import { fundAccount, pollForAccount } from '../sdk/sdk.service';
 import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
 import { GameSession, SignatureType, TransactionLog } from './bot.interface';
 
@@ -217,26 +217,24 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
  */
 async function respondToContractCall(gameSession: GameSession) {
   if (gameSession.contractState.callDataToSend == null) return;
-  await gameSession.channelWrapper.instance.callContract(
+  const result = await gameSession.channelWrapper.instance.callContract(
     {
       amount: GAME_STAKE,
       contract: gameSession.contractState.address,
       abiVersion: CONTRACT_CONFIGURATION.abiVersion,
       callData: gameSession.contractState.callDataToSend,
     },
-    async (tx: Encoded.Transaction) => {
-      await sendCallUpdateLog(
-        tx,
-        {
-          name: ContractEvents.player1Moved,
-          value: gameSession.contractState.botMove,
-        },
-        gameSession,
-      );
-      return sdk.signTransaction(tx, {
-        onAccount: gameSession.participants.initiatorId,
-      });
+    async (tx: Encoded.Transaction) => sdk.signTransaction(tx, {
+      onAccount: gameSession.participants.initiatorId,
+    }),
+  );
+  await sendCallUpdateLog(
+    result.signedTx,
+    {
+      name: ContractEvents.player1Moved,
+      value: gameSession.contractState.botMove,
     },
+    gameSession,
   );
   gameSession.contractState.callDataToSend = null;
 }
@@ -381,6 +379,8 @@ export async function generateGameSession(
 
   await fundAccount(initiatorId);
   await fundAccount(responderId);
+  await pollForAccount(initiatorId);
+  await pollForAccount(responderId);
 
   const channelConfig: ChannelOptions & {
     gameStake: BigNumber;
