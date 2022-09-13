@@ -11,7 +11,7 @@ import contractSource from '@aeternity/rock-paper-scissors';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { BigNumber } from 'bignumber.js';
-import { nextTick, toRaw } from 'vue';
+import { nextTick } from 'vue';
 import {
   decodeCallData,
   keypair,
@@ -48,9 +48,10 @@ function timeout(ms: number) {
   });
 }
 
+let channel: Channel;
+
 export class GameChannel {
   channelConfig?: ChannelOptions;
-  channelInstance?: Channel;
   channelRound?: number;
   channelId?: string;
   fsmId?: string;
@@ -97,16 +98,8 @@ export class GameChannel {
   contractAddress?: Encoded.ContractAddress;
   contractCreationChannelRound?: number;
 
-  // since gameChannel is reactive, we need to get the raw channel instance
-  getChannelWithoutProxy() {
-    if (!this.channelInstance) {
-      throw new Error('Channel is not initialized');
-    }
-    return toRaw(this.channelInstance);
-  }
-
   getStatus() {
-    return this.getChannelWithoutProxy().status();
+    return channel.status();
   }
 
   getSelectionHash(selection: Selections): string {
@@ -178,7 +171,7 @@ export class GameChannel {
     if (!config) config = await this.fetchChannelConfig();
     this.channelConfig = config;
     this.isFunded = true;
-    this.channelInstance = await Channel.initialize({
+    channel = await Channel.initialize({
       ...this.channelConfig,
       debug: true,
       role: 'responder',
@@ -201,7 +194,7 @@ export class GameChannel {
    * hangs for a while, therefore we add a timeout
    */
   async checkIfChannelIsEstablished() {
-    const statePromise = this.getChannelWithoutProxy().state();
+    const statePromise = channel.state();
 
     try {
       await Promise.race([statePromise, timeout(3000)]);
@@ -214,7 +207,7 @@ export class GameChannel {
   async reconnectChannel() {
     if (!this.channelConfig) throw new Error('Channel config is not set');
     this.isOpening = true;
-    this.channelInstance = await Channel.reconnect(
+    channel = await Channel.reconnect(
       {
         ...this.channelConfig,
         debug: true,
@@ -247,7 +240,7 @@ export class GameChannel {
 
   async closeChannel() {
     localStorage.clear();
-    if (!this.channelInstance) {
+    if (!channel) {
       throw new Error('Channel is not open');
     }
 
@@ -267,7 +260,7 @@ export class GameChannel {
     await channelClosing.then(async (canClose) => {
       if (!canClose) return;
       this.channelIsClosing = true;
-      await this.getChannelWithoutProxy()
+      await channel
         .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
         .then(async () => {
           await this.saveResultsOnChain();
@@ -341,15 +334,14 @@ export class GameChannel {
   }
 
   registerEvents() {
-    if (this.channelInstance) {
-      this.getChannelWithoutProxy().on('statusChanged', (status) => {
+    if (channel) {
+      channel.on('statusChanged', (status) => {
         if (status === 'open') {
           this.isOpen = true;
           this.isOpening = false;
 
-          if (!this.channelId)
-            this.channelId = this.getChannelWithoutProxy().id();
-          if (!this.fsmId) this.fsmId = this.getChannelWithoutProxy().fsmId();
+          if (!this.channelId) this.channelId = channel.id();
+          if (!this.fsmId) this.fsmId = channel.fsmId();
           this.updateBalances();
         }
 
@@ -359,8 +351,8 @@ export class GameChannel {
         }
       });
 
-      this.getChannelWithoutProxy().on('stateChanged', () => {
-        this.channelRound = this.getChannelWithoutProxy().round() ?? undefined;
+      channel.on('stateChanged', () => {
+        this.channelRound = channel.round() ?? undefined;
         if (this.isOpen) this.saveStateToLocalStorage();
         if (
           this.gameRound.botSelection != Selections.none &&
@@ -371,11 +363,11 @@ export class GameChannel {
           nextTick(() => this.revealRoundResult());
         }
       });
-      this.getChannelWithoutProxy().on('message', (message) => {
+      channel.on('message', (message) => {
         const msg = JSON.parse(message.info);
         this.handleMessage(msg);
       });
-      this.getChannelWithoutProxy().on('onChainTx', async (onChainTx) => {
+      channel.on('onChainTx', async (onChainTx) => {
         const onChainTxhash = buildTxHash(onChainTx);
         const polledTx = await poll(onChainTxhash, {
           onNode: node,
@@ -424,13 +416,13 @@ export class GameChannel {
     params: unknown[],
     amount?: number | BigNumber
   ) {
-    if (!this.channelInstance) {
+    if (!channel) {
       throw new Error('Channel is not open');
     }
     if (!this.contract || !this.contractAddress) {
       throw new Error('Contract is not set');
     }
-    const result = await this.getChannelWithoutProxy().callContract(
+    const result = await channel.callContract(
       {
         amount: amount ?? this.gameRound.stake,
         callData: this.contract.calldata.encode(
@@ -459,10 +451,7 @@ export class GameChannel {
       throw new Error('Channel config is not set');
     }
     const { initiatorId, responderId } = this.channelConfig;
-    const balances = await this.getChannelWithoutProxy().balances([
-      initiatorId,
-      responderId,
-    ]);
+    const balances = await channel.balances([initiatorId, responderId]);
     this.balances.user = new BigNumber(balances[responderId]);
     this.balances.bot = new BigNumber(balances[initiatorId]);
   }
@@ -515,7 +504,7 @@ export class GameChannel {
     if (!this.contract) throw new Error('Contract is not set');
     if (!this.contractAddress) throw new Error('Contract address is not set');
 
-    return await this.getChannelWithoutProxy().getContractCall({
+    return await channel.getContractCall({
       caller,
       contract: this.contractAddress,
       round,
