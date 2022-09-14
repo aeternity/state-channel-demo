@@ -8,9 +8,12 @@ import { WEBSOCKET_URL } from '../sdk';
 export const MUTUAL_CHANNEL_CONFIGURATION: Partial<ChannelOptions> & {
   minimumDepthStrategy: 'plain' | 'txFee';
   minimumDepth: number;
+  fee: BigNumber;
 } = {
   url: WEBSOCKET_URL,
   pushAmount: 0,
+  // we provide a big enough fee in order for the tx to be picked earlier
+  fee: new BigNumber('0.3e18'),
   initiatorAmount: new BigNumber('4.5e18'),
   responderAmount: new BigNumber('4.5e18'),
   channelReserve: 2,

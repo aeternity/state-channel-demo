@@ -2,7 +2,7 @@ import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { AeSdk, Node } from '@aeternity/aepp-sdk';
 import axios from 'axios';
 import BigNumber from 'bignumber.js';
-import { setTimeout } from 'timers/promises';
+import { setTimeout as awaitSetTimeout } from 'timers/promises';
 import {
   COMPILER_URL,
   FAUCET_ACCOUNT,
@@ -36,7 +36,7 @@ export const genesisFund = async (
   address: Encoded.AccountAddress,
 ): Promise<void> => {
   if (isGenesisFunding) {
-    await setTimeout(300);
+    await awaitSetTimeout(300);
     return genesisFund(address);
   }
   isGenesisFunding = true;
@@ -116,9 +116,15 @@ export async function pollForAccount(
     return !!(await sdk.api.getAccountByPubkey(address));
   } catch (error) {
     if (maxTries > 0) {
-      await setTimeout(1000);
+      logger.warn(`Account ${address} not yet known by node, retrying...`);
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       return pollForAccount(address, maxTries - 1);
     }
+    logger.error(
+      error,
+      `Account ${address} is not yet known by the node and max retries have been used.`,
+    );
     throw error;
   }
 }
