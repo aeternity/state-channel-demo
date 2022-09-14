@@ -4,8 +4,9 @@ import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractSource from '@aeternity/rock-paper-scissors';
 import logger from '../../logger';
 import { SignatureType, TransactionLog } from '../bot/bot.interface';
-import { decodeCallData, sdk, Update } from '../sdk';
+import { sdk } from '../sdk';
 import {
+  ContractEvents,
   CONTRACT_CONFIGURATION,
   CONTRACT_NAME,
   Methods,
@@ -27,12 +28,18 @@ export async function getCompiledContract(onAccount: Encoded.AccountAddress) {
 /**
  * Makes a random pick and returns calldata for `player1_move` method
  */
-export function getRandomMoveCallData(
-  contract: ContractInstance,
-): Encoded.ContractBytearray {
+export function getRandomMoveCallData(contract: ContractInstance): {
+  move: Moves;
+  calldata: Encoded.ContractBytearray;
+} {
   const randomMove = Math.floor(Math.random() * 3);
   const move = Object.values(Moves)[randomMove];
-  return contract.calldata.encode(CONTRACT_NAME, Methods.player1_move, [move]);
+  return {
+    move,
+    calldata: contract.calldata.encode(CONTRACT_NAME, Methods.player1_move, [
+      move,
+    ]),
+  };
 }
 
 /**
@@ -90,16 +97,14 @@ export async function deployContract(
  * extracts latest callData and generates returns next callData to be sent
  */
 export async function getNextCallData(
-  update: Update,
+  events: ReturnType<ContractInstance['decodeEvents']>,
   contract: ContractInstance,
 ) {
-  const data = await decodeCallData(update.call_data, contract.bytecode);
-  switch (data.function) {
-    case Methods.provide_hash:
+  const mainEvent = events.at(-1);
+  switch (mainEvent.name) {
+    case ContractEvents.player0ProvidedHash:
       return getRandomMoveCallData(contract);
-    case Methods.reveal:
-      return null;
     default:
-      throw new Error(`Unhandled method: ${data.function}`);
+      return null;
   }
 }

@@ -11,6 +11,7 @@ export interface GameRound {
   isCompleted?: boolean;
   hasRevealed?: boolean;
   userInAction: boolean;
+  shouldHandleBotAction: boolean;
 }
 
 export interface Update {
@@ -44,4 +45,15 @@ export enum SignatureType {
   proposed = 'Signed (proposed)',
   confirmed = 'Co-signed (confirmed)',
   declined = 'Declined',
+}
+
+export enum ContractEvents {
+  player0Won = 'Player0Won',
+  player1Won = 'Player1Won',
+  draw = 'Draw',
+  player0ProvidedHash = 'Player0ProvidedHash',
+  player0Revealed = 'Player0Revealed',
+  player1Moved = 'Player1Moved',
+  player0WonDispute = 'Player0WonDispute',
+  player1WonDispute = 'Player1WonDispute',
 }

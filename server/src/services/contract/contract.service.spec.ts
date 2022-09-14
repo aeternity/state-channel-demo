@@ -1,9 +1,9 @@
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import contractSource from '@aeternity/rock-paper-scissors';
-import { CONTRACT_NAME, Methods, Moves } from './contract.constants';
 import { ContractService, RockPaperScissorsContract } from '.';
-import { decodeCallData, sdk, Update } from '../sdk';
 import { createHash } from '../../../test';
+import { decodeCallData, sdk } from '../sdk';
+import { ContractEvents, CONTRACT_NAME, Moves } from './contract.constants';
 
 describe('ContractService', () => {
   it('should be defined', () => {
@@ -21,7 +21,7 @@ describe('ContractService', () => {
 
   describe('getRandomMoveCallData()', () => {
     it('should generate callData with either rock, paper, or scissors', async () => {
-      const callData = ContractService.getRandomMoveCallData(contract);
+      const callData = ContractService.getRandomMoveCallData(contract).calldata;
       const decodedCallData = await decodeCallData(callData, contract.bytecode);
 
       const { arguments: usedArguments } = decodedCallData;
@@ -40,20 +40,17 @@ describe('ContractService', () => {
       const pick = Moves.paper;
       const dummyHash = await createHash(pick, hashKey);
 
-      const callData = contract.calldata.encode(
-        CONTRACT_NAME,
-        Methods.provide_hash,
-        [dummyHash],
-      );
-
-      const update: Update = {
-        call_data: callData,
-        contract_id: 'ct_',
-        op: 'OffChainCallContract',
-      };
-
-      const nextCallData = await ContractService.getNextCallData(
-        update,
+      const { calldata: nextCallData } = await ContractService.getNextCallData(
+        [
+          {
+            name: ContractEvents.player0ProvidedHash,
+            args: [dummyHash],
+            contract: {
+              name: CONTRACT_NAME,
+              address: 'ct_random',
+            },
+          },
+        ],
         contract,
       );
 
@@ -70,22 +67,21 @@ describe('ContractService', () => {
       ).toBeTruthy();
     });
 
-    it('should throw an error if update contains an unhandled method', async () => {
-      const callData = contract.calldata.encode(
-        CONTRACT_NAME,
-        Methods.set_timestamp,
-        [1],
+    it('should return null when provided with unhandled method', async () => {
+      const nextCallData = await ContractService.getNextCallData(
+        [
+          {
+            name: 'lala',
+            args: ['lala'],
+            contract: {
+              name: CONTRACT_NAME,
+              address: 'ct_random',
+            },
+          },
+        ],
+        contract,
       );
-
-      const update: Update = {
-        call_data: callData,
-        contract_id: 'ct_',
-        op: 'OffChainCallContract',
-      };
-
-      await expect(
-        ContractService.getNextCallData(update, contract),
-      ).rejects.toThrow('Unhandled method: set_timestamp');
+      expect(nextCallData).toBe(null);
     });
   });
 });
