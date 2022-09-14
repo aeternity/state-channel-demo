@@ -92,9 +92,9 @@ jobs:
             VITE_NODE_ENV=staging
             VITE_BOT_SERVICE_URL=https://state-channel-demo-backend.prd.aepps.com
             VITE_CLIENT_PORT=8000 
-            VITE_NODE_URL=https://testnet.prd.aepps.com
+            VITE_NODE_URL=https://testnet.aeternity.io
             VITE_COMPILER_URL=https://compiler.aepps.com
-            VITE_WS_URL=wss://testnet.prd.aepps.com/channel 
+            VITE_WS_URL=wss://testnet.aeternity.io/channel 
             VITE_FAUCET_PUBLIC_ADDRESS=ak_2iBPH7HUz3cSDVEUWiHg76MZJ6tZooVNBmmxcgVK6VV8KAE688
             VITE_NETWORK_ID=ae_uat
             VITE_RESPONDER_HOST=localhost

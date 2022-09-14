@@ -26,11 +26,10 @@ describe('/open', () => {
       port: config.port,
       host: config.host,
       gameStake: '10000000000000000',
+      fee: '300000000000000000',
       responderId: config.address,
-      responderAmount:
-      MUTUAL_CHANNEL_CONFIGURATION.responderAmount.toString(),
-      initiatorAmount:
-      MUTUAL_CHANNEL_CONFIGURATION.initiatorAmount.toString(),
+      responderAmount: MUTUAL_CHANNEL_CONFIGURATION.responderAmount.toString(),
+      initiatorAmount: MUTUAL_CHANNEL_CONFIGURATION.initiatorAmount.toString(),
     });
   });
 
