@@ -11,6 +11,7 @@ import {
   sdk,
   verifyContractBytecode,
 } from '../../utils/sdk-service/sdk-service';
+import { Methods } from '../game-channel/game-channel.types';
 
 describe('SDK', () => {
   let gameChannel: GameChannel;
@@ -43,9 +44,9 @@ describe('SDK', () => {
         },
       },
     });
-    await expect(gameChannel.callContract('init', [])).rejects.toThrowError(
-      'Channel is not open'
-    );
+    await expect(
+      gameChannel.callContract(Methods.init, [])
+    ).rejects.toThrowError('Channel is not open');
   });
   it('cannot call contract when contract is not deployed', async () => {
     createTestingPinia({
@@ -58,9 +59,9 @@ describe('SDK', () => {
     await gameChannel.initializeChannel();
 
     expect(gameChannel.contract).toBeFalsy();
-    await expect(gameChannel.callContract('init', [])).rejects.toThrowError(
-      'Contract is not set'
-    );
+    await expect(
+      gameChannel.callContract(Methods.init, [])
+    ).rejects.toThrowError('Contract is not set');
   });
 
   it('can call contract after it is deployed', async () => {
@@ -78,7 +79,7 @@ describe('SDK', () => {
     });
 
     await expect(
-      gameChannel.callContract('provide_hash', [
+      gameChannel.callContract(Methods.provide_hash, [
         SHA('sha256')
           .update('aeternity' + 'rock')
           .digest('hex'),
