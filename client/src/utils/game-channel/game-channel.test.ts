@@ -20,15 +20,17 @@ describe('GameChannel', async () => {
     signedTx: 'tx_mock',
   });
 
+  vi.spyOn(gameChannel, 'fetchChannelConfig').mockResolvedValue(
+    {} as ChannelOptions
+  );
+
   vi.spyOn(sdk, 'getContractInstance').mockResolvedValue({
     source: contractSource,
     compile: () => ({ bytecode: 'bytecode_mock' }),
   } as unknown as ContractInstance);
 
-  const getChannelWithoutProxySpy = vi.spyOn(
-    gameChannel,
-    'getChannelWithoutProxy'
-  );
+  const channelInitializeSpy = vi.spyOn(Channel, 'initialize');
+  const channelReconnectSpy = vi.spyOn(Channel, 'reconnect');
 
   beforeEach(async () => {
     createTestingPinia({
@@ -124,6 +126,7 @@ describe('GameChannel', async () => {
         isCompleted: true,
         winner: 'ak_me',
         userInAction: false,
+        shouldHandleBotAction: false,
         userSelection: Selections.paper,
         botSelection: Selections.rock,
         hasRevealed: true,
@@ -135,6 +138,7 @@ describe('GameChannel', async () => {
         index: 4,
         isCompleted: false,
         winner: undefined,
+        shouldHandleBotAction: false,
         userSelection: Selections.none,
         botSelection: Selections.none,
         userInAction: false,
@@ -149,37 +153,43 @@ describe('GameChannel', async () => {
   });
 
   describe('checkIfChannelIsEstablished()', async () => {
-    getChannelWithoutProxySpy
-      .mockReturnValueOnce({
+    channelInitializeSpy
+      .mockResolvedValueOnce({
         state: function () {
           return new Promise((resolve) => {
             setTimeout(resolve, 5000);
           });
         },
-      } as Channel)
-      .mockReturnValueOnce({
+        on: () => ({}),
+      } as unknown as Channel)
+      .mockResolvedValueOnce({
         state: function () {
           return new Promise((resolve) => {
             setTimeout(resolve, 100);
           });
         },
-      } as Channel);
+        on: () => ({}),
+      } as unknown as Channel);
 
     it('returns false when state() promise takes more than 3000ms', async () => {
+      await gameChannel.initializeChannel();
       expect(await gameChannel.checkIfChannelIsEstablished()).toBe(false);
     });
     it('returns true when state() promise takes less than 3000ms', async () => {
+      await gameChannel.initializeChannel();
       expect(await gameChannel.checkIfChannelIsEstablished()).toBe(true);
     });
   });
 
   describe('reconnectChannel()', async () => {
     const gameChannel = new GameChannel();
-    const getChannelWithoutProxySpy = vi.spyOn(
-      gameChannel,
-      'getChannelWithoutProxy'
-    );
-    const reconnectSpy = vi.spyOn(Channel, 'reconnect');
+    channelInitializeSpy.mockResolvedValueOnce({
+      on: () => ({}),
+    } as unknown as Channel);
+    channelReconnectSpy.mockResolvedValue({
+      on: () => ({}),
+    } as unknown as Channel);
+
     const checkIfChannelIsEstablishedSpy = vi.spyOn(
       gameChannel,
       'checkIfChannelIsEstablished'
@@ -188,7 +198,6 @@ describe('GameChannel', async () => {
     const resetAppSpy = vi.spyOn(main, 'resetApp').mockResolvedValue();
     const registerEventsSpy = vi.spyOn(gameChannel, 'registerEvents');
 
-    reconnectSpy.mockResolvedValue({} as Channel);
     checkIfChannelIsEstablishedSpy
       .mockResolvedValueOnce(false)
       .mockResolvedValueOnce(true);
@@ -206,9 +215,6 @@ describe('GameChannel', async () => {
     });
 
     it('re-registers events on channel reconnect', async () => {
-      getChannelWithoutProxySpy.mockReturnValue({
-        on: () => ({}),
-      } as unknown as Channel);
       gameChannel.channelConfig = {} as ChannelOptions;
       localStorage.setItem('gameState', 'test');
       await gameChannel.reconnectChannel();
@@ -230,6 +236,7 @@ describe('GameChannel', async () => {
         botSelection: Selections.rock,
         userInAction: false,
         hasRevealed: true,
+        shouldHandleBotAction: true,
       };
       gameChannel.gameRound = gameRound;
       gameChannel.contractCreationChannelRound = 3;
@@ -267,6 +274,7 @@ describe('GameChannel', async () => {
         userSelection: Selections.none,
         botSelection: Selections.none,
         isCompleted: false,
+        shouldHandleBotAction: false,
       });
     });
 
@@ -274,6 +282,7 @@ describe('GameChannel', async () => {
       gameChannel.gameRound = {
         stake: new BigNumber(10),
         userInAction: false,
+        shouldHandleBotAction: false,
         index: 3,
         isCompleted: true,
         winner: 'ak_me' as Encoded.AccountAddress,

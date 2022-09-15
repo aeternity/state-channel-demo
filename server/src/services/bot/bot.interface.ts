@@ -3,6 +3,7 @@ import { Channel } from '@aeternity/aepp-sdk';
 import { ChannelState } from '@aeternity/aepp-sdk/es/channel/internal';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { Moves } from '../contract/contract.constants';
 
 export interface GameSession {
   channelWrapper: {
@@ -18,6 +19,8 @@ export interface GameSession {
     instance?: ContractInstance;
     callDataToSend?: Encoded.ContractBytearray;
     address?: Encoded.ContractAddress;
+    lastCaller?: Encoded.AccountAddress;
+    botMove?: Moves;
   };
   participants: {
     responderId: Encoded.AccountAddress;

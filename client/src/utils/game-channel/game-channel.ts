@@ -4,16 +4,13 @@ import {
   encodeContractAddress,
   MemoryAccount,
   poll,
-  Tag,
   unpackTx,
 } from '@aeternity/aepp-sdk';
 import contractSource from '@aeternity/rock-paper-scissors';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { BigNumber } from 'bignumber.js';
-import { nextTick, toRaw } from 'vue';
 import {
-  decodeCallData,
   keypair,
   node,
   refreshSdkAccount,
@@ -30,6 +27,7 @@ import {
 import { TransactionLog } from '../../components/transaction/transaction.vue';
 import { resetApp } from '../../main';
 import {
+  ContractEvents,
   GameRound,
   Methods,
   Selections,
@@ -48,9 +46,10 @@ function timeout(ms: number) {
   });
 }
 
+let channel: Channel;
+
 export class GameChannel {
   channelConfig?: ChannelOptions;
-  channelInstance?: Channel;
   channelRound?: number;
   channelId?: string;
   fsmId?: string;
@@ -91,22 +90,15 @@ export class GameChannel {
     userSelection: Selections.none,
     botSelection: Selections.none,
     isCompleted: false,
+    shouldHandleBotAction: false,
     userInAction: false,
   };
   contract?: ContractInstance;
   contractAddress?: Encoded.ContractAddress;
   contractCreationChannelRound?: number;
 
-  // since gameChannel is reactive, we need to get the raw channel instance
-  getChannelWithoutProxy() {
-    if (!this.channelInstance) {
-      throw new Error('Channel is not initialized');
-    }
-    return toRaw(this.channelInstance);
-  }
-
   getStatus() {
-    return this.getChannelWithoutProxy().status();
+    return channel.status();
   }
 
   getSelectionHash(selection: Selections): string {
@@ -178,7 +170,7 @@ export class GameChannel {
     if (!config) config = await this.fetchChannelConfig();
     this.channelConfig = config;
     this.isFunded = true;
-    this.channelInstance = await Channel.initialize({
+    channel = await Channel.initialize({
       ...this.channelConfig,
       debug: true,
       role: 'responder',
@@ -201,7 +193,7 @@ export class GameChannel {
    * hangs for a while, therefore we add a timeout
    */
   async checkIfChannelIsEstablished() {
-    const statePromise = this.getChannelWithoutProxy().state();
+    const statePromise = channel.state();
 
     try {
       await Promise.race([statePromise, timeout(3000)]);
@@ -214,7 +206,7 @@ export class GameChannel {
   async reconnectChannel() {
     if (!this.channelConfig) throw new Error('Channel config is not set');
     this.isOpening = true;
-    this.channelInstance = await Channel.reconnect(
+    channel = await Channel.reconnect(
       {
         ...this.channelConfig,
         debug: true,
@@ -247,7 +239,7 @@ export class GameChannel {
 
   async closeChannel() {
     localStorage.clear();
-    if (!this.channelInstance) {
+    if (!channel) {
       throw new Error('Channel is not open');
     }
 
@@ -267,7 +259,7 @@ export class GameChannel {
     await channelClosing.then(async (canClose) => {
       if (!canClose) return;
       this.channelIsClosing = true;
-      await this.getChannelWithoutProxy()
+      await channel
         .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
         .then(async () => {
           await this.saveResultsOnChain();
@@ -316,7 +308,12 @@ export class GameChannel {
     // if we are signing a transaction that updates the contract
     if (update?.op === 'OffChainNewContract' && update?.code && update?.owner) {
       const proposedBytecode = update.code;
-      const isContractValid = await verifyContractBytecode(proposedBytecode);
+      let isContractValid = false;
+      try {
+        isContractValid = await verifyContractBytecode(proposedBytecode);
+      } catch (e) {
+        console.warn('Compiler threw an error on verification', e);
+      }
       if (!update.owner) throw new Error('Owner is not set');
       if (!isContractValid) throw new Error('Contract is not valid');
 
@@ -330,10 +327,9 @@ export class GameChannel {
     // for both user and bot calls to the contract
     if (update?.op === 'OffChainCallContract') {
       this.lastOffChainTxTime = Date.now();
-      await this.logCallUpdate(update.call_data, txHash);
       // if we are signing a bot transaction that calls the contract
       if (update?.caller_id !== sdk.selectedAddress) {
-        await this.handleOpponentCallUpdate(update);
+        this.gameRound.shouldHandleBotAction = true;
       }
     }
 
@@ -341,15 +337,14 @@ export class GameChannel {
   }
 
   registerEvents() {
-    if (this.channelInstance) {
-      this.getChannelWithoutProxy().on('statusChanged', (status) => {
+    if (channel) {
+      channel.on('statusChanged', (status) => {
         if (status === 'open') {
           this.isOpen = true;
           this.isOpening = false;
 
-          if (!this.channelId)
-            this.channelId = this.getChannelWithoutProxy().id();
-          if (!this.fsmId) this.fsmId = this.getChannelWithoutProxy().fsmId();
+          if (!this.channelId) this.channelId = channel.id();
+          if (!this.fsmId) this.fsmId = channel.fsmId();
           this.updateBalances();
         }
 
@@ -359,23 +354,20 @@ export class GameChannel {
         }
       });
 
-      this.getChannelWithoutProxy().on('stateChanged', () => {
-        this.channelRound = this.getChannelWithoutProxy().round() ?? undefined;
+      channel.on('stateChanged', (tx: Encoded.Transaction) => {
+        this.channelRound = channel.round() ?? undefined;
         if (this.isOpen) this.saveStateToLocalStorage();
-        if (
-          this.gameRound.botSelection != Selections.none &&
-          !this.gameRound.hasRevealed
-        ) {
-          this.gameRound.hasRevealed = true;
-          this.saveStateToLocalStorage();
-          nextTick(() => this.revealRoundResult());
+
+        if (this.gameRound.shouldHandleBotAction) {
+          this.gameRound.shouldHandleBotAction = false;
+          this.handleOpponentCall(tx);
         }
       });
-      this.getChannelWithoutProxy().on('message', (message) => {
+      channel.on('message', (message) => {
         const msg = JSON.parse(message.info);
         this.handleMessage(msg);
       });
-      this.getChannelWithoutProxy().on('onChainTx', async (onChainTx) => {
+      channel.on('onChainTx', async (onChainTx) => {
         const onChainTxhash = buildTxHash(onChainTx);
         const polledTx = await poll(onChainTxhash, {
           onNode: node,
@@ -420,17 +412,17 @@ export class GameChannel {
   }
 
   async callContract(
-    method: string,
+    method: Methods,
     params: unknown[],
     amount?: number | BigNumber
   ) {
-    if (!this.channelInstance) {
+    if (!channel) {
       throw new Error('Channel is not open');
     }
     if (!this.contract || !this.contractAddress) {
       throw new Error('Contract is not set');
     }
-    const result = await this.getChannelWithoutProxy().callContract(
+    const result = await channel.callContract(
       {
         amount: amount ?? this.gameRound.stake,
         callData: this.contract.calldata.encode(
@@ -451,6 +443,15 @@ export class GameChannel {
         return this.signTx(method, tx, options);
       }
     );
+
+    const value =
+      typeof params === 'string' ? params : (params.at(-1) as string);
+
+    this.logCallUpdate(result.signedTx, {
+      name: method,
+      value,
+      type: 'method',
+    });
     return result;
   }
 
@@ -459,51 +460,71 @@ export class GameChannel {
       throw new Error('Channel config is not set');
     }
     const { initiatorId, responderId } = this.channelConfig;
-    const balances = await this.getChannelWithoutProxy().balances([
-      initiatorId,
-      responderId,
-    ]);
+    const balances = await channel.balances([initiatorId, responderId]);
     this.balances.user = new BigNumber(balances[responderId]);
     this.balances.bot = new BigNumber(balances[initiatorId]);
   }
 
-  async handleOpponentCallUpdate(update: Update) {
+  async getLastEventsDecoded() {
     if (!this.contract) throw new Error('Contract is not set');
-    if (!this.contract.bytecode) throw new Error('Contract is not compiled');
-    const data = await decodeCallData(update.call_data, this.contract.bytecode);
-    switch (data.function) {
-      case Methods.player1_move:
-        return this.setBotSelection(data.arguments[0].value as Selections);
+    const result = await this.fetchLastContractCall();
+    return this.contract.decodeEvents(result.log);
+  }
+
+  async handleOpponentCall(tx: Encoded.Transaction) {
+    if (!this.channelConfig?.responderId)
+      throw new Error('Responder id is not defined');
+    if (!this.channelRound) throw new Error('Channel round is undefined');
+    const decodedEvents = await this.getLastEventsDecoded();
+    this.logCallUpdate(tx, {
+      name: decodedEvents[0].name as ContractEvents,
+      value: (decodedEvents[0].args as string[])[0],
+      type: 'event',
+    });
+
+    switch (decodedEvents[0].name) {
+      case ContractEvents.player1Moved:
+        this.setBotSelection(
+          (decodedEvents[0].args as string[])[0] as Selections
+        );
+        this.gameRound.hasRevealed = true;
+        this.saveStateToLocalStorage();
+        this.revealRoundResult();
+        break;
       default:
-        throw new Error(`Unhandled method: ${data.function}`);
+        return;
     }
   }
 
-  async logCallUpdate(callData: Encoded.ContractBytearray, th: Encoded.TxHash) {
-    if (!this.contract) throw new Error('Contract is not set');
-    if (!this.contract.bytecode) throw new Error('Contract is not compiled');
-    const decodedCallData = await decodeCallData(
-      callData,
-      this.contract.bytecode
-    );
+  async logCallUpdate(
+    tx: Encoded.Transaction,
+    information: {
+      name: Methods | ContractEvents;
+      value: string;
+      type: 'method' | 'event';
+    }
+  ) {
+    const th = buildTxHash(tx);
     const transactionLog: TransactionLog = {
       id: th,
-      description: `User called ${decodedCallData.function}()`,
+      description: ``,
       signed: SignatureType.proposed,
       onChain: false,
       timestamp: Date.now(),
     };
-    switch (decodedCallData.function) {
-      case Methods.provide_hash:
-        transactionLog.description = `User hashed his selection`;
-        break;
-      case Methods.reveal:
-        transactionLog.description = `User revealed his selection: ${decodedCallData.arguments[1].value}`;
-        break;
-      case Methods.player1_move:
-        transactionLog.signed = SignatureType.confirmed;
-        transactionLog.description = `Bot selected ${decodedCallData.arguments[0].value}`;
-        break;
+    if (information.type === 'method') {
+      transactionLog.description = `User called ${information.name}()`;
+      switch (information.name) {
+        case Methods.provide_hash:
+          transactionLog.description = `User hashed his selection`;
+          break;
+        case Methods.reveal:
+          transactionLog.description = `User revealed his selection: ${information.value}`;
+          break;
+      }
+    } else if (information.name === ContractEvents.player1Moved) {
+      transactionLog.signed = SignatureType.confirmed;
+      transactionLog.description = `Bot selected ${information.value}`;
     }
     useTransactionsStore().addUserTransaction(
       transactionLog,
@@ -515,7 +536,7 @@ export class GameChannel {
     if (!this.contract) throw new Error('Contract is not set');
     if (!this.contractAddress) throw new Error('Contract address is not set');
 
-    return await this.getChannelWithoutProxy().getContractCall({
+    return await channel.getContractCall({
       caller,
       contract: this.contractAddress,
       round,
@@ -575,6 +596,7 @@ export class GameChannel {
     this.gameRound.index++;
     this.gameRound.userSelection = Selections.none;
     this.gameRound.botSelection = Selections.none;
+    this.gameRound.shouldHandleBotAction = false;
     this.gameRound.isCompleted = false;
     this.gameRound.hasRevealed = false;
     this.gameRound.winner = undefined;
@@ -594,12 +616,15 @@ export class GameChannel {
 
   private handleMessage(message: { type: string; data: TransactionLog }) {
     if (message.type === 'add_bot_transaction_log') {
+      const txStore = useTransactionsStore();
       const txLog = message.data as TransactionLog;
-      const round =
+      let round =
         txLog.onChain || txLog.description === 'Deploy contract'
           ? 0
           : this.gameRound.index;
-      useTransactionsStore().addBotTransaction(txLog, round);
+
+      if (round > 1 && txStore.botTransactions[round - 1].length === 2) round--;
+      txStore.addBotTransaction(txLog, round);
     }
   }
 
@@ -724,11 +749,11 @@ export class GameChannel {
       const lastContractCall = await this.fetchLastContractCall();
       const decodedCall = this.contract?.decodeEvents(lastContractCall.log);
 
-      if (decodedCall?.[0].name === 'Player1Moved')
+      if (decodedCall?.[0].name === ContractEvents.player1Moved)
         return this.revealRoundResult();
 
       if (
-        decodedCall?.[1].name === 'Player0Revealed' &&
+        decodedCall?.[1].name === ContractEvents.player0Revealed &&
         !savedState.gameRound.isCompleted
       ) {
         return this.handleRoundResult();
