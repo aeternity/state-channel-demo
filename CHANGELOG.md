@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.1.0](https://github.com/aeternity/state-channel-demo/compare/v1.0.0...v1.1.0) (2022-09-15)
+
+
+### Features
+
+* add channelCreateTx fee ([#126](https://github.com/aeternity/state-channel-demo/issues/126)) ([a3ffa12](https://github.com/aeternity/state-channel-demo/commit/a3ffa12434f98ddf95c5575eadfd548c6ef1ebe0))
+
+
+### Bug Fixes
+
+* use ws instead of wss with deployed node ([#125](https://github.com/aeternity/state-channel-demo/issues/125)) ([35ff52f](https://github.com/aeternity/state-channel-demo/commit/35ff52f6271226d521eb9ab81ca850ae2f9d7e38))
+
+
+### Refactorings
+
+* **client:** remove channel proxy ([dace82d](https://github.com/aeternity/state-channel-demo/commit/dace82d1c8baa3a7430d6e2e91d0b7ec1c595b5d))
+* decode contract events instead of decoding w compiler ([#124](https://github.com/aeternity/state-channel-demo/issues/124)) ([a66c862](https://github.com/aeternity/state-channel-demo/commit/a66c862daeff7d80c7e64130010956445d363979))
+
 ## 1.0.0 (2022-09-09)
 
 
