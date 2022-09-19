@@ -11,11 +11,19 @@ export const NODE_URL =
   import.meta.env.VITE_NODE_URL ?? 'http://localhost:3013';
 export const COMPILER_URL =
   import.meta.env.VITE_COMPILER_URL ?? 'http://localhost:3080';
-export const IS_USING_LOCAL_NODE = !import.meta.env.VITE_NODE_URL.includes(
-  'testnet'
+export const IS_USING_LOCAL_NODE = !NODE_URL.includes('testnet');
+console.log(`NODE_URL from env: ${import.meta.env.VITE_NODE_URL}`);
+console.log(`IS_USING_LOCAL_NODE: ${IS_USING_LOCAL_NODE}`);
+
+const FAUCET_PUBLIC_ADDRESS =
+  (import.meta.env.VITE_FAUCET_PUBLIC_ADDRESS as Encoded.AccountAddress) ??
+  'ak_2iBPH7HUz3cSDVEUWiHg76MZJ6tZooVNBmmxcgVK6VV8KAE688';
+
+console.log(
+  `FAUCET_PUBLIC_ADDRESS from env (if undefined manualy set to correct one): ${
+    import.meta.env.VITE_FAUCET_PUBLIC_ADDRESS
+  }`
 );
-const FAUCET_PUBLIC_ADDRESS = import.meta.env
-  .VITE_FAUCET_PUBLIC_ADDRESS as Encoded.AccountAddress;
 
 export let sdk: AeSdk;
 export let node: Node;
