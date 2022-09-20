@@ -349,7 +349,9 @@ export class GameChannel {
         }
 
         if (status === 'closed' || status === 'died') {
-          alert('Node crashed and channel has closed. App will reset.');
+          alert(
+            'Node triggered a timeout and the channel has died. App will reset.'
+          );
           resetApp();
         }
       });
@@ -578,6 +580,10 @@ export class GameChannel {
     this.gameRound.userInAction = false;
     this.saveStateToLocalStorage();
     await this.updateBalances();
+
+    if (this.gameRound.index % 50 === 0) {
+      await channel.cleanContractCalls();
+    }
 
     // if autoplay is enabled
     if (this.autoplay.enabled) {
