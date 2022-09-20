@@ -25,6 +25,7 @@ export const useTransactionsStore = defineStore('transactions', {
     addBotTransaction(transaction: TransactionLog, round: number) {
       this.botTransactions[round] ??= [];
       this.botTransactions[round].push(transaction);
+      this.pruneTransactions();
     },
     setUserTransactions(transactions: TransactionLogGroup) {
       this.userTransactions = transactions;
@@ -42,6 +43,16 @@ export const useTransactionsStore = defineStore('transactions', {
         (transaction) => transaction.description === 'Open state channel'
       );
       if (botTxIdx !== -1) this.botTransactions[0][botTxIdx].id = newId;
+    },
+    // only keep the last 50 rounds
+    pruneTransactions() {
+      if (Object.keys(this.botTransactions).length > 50) {
+        const keys = Object.keys(this.botTransactions);
+        // don't delete round 0, because it contains the on-chain transactions
+        const firstKey = keys[1];
+        delete this.botTransactions[parseInt(firstKey)];
+        delete this.userTransactions[parseInt(firstKey)];
+      }
     },
   },
 });

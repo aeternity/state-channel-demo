@@ -217,6 +217,10 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
  */
 async function respondToContractCall(gameSession: GameSession) {
   if (gameSession.contractState.callDataToSend == null) return;
+  if (gameSession.channelWrapper.instance.round() % 150 === 0) {
+    await gameSession.channelWrapper.instance.cleanContractCalls();
+  }
+
   const result = await gameSession.channelWrapper.instance.callContract(
     {
       amount: GAME_STAKE,
