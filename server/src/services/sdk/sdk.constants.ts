@@ -1,9 +1,14 @@
 import { MemoryAccount } from '@aeternity/aepp-sdk';
 import env from '../../env';
 
-const ENVIRONMENT = ['development', 'test'].includes(process.env.NODE_ENV)
+const ENVIRONMENT = process.env.NODE_ENV === 'test'
   ? 'development'
-  : 'testnet';
+  : (process.env.NODE_ENV as keyof typeof env);
+
+if (!Object.keys(env).includes(ENVIRONMENT)) {
+  throw new Error(`Environment ${ENVIRONMENT} is not defined in env/index.ts`);
+}
+
 export const WEBSOCKET_URL = env[ENVIRONMENT]?.WS_URL;
 export const NODE_URL = env[ENVIRONMENT]?.NODE_URL;
 export const COMPILER_URL = env[ENVIRONMENT]?.COMPILER_URL;

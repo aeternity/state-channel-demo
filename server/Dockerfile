@@ -1,5 +1,7 @@
 FROM node:16.15.1 as builder 
 
+ARG NODE_ENV
+
 RUN mkdir -p /home/node/app/server
 WORKDIR /home/node/app/server
 COPY ./server/package*.json /home/node/app/server/
