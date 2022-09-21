@@ -281,6 +281,12 @@ export async function handleOpponentCallUpdate(
   await respondToContractCall(gameSession);
 }
 
+async function initializeChannel(config: ChannelOptions, retries = 3) {
+  const channel = await Channel.initialize(config);
+  // eslint-disable-next-line
+  return registerEvents(channel, config, retries);
+}
+
 /**
  * Registers channel events.
  * If the channel is closed,
@@ -293,8 +299,26 @@ export async function handleOpponentCallUpdate(
 export async function registerEvents(
   channelInstance: Channel,
   configuration: ChannelOptions,
+  disconnectionRetries = 3,
 ) {
+  const gameSession = gameSessionPool.get(configuration.initiatorId);
   channelInstance.on('statusChanged', (status) => {
+    if (
+      status === 'disconnected'
+      && gameSession
+      && gameSession.channelWrapper?.lastTxTag !== 'shutdown_sign_ack'
+    ) {
+      if (disconnectionRetries > 0) {
+        logger.warn(
+          `Bot ${configuration.initiatorId} channel disconnected, retrying ${disconnectionRetries} more times`,
+        );
+        void initializeChannel(configuration, disconnectionRetries - 1);
+      } else {
+        logger.error(
+          `Bot ${configuration.initiatorId} channel disconnected, giving up`,
+        );
+      }
+    }
     if (status === 'closed') {
       void handleChannelClose(configuration.initiatorId);
     }
@@ -404,6 +428,8 @@ export async function generateGameSession(
         updates: Update[];
       },
     ) => {
+      const gameSession = gameSessionPool.get(initiatorId);
+      if (gameSession) gameSession.channelWrapper.lastTxTag = tag;
       if (tag === 'initiator_sign') {
         // we are signing the channel open transaction
         openStateChannelTxLog = {
@@ -414,7 +440,6 @@ export async function generateGameSession(
           timestamp: Date.now(),
         };
       }
-      const gameSession = gameSessionPool.get(initiatorId);
       if (tag === 'shutdown_sign_ack') {
         // we are signing the channel close transaction
         void gameSession.channelWrapper.instance.sendMessage(

@@ -328,6 +328,13 @@ export class GameChannel {
   registerEvents() {
     if (channel) {
       channel.on('statusChanged', (status) => {
+        // should be kept for debugging
+        console.log(status);
+
+        if (status === 'disconnected' && !this.isOpen) {
+          this.initializeChannel(this.channelConfig);
+        }
+
         if (status === 'open') {
           this.isOpen = true;
           this.isOpening = false;

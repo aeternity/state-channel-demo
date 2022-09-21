@@ -14,6 +14,7 @@ export interface GameSession {
       responderAmount: BigNumber;
       initiatorAmount: BigNumber;
     };
+    lastTxTag?: string;
   };
   contractState?: {
     instance?: ContractInstance;
