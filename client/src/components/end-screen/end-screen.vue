@@ -43,8 +43,8 @@ const title = computed(() => {
   return earnings.value.isZero()
     ? `${user} didn't win or lose anything`
     : earnings.value.isGreaterThan(0)
-    ? `${user} won ${earnings.value.dividedBy(1e18).toFormat(2)} AE`
-    : `${user} lost ${earnings.value.abs().dividedBy(1e18).toFormat(2)} AE`;
+    ? `${user} won ${earnings.value.dividedBy(1e18).toFormat(2)} Æ`
+    : `${user} lost ${earnings.value.abs().dividedBy(1e18).toFormat(2)} Æ`;
 });
 const txPerSecText = computed(
   () =>
@@ -103,7 +103,7 @@ function continueAutoplay() {
         @click="continueAutoplay()"
         :title="
           hasInsuffientBalance
-            ? 'You don\'t have enough AE to continue autoplay'
+            ? 'You don\'t have enough Æ to continue autoplay'
             : ''
         "
       />

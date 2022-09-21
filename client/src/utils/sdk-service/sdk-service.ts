@@ -42,14 +42,19 @@ export async function initSdk() {
   sdk = await getNewSdk();
 }
 
-export async function returnCoinsToFaucet() {
+export async function returnCoinsToFaucet(
+  payload?: string
+): Promise<Encoded.TxHash | undefined> {
   if (!sdk) return;
   const userBalance = await sdk.getBalance(
     sdk.selectedAddress as Encoded.AccountAddress
   );
   if (BigInt(userBalance) <= 0) return;
   try {
-    await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS);
+    const result = await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
+      payload,
+    });
+    return result.hash;
   } catch (e) {
     console.error({ e }, 'failed to return funds to faucet');
   }
