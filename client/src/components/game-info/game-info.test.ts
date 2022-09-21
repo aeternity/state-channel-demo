@@ -18,7 +18,7 @@ describe('Game Info', () => {
       props: { ...initialGameInfo },
     });
 
-    const roundStake = gameInfo.getByText('STAKE: 0.05 AE');
+    const roundStake = gameInfo.getByText('STAKE: 0.05 Æ');
     expect(roundStake).toBeTruthy();
     expect(() => {
       gameInfo.getByText('ROUND: 0');
@@ -30,7 +30,7 @@ describe('Game Info', () => {
       props: { ...firstRoundInfo },
     });
 
-    const roundStake = gameInfo.getByText('STAKE: 0.05 AE');
+    const roundStake = gameInfo.getByText('STAKE: 0.05 Æ');
     expect(roundStake).toBeTruthy();
 
     const playerBalance = gameInfo.getByText(`ROUND: 1`);
@@ -42,7 +42,7 @@ describe('Game Info', () => {
       props: { ...firstRoundInfo, stake: new BigNumber(1.23456e18) },
     });
 
-    const roundStake = gameInfo.getByText('STAKE: 1.23 AE');
+    const roundStake = gameInfo.getByText('STAKE: 1.23 Æ');
     expect(roundStake).toBeTruthy();
 
     const playerBalance = gameInfo.getByText(`ROUND: 1`);
