@@ -28,7 +28,7 @@ describe('Show player info', () => {
     const playerName = playerInfo.getByText(mockPlayerInfo.name);
     expect(playerName).toBeTruthy();
 
-    const playerBalance = playerInfo.getByText(`3.00 ae`);
+    const playerBalance = playerInfo.getByText(`3.00 æ`);
     expect(playerBalance).toBeTruthy();
   });
 });

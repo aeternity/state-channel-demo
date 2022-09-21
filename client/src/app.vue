@@ -51,9 +51,8 @@ onMounted(async () => {
     node
       .getTransactionByHash(th)
       .then((tx) => {
-        resultsFromSharedLink.value = JSON.parse(
-          decode(tx.tx.payload as Encoded.Bytearray).toString()
-        );
+        const payload = decode(tx.tx.payload as Encoded.Bytearray).toString();
+        resultsFromSharedLink.value = JSON.parse(payload.split('|')[1]);
       })
       .catch((e) => {
         console.error(e);

@@ -638,7 +638,10 @@ export class GameChannel {
       responderId: this.channelConfig.responderId,
     };
 
-    const message = JSON.stringify(data);
+    const url = 'https://statechannel.aepps.com/rock-paper-scissors';
+    const message = `I just played a game of rock-paper-scissors on the æternity blockchain. Try it on ${url} | ${JSON.stringify(
+      data
+    )}`;
 
     const result = await sdk.spend(0, this.channelConfig.initiatorId, {
       payload: message,
