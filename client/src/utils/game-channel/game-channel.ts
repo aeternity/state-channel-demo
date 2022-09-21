@@ -1,3 +1,4 @@
+import { NODE_URL } from '../sdk-service/sdk-service';
 import {
   buildTxHash,
   Channel,
@@ -185,27 +186,24 @@ export class GameChannel {
     this.registerEvents();
   }
 
-  /**
-   * ! Workaround.
-   * returns true if channel was never shutdown
-   * and reconnection was successful.
-   * In cases where channel was shutdown, `channel.state()`
-   * hangs for a while, therefore we add a timeout
-   */
-  async checkIfChannelIsEstablished() {
-    const statePromise = channel.state();
-
-    try {
-      await Promise.race([statePromise, timeout(3000)]);
-      return true;
-    } catch (e) {
-      return false;
-    }
+  async checkifChannelIsStillOpen() {
+    const response = await fetch(`${NODE_URL}/v3/channels/${this.channelId}`);
+    const result = await response.json();
+    return !!result.id;
   }
 
   async reconnectChannel() {
     if (!this.channelConfig) throw new Error('Channel config is not set');
     this.isOpening = true;
+
+    if (!(await this.checkifChannelIsStillOpen())) {
+      localStorage.removeItem('gameState');
+      alert(
+        'Channel was shutdown and can no longer be opened. App will reset.'
+      );
+      return resetApp();
+    }
+
     channel = await Channel.reconnect(
       {
         ...this.channelConfig,
@@ -221,15 +219,6 @@ export class GameChannel {
         round: this.channelRound,
       }
     );
-
-    const reconnectionWasSuccessful = await this.checkIfChannelIsEstablished();
-    if (!reconnectionWasSuccessful) {
-      alert(
-        'Channel was shutdown and can no longer be opened. App will reset.'
-      );
-      localStorage.removeItem('gameState');
-      return setTimeout(resetApp, 2000);
-    }
 
     this.isFunded = true;
     this.isOpen = true;

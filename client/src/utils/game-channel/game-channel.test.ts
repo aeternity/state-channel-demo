@@ -152,35 +152,6 @@ describe('GameChannel', async () => {
     });
   });
 
-  describe('checkIfChannelIsEstablished()', async () => {
-    channelInitializeSpy
-      .mockResolvedValueOnce({
-        state: function () {
-          return new Promise((resolve) => {
-            setTimeout(resolve, 5000);
-          });
-        },
-        on: () => ({}),
-      } as unknown as Channel)
-      .mockResolvedValueOnce({
-        state: function () {
-          return new Promise((resolve) => {
-            setTimeout(resolve, 100);
-          });
-        },
-        on: () => ({}),
-      } as unknown as Channel);
-
-    it('returns false when state() promise takes more than 3000ms', async () => {
-      await gameChannel.initializeChannel();
-      expect(await gameChannel.checkIfChannelIsEstablished()).toBe(false);
-    });
-    it('returns true when state() promise takes less than 3000ms', async () => {
-      await gameChannel.initializeChannel();
-      expect(await gameChannel.checkIfChannelIsEstablished()).toBe(true);
-    });
-  });
-
   describe('reconnectChannel()', async () => {
     const gameChannel = new GameChannel();
     channelInitializeSpy.mockResolvedValueOnce({
@@ -192,7 +163,7 @@ describe('GameChannel', async () => {
 
     const checkIfChannelIsEstablishedSpy = vi.spyOn(
       gameChannel,
-      'checkIfChannelIsEstablished'
+      'checkifChannelIsStillOpen'
     );
     const alertSpy = vi.spyOn(window, 'alert');
     const resetAppSpy = vi.spyOn(main, 'resetApp').mockResolvedValue();
@@ -256,7 +227,7 @@ describe('GameChannel', async () => {
     const gameChannel = new GameChannel();
     const reconnectChannelSpy = vi
       .spyOn(gameChannel, 'reconnectChannel')
-      .mockResolvedValue({} as NodeJS.Timeout);
+      .mockResolvedValue();
     const buildContractSpy = vi
       .spyOn(gameChannel, 'buildContract')
       .mockResolvedValue();
