@@ -251,8 +251,9 @@ export class GameChannel {
       await channel
         .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
         .then(async () => {
-          await this.saveResultsOnChain();
-          await returnCoinsToFaucet();
+          this.savedResultsOnChainTxHash = await returnCoinsToFaucet(
+            this.getMessageToSaveOnChain()
+          );
           this.shouldShowEndScreen = true;
           this.isOpen = false;
         });
@@ -623,7 +624,7 @@ export class GameChannel {
     }
   }
 
-  async saveResultsOnChain() {
+  getMessageToSaveOnChain() {
     if (!this.channelConfig) throw new Error('Channel config is not set');
 
     const initialBalance = this.channelConfig?.responderAmount as BigNumber;
@@ -639,11 +640,7 @@ export class GameChannel {
     };
 
     const message = JSON.stringify(data);
-
-    const result = await sdk.spend(0, this.channelConfig.initiatorId, {
-      payload: message,
-    });
-    this.savedResultsOnChainTxHash = result.hash;
+    return message;
   }
 
   saveStateToLocalStorage() {

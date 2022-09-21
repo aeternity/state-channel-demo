@@ -12,7 +12,7 @@ defineProps<{
     <span class="title">Game</span>
     <div class="info" data-testid="info" v-if="stake">
       <span class="stake">
-        STAKE: {{ stake.dividedBy(1e18).toFormat(2) }} AE
+        STAKE: {{ stake.dividedBy(1e18).toFormat(2) }} Æ
       </span>
       <span class="info-seperator" v-if="round"> / </span>
       <span v-if="round">ROUND: {{ round }}</span>

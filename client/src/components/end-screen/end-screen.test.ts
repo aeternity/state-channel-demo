@@ -38,7 +38,7 @@ describe('Show end screen', async () => {
         ],
       },
     });
-    expect(endScreen.getByText('You won 5.00 AE')).toBeTruthy();
+    expect(endScreen.getByText('You won 5.00 Æ')).toBeTruthy();
     expect(endScreen.getByText('1 round played')).toBeTruthy();
     expect(endScreen.getByText('1 off-chain transaction in 1sec')).toBeTruthy();
   });
@@ -62,7 +62,7 @@ describe('Show end screen', async () => {
         ],
       },
     });
-    expect(endScreen.getByText('You lost 2.00 AE')).toBeTruthy();
+    expect(endScreen.getByText('You lost 2.00 Æ')).toBeTruthy();
     expect(endScreen.getByText('1 off-chain transaction in 1sec')).toBeTruthy();
   });
 
@@ -104,7 +104,7 @@ describe('Show end screen', async () => {
         plugins: [createTestingPinia()],
       },
     });
-    expect(endScreen.getByText('The player won 10.00 AE')).toBeTruthy();
+    expect(endScreen.getByText('The player won 10.00 Æ')).toBeTruthy();
     expect(
       endScreen.getByText('31 off-chain transactions in 1.234sec')
     ).toBeTruthy();
