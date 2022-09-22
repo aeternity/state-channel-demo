@@ -161,7 +161,7 @@ onUpdated(() => {
   padding: var(--padding);
   padding-bottom: min(20px, var(--padding));
   max-width: 100%;
-  transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: height 0.7s cubic-bezier(0.25, 1, 0.5, 1);
   display: flex;
   flex-direction: column;
 
