@@ -4,7 +4,11 @@ const props = defineProps<{
 }>();
 
 const message =
-  'I just played a game of rock-paper-scissors on the æternity blockchain. ';
+  'I just played a game of rock-paper-scissors on the æternity blockchain.\n';
+
+const twitterΜessage =
+  message.replace('æternity', '@aeternity') +
+  '#Æ #æternity #AE #aeternityblockchain #web3 #blockchaintechnology\n';
 
 const fbUrl = `https://www.facebook.com/sharer/sharer.php?&u=${encodeURIComponent(
   props.url
@@ -13,7 +17,7 @@ const linkedInUrl = `https://www.linkedin.com/shareArticle?url=${encodeURICompon
   props.url
 )}`;
 const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-  message
+  twitterΜessage
 )}&url=${encodeURIComponent(props.url)}`;
 const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
   message + props.url
