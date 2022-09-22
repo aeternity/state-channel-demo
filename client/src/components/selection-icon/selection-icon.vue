@@ -3,6 +3,8 @@ import { Selections } from '../../utils/game-channel/game-channel.types';
 
 const props = defineProps<{
   type: Selections;
+  victory?: boolean;
+  defeat?: boolean;
 }>();
 
 const icon = new URL(`../../assets/images/${props.type}.png`, import.meta.url)
@@ -10,7 +12,7 @@ const icon = new URL(`../../assets/images/${props.type}.png`, import.meta.url)
 </script>
 
 <template>
-  <div class="selection-icon">
+  <div class="selection-icon" :class="{ victory, defeat }">
     <img :src="icon" :alt="props.type" />
   </div>
 </template>
@@ -19,24 +21,32 @@ const icon = new URL(`../../assets/images/${props.type}.png`, import.meta.url)
 @import '../../mediaqueries.scss';
 
 .selection-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   user-select: none;
   background-color: var(--gray);
   border-radius: 15px;
-  padding: 10px;
+  width: 100px;
+  height: 100px;
+  transition: background-color 0.2s ease-in-out;
   img {
-    width: 80px;
+    width: 80%;
+  }
+  &.victory {
+    background-color: var(--green);
+  }
+  &.defeat {
+    background-color: var(--pink);
   }
   @include for-big-desktop-up {
-    padding: 20px;
-    img {
-      width: 100px;
-    }
+    width: 120px;
+    height: 120px;
   }
   @include for-phone-only {
-    padding: 10px;
-    img {
-      width: 60px;
-    }
+    border-radius: 8px;
+    width: 55px;
+    height: 55px;
   }
 }
 </style>

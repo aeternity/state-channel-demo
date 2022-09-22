@@ -40,7 +40,7 @@ describe('Rock Paper Scissors Component', () => {
     expect(paperBtn).toBeTruthy();
     expect(scissorsBtn).toBeTruthy();
     expect(RockPaperScissorsEl.getByTestId('userSelection').innerHTML).toBe(
-      '<!--v-if-->'
+      '<!--v-if--><!--v-if-->'
     );
     expect(RockPaperScissorsEl.getByTestId('botSelection').innerHTML).toBe(
       '<!--v-if-->'

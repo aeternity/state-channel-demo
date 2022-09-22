@@ -45,6 +45,13 @@
   box-sizing: content-box;
 }
 
+@include for-phone-only {
+  .loading {
+    transform: translateZ(0) scale(0.6);
+    transform-origin: 50% 50%;
+  }
+}
+
 @keyframes loadingAnimation {
   0% {
     background: rgba(255, 255, 255, 0);

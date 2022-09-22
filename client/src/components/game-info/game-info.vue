@@ -33,7 +33,7 @@ defineProps<{
     font-size: 50px;
     font-weight: bold;
     @include for-phone-only {
-      font-size: 34px;
+      font-size: 26px;
     }
     @include for-tablet-portrait-up {
       font-size: 40px;
@@ -45,7 +45,7 @@ defineProps<{
     text-align: right;
     font-weight: 500;
     @include for-phone-only {
-      font-size: 16px;
+      font-size: 14px;
       text-align: center;
     }
     @include for-tablet-portrait-up {

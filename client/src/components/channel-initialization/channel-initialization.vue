@@ -87,7 +87,7 @@ function toggleAutoplay() {
           When being <span class="bold">idle for 2 minutes</span>, a timeout is
           triggered and the state channel closes.
         </p>
-        <div>
+        <div class="buttons">
           <Button
             :disabled="channelIsOpening"
             @click="openStateChannel()"
@@ -136,6 +136,9 @@ function toggleAutoplay() {
     &.shadow {
       width: min-content;
       box-shadow: 0 4px 8px 0 rgb(0 0 0 / 20%), 0 1px 10px 0 rgb(0 0 0 / 15%);
+      @include for-phone-only {
+        width: unset;
+      }
     }
   }
 }
@@ -146,7 +149,7 @@ function toggleAutoplay() {
   font-weight: 500;
   text-align: center;
   @include for-phone-only {
-    font-size: 28px;
+    font-size: 26px;
     min-width: 100%;
     max-width: 100%;
     margin: 20px;
@@ -167,6 +170,15 @@ function toggleAutoplay() {
   }
   .bold {
     font-weight: 500;
+  }
+}
+.buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  @include for-phone-only {
+    flex-direction: column-reverse;
   }
 }
 </style>
