@@ -22,8 +22,8 @@ export const MUTUAL_CHANNEL_CONFIGURATION: Partial<ChannelOptions> & {
   // execute channel_settle transaction
   // read more: https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md#channel_settle
   lockPeriod: 0,
-  // workaround: minimize the number of node hangs
-  timeoutIdle: 2 * 60 * 60 * 1000,
+  // peers need to respond in maximum 2 minutes
+  timeoutIdle: 2 * 60 * 1000,
   debug: false,
   // How to calculate minimum depth - either txfee (default) or plain. We use
   // `plain` with `minimumDepth` in order to reduce delay.

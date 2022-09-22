@@ -4,8 +4,6 @@ import { default as Button } from '../generic-button/generic-button.vue';
 import { useChannelStore } from '../../stores/channel';
 import BigNumber from 'bignumber.js';
 import { GameChannel } from '../../utils/game-channel/game-channel';
-import { TransactionLog } from '../transaction/transaction.vue';
-import { useTransactionsStore } from '../../stores/transactions';
 import { resetApp } from '../../main';
 import ShareButtons from '../share-buttons/share-buttons.vue';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
@@ -34,19 +32,10 @@ const seconds =
   1000;
 
 let offChainTxNo = 0;
-const didReconnect = !!localStorage.getItem('gameState');
-if (didReconnect || props.resultsFromSharedLink) {
-  // since we're not saving all the logs we can't just count the current transaction logs.
-  offChainTxNo = roundsPlayed * 3 + 1;
-  if (roundsPlayed === 1 && !isLastRoundCompleted) {
-    offChainTxNo -= 3;
-  }
-} else {
-  for (const round of Object.values(useTransactionsStore().userTransactions)) {
-    offChainTxNo += round.filter(
-      (tx: TransactionLog) => tx.onChain === false
-    ).length;
-  }
+// since we're not saving all the logs we can't count the current transaction logs.
+offChainTxNo = roundsPlayed * 3 + 1;
+if (roundsPlayed === 1 && !isLastRoundCompleted) {
+  offChainTxNo -= 3;
 }
 
 const title = computed(() => {
@@ -54,8 +43,8 @@ const title = computed(() => {
   return earnings.value.isZero()
     ? `${user} didn't win or lose anything`
     : earnings.value.isGreaterThan(0)
-    ? `${user} won ${earnings.value.dividedBy(1e18).toFormat(2)} AE`
-    : `${user} lost ${earnings.value.abs().dividedBy(1e18).toFormat(2)} AE`;
+    ? `${user} won ${earnings.value.dividedBy(1e18).toFormat(2)} Æ`
+    : `${user} lost ${earnings.value.abs().dividedBy(1e18).toFormat(2)} Æ`;
 });
 const txPerSecText = computed(
   () =>
@@ -114,7 +103,7 @@ function continueAutoplay() {
         @click="continueAutoplay()"
         :title="
           hasInsuffientBalance
-            ? 'You don\'t have enough AE to continue autoplay'
+            ? 'You don\'t have enough Æ to continue autoplay'
             : ''
         "
       />

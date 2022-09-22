@@ -11,6 +11,10 @@ route.get('/', (_req, res) => {
   );
 });
 
+route.get('/status', (_req, res) => {
+  res.json(botService.getServiceStatus());
+});
+
 route.post('/open', (async (req, res) => {
   const reqBody = req.body as Partial<ResponderBaseChannelConfig>;
   const { address, port, host } = reqBody;

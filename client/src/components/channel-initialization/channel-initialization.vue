@@ -83,6 +83,10 @@ function toggleAutoplay() {
           the game is over, you can see every action recorded on the blockchain
           by checking our explorer.
         </p>
+        <p class="info">
+          When being <span class="bold">idle for 2 minutes</span>, a timeout is
+          triggered and the state channel closes.
+        </p>
         <div>
           <Button
             :disabled="channelIsOpening"
@@ -160,6 +164,9 @@ function toggleAutoplay() {
     min-width: 100%;
     max-width: 100%;
     margin: 20px;
+  }
+  .bold {
+    font-weight: 500;
   }
 }
 </style>

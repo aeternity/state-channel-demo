@@ -1,3 +1,4 @@
+import { NODE_URL } from '../sdk-service/sdk-service';
 import {
   buildTxHash,
   Channel,
@@ -185,27 +186,24 @@ export class GameChannel {
     this.registerEvents();
   }
 
-  /**
-   * ! Workaround.
-   * returns true if channel was never shutdown
-   * and reconnection was successful.
-   * In cases where channel was shutdown, `channel.state()`
-   * hangs for a while, therefore we add a timeout
-   */
-  async checkIfChannelIsEstablished() {
-    const statePromise = channel.state();
-
-    try {
-      await Promise.race([statePromise, timeout(3000)]);
-      return true;
-    } catch (e) {
-      return false;
-    }
+  async checkifChannelIsStillOpen() {
+    const response = await fetch(`${NODE_URL}/v3/channels/${this.channelId}`);
+    const result = await response.json();
+    return !!result.id;
   }
 
   async reconnectChannel() {
     if (!this.channelConfig) throw new Error('Channel config is not set');
     this.isOpening = true;
+
+    if (!(await this.checkifChannelIsStillOpen())) {
+      localStorage.removeItem('gameState');
+      alert(
+        'Channel was shutdown and can no longer be opened. App will reset.'
+      );
+      return resetApp();
+    }
+
     channel = await Channel.reconnect(
       {
         ...this.channelConfig,
@@ -221,15 +219,6 @@ export class GameChannel {
         round: this.channelRound,
       }
     );
-
-    const reconnectionWasSuccessful = await this.checkIfChannelIsEstablished();
-    if (!reconnectionWasSuccessful) {
-      alert(
-        'Channel was shutdown and can no longer be opened. App will reset.'
-      );
-      localStorage.removeItem('gameState');
-      return setTimeout(resetApp, 2000);
-    }
 
     this.isFunded = true;
     this.isOpen = true;
@@ -262,8 +251,9 @@ export class GameChannel {
       await channel
         .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
         .then(async () => {
-          await this.saveResultsOnChain();
-          await returnCoinsToFaucet();
+          this.savedResultsOnChainTxHash = await returnCoinsToFaucet(
+            this.getMessageToSaveOnChain()
+          );
           this.shouldShowEndScreen = true;
           this.isOpen = false;
         });
@@ -349,7 +339,9 @@ export class GameChannel {
         }
 
         if (status === 'closed' || status === 'died') {
-          alert('Node crashed and channel has closed. App will reset.');
+          alert(
+            'Node triggered a timeout and the channel has died. App will reset.'
+          );
           resetApp();
         }
       });
@@ -579,6 +571,10 @@ export class GameChannel {
     this.saveStateToLocalStorage();
     await this.updateBalances();
 
+    if (this.gameRound.index % 50 === 0) {
+      await channel.cleanContractCalls();
+    }
+
     // if autoplay is enabled
     if (this.autoplay.enabled) {
       // if not last round, start next round
@@ -628,7 +624,7 @@ export class GameChannel {
     }
   }
 
-  async saveResultsOnChain() {
+  getMessageToSaveOnChain() {
     if (!this.channelConfig) throw new Error('Channel config is not set');
 
     const initialBalance = this.channelConfig?.responderAmount as BigNumber;
@@ -644,11 +640,7 @@ export class GameChannel {
     };
 
     const message = JSON.stringify(data);
-
-    const result = await sdk.spend(0, this.channelConfig.initiatorId, {
-      payload: message,
-    });
-    this.savedResultsOnChainTxHash = result.hash;
+    return message;
   }
 
   saveStateToLocalStorage() {
