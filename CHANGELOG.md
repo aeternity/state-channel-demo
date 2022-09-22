@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.1.0](https://github.com/aeternity/state-channel-demo/compare/v1.0.0...v1.1.0) (2022-09-22)
+
+
+### Features
+
+* add channelCreateTx fee ([#126](https://github.com/aeternity/state-channel-demo/issues/126)) ([a3ffa12](https://github.com/aeternity/state-channel-demo/commit/a3ffa12434f98ddf95c5575eadfd548c6ef1ebe0))
+* add debug status endpoint ([0f3a42b](https://github.com/aeternity/state-channel-demo/commit/0f3a42b6fca889f51ffa883e29f6f365cc8f1218))
+* optimize performance ([#143](https://github.com/aeternity/state-channel-demo/issues/143)) ([69c15de](https://github.com/aeternity/state-channel-demo/commit/69c15de9885d0315e580079207e3fca211c20913))
+* release 1.0.1 ([eeef526](https://github.com/aeternity/state-channel-demo/commit/eeef526a07be297bc40bc88e8b6a795b124365bf))
+* seperate nodes per env config ([cdd0f63](https://github.com/aeternity/state-channel-demo/commit/cdd0f63c30a73317d5eba64ad0aa9fe4000429d6))
+
+
+### Bug Fixes
+
+* use ws instead of wss with deployed node ([#125](https://github.com/aeternity/state-channel-demo/issues/125)) ([35ff52f](https://github.com/aeternity/state-channel-demo/commit/35ff52f6271226d521eb9ab81ca850ae2f9d7e38))
+
+
+### CI / CD
+
+* **build:** add argument to server Dockerfile ([3815176](https://github.com/aeternity/state-channel-demo/commit/3815176cebe1a1e8478e8f9c30f2f1d0f9f659a3))
+
+
+### Refactorings
+
+* **client:** remove channel proxy ([dace82d](https://github.com/aeternity/state-channel-demo/commit/dace82d1c8baa3a7430d6e2e91d0b7ec1c595b5d))
+* decode contract events instead of decoding w compiler ([#124](https://github.com/aeternity/state-channel-demo/issues/124)) ([a66c862](https://github.com/aeternity/state-channel-demo/commit/a66c862daeff7d80c7e64130010956445d363979))
+* save results via transferFunds instead of sending an extra tx ([#147](https://github.com/aeternity/state-channel-demo/issues/147)) ([d069ce9](https://github.com/aeternity/state-channel-demo/commit/d069ce9a79c09a880de0681bb7242ccfadb7289b))
+* use a 2 minute timeout idle ([#142](https://github.com/aeternity/state-channel-demo/issues/142)) ([1edfc95](https://github.com/aeternity/state-channel-demo/commit/1edfc955c460999398edc921b3f3869b82272d42))
+* use node api to check if channel is open before reconnection ([759da65](https://github.com/aeternity/state-channel-demo/commit/759da658ce2432b6ddb31f73744acd25adcb060c))
+
 ## 1.0.0 (2022-09-09)
 
 
