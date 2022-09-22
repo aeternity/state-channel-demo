@@ -35,6 +35,9 @@ const channelStore = useChannelStore();
   height: 100%;
   font-size: 40px;
   font-weight: 500;
+  @include for-phone-only {
+    font-size: 26px;
+  }
 }
 .game-screen {
   display: grid;
@@ -43,18 +46,35 @@ const channelStore = useChannelStore();
   gap: 0px 0px;
   grid-template-areas: 'user bot';
   grid-area: body;
+  @include for-phone-only {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
 }
 .user,
 .bot {
   display: grid;
   grid-template-rows: 15% 85%;
+  @include for-phone-only {
+    margin-top: 10px;
+  }
 }
 .user {
   grid-area: user;
   border-right: 1px solid var(--pink);
+  @include for-phone-only {
+    height: 65%;
+    border-right: none;
+    border-bottom: 1px solid var(--pink);
+  }
 }
 .bot {
   grid-area: bot;
   border-left: 1px solid var(--pink);
+  @include for-phone-only {
+    height: 35%;
+    border-left: none;
+  }
 }
 </style>

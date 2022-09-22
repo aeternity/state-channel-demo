@@ -5,6 +5,7 @@ import { useTransactionsStore } from '../../stores/transactions';
 import SingleTransaction from '../transaction/transaction.vue';
 import Accordion from '../accordion/accordion.vue';
 import Notification from '../notification/notification.vue';
+import { useIsOnMobileStore } from '../../stores/is-on-mobile';
 
 const EXPAND_ICON = new URL('../../assets/svg/expand.svg', import.meta.url)
   .href;
@@ -16,6 +17,7 @@ const MINIMISE_ICON = new URL(
 const terminalEl = ref<Element>();
 const transactionStore = useTransactionsStore();
 const { userTransactions, botTransactions } = storeToRefs(transactionStore);
+const isOnMobile = useIsOnMobileStore().isOnMobile;
 
 const didReconnect = !!localStorage.getItem('gameState');
 
@@ -40,8 +42,10 @@ onUpdated(() => {
   >
     <div ref="terminalEl" class="terminal">
       <div class="header">
-        <div class="title">Your Terminal</div>
-        <div class="title">Bot Terminal</div>
+        <div class="title">
+          {{ isOnMobile ? 'Tx Terminal' : 'Your Terminal' }}
+        </div>
+        <div class="title">{{ isOnMobile ? '' : 'Bot Terminal' }}</div>
         <button
           class="expand"
           aria-label="expand_button"
@@ -75,8 +79,14 @@ onUpdated(() => {
               v-for="(transaction, txIdx) in specialBotTx.slice(0, 2)"
               :key="transaction.id"
             >
-              <SingleTransaction :transaction="specialUserTx[txIdx]" />
-              <SingleTransaction :transaction="transaction" />
+              <div class="single-transaction">
+                <div class="single-transaction-text">You:</div>
+                <SingleTransaction :transaction="specialUserTx[txIdx]" />
+              </div>
+              <div class="single-transaction">
+                <div class="single-transaction-text">Bot:</div>
+                <SingleTransaction :transaction="transaction" />
+              </div>
             </div>
           </template>
         </Accordion>
@@ -99,10 +109,16 @@ onUpdated(() => {
               ]"
               :key="transaction.id"
             >
-              <SingleTransaction
-                :transaction="userTransactions[parseInt(roundKey)][txIdx]"
-              />
-              <SingleTransaction :transaction="transaction" />
+              <div class="single-transaction">
+                <div class="single-transaction-text">You:</div>
+                <SingleTransaction
+                  :transaction="userTransactions[parseInt(roundKey)][txIdx]"
+                />
+              </div>
+              <div class="single-transaction">
+                <div class="single-transaction-text">Bot:</div>
+                <SingleTransaction :transaction="transaction" />
+              </div>
             </div>
           </template>
         </Accordion>
@@ -117,8 +133,14 @@ onUpdated(() => {
           </template>
           <template v-slot:content>
             <div class="transaction-pair">
-              <SingleTransaction :transaction="specialUserTx[2]" />
-              <SingleTransaction :transaction="specialBotTx[2]" />
+              <div class="single-transaction">
+                <div class="single-transaction-text">You:</div>
+                <SingleTransaction :transaction="specialUserTx[2]" />
+              </div>
+              <div class="single-transaction">
+                <div class="single-transaction-text">You:</div>
+                <SingleTransaction :transaction="specialBotTx[2]" />
+              </div>
             </div>
           </template>
         </Accordion>
@@ -151,6 +173,11 @@ onUpdated(() => {
     padding-bottom: var(--padding);
     width: calc(100% - var(--padding) * 2);
     height: calc(100vh - var(--padding) * 2);
+    @include for-phone-only {
+      .header {
+        margin-top: 30px;
+      }
+    }
   }
   .header {
     width: 100%;
@@ -256,8 +283,21 @@ onUpdated(() => {
         &:nth-of-type(odd) {
           background-color: rgba(255, 255, 255, 0.5);
         }
-        .transaction {
-          width: 50%;
+        .single-transaction {
+          width: 100%;
+          display: flex;
+          .single-transaction-text {
+            display: none;
+            @include for-phone-only {
+              display: block;
+              font-size: 12px;
+              font-weight: 500;
+              padding-right: 7px;
+            }
+          }
+        }
+        @include for-phone-only {
+          flex-direction: column;
         }
       }
     }
