@@ -17,12 +17,38 @@ import {
   GAME_STAKE,
 } from '../contract';
 import { getNextCallData } from '../contract/contract.service';
-import { FAUCET_PUBLIC_ADDRESS, sdk, Update } from '../sdk';
+import {
+  ENVIRONMENT_CONFIG, FAUCET_PUBLIC_ADDRESS, sdk, Update,
+} from '../sdk';
 import { fundAccount, pollForAccount } from '../sdk/sdk.service';
 import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
-import { GameSession, SignatureType, TransactionLog } from './bot.interface';
+import {
+  GameSession,
+  ServiceStatus,
+  SignatureType,
+  TransactionLog,
+} from './bot.interface';
 
 export const gameSessionPool = new Map<string, GameSession>();
+
+const serviceStatus: ServiceStatus = {
+  channelsOpenCurrently: 0,
+  channelsInitialized: 0,
+  channelsOpened: 0,
+  runningSince: new Date(),
+  env: ENVIRONMENT_CONFIG,
+};
+
+/**
+ * Returns the current status of the game session service
+ */
+export function getServiceStatus() {
+  return {
+    ...serviceStatus,
+    channelsOpenCurrently: gameSessionPool.size,
+  };
+}
+
 let openStateChannelTxLog: TransactionLog;
 
 /**
@@ -67,6 +93,7 @@ export async function addGameSession(
       address,
     },
   });
+  serviceStatus.channelsOpened += 1;
   logger.info(
     `Added to game session pool with bot ID: ${configuration.initiatorId}. Total sessions: ${gameSessionPool.size}`,
   );
@@ -383,6 +410,9 @@ export async function generateGameSession(
 
   await fundAccount(initiatorId);
   await fundAccount(responderId);
+
+  serviceStatus.channelsInitialized += 1;
+
   await pollForAccount(initiatorId);
   await pollForAccount(responderId);
 
