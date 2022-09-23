@@ -33,7 +33,7 @@ export interface ServiceStatus {
   channelsOpenCurrently: number;
   channelsInitialized: number;
   channelsOpened: number;
-  runningSince: Date;
+  timestamp: Date;
   env: typeof ENVIRONMENT_CONFIG;
 }
 
