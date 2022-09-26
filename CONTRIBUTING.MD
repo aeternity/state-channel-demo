@@ -11,8 +11,8 @@
   - Before submitting a Pull Request, make sure all the tests are passing  
   💡 Keep in mind that both server & client tests depend on a running local node 
   -  If you're implementing a new feature, do not forget to 
-    - add JSDoc comments for readability 
-    - implement its tests as well 🚀
+     - add JSDoc comments for readability 
+     - implement its tests as well 🚀
 
 💡 Each Pull Request will be deployed in a staging environment (needs to be triggered by a maintainer)
 
