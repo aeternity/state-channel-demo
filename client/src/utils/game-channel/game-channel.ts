@@ -258,6 +258,7 @@ export class GameChannel {
           );
           this.shouldShowEndScreen = true;
           this.isOpen = false;
+          channel.disconnect();
         });
     });
     return channelClosing;

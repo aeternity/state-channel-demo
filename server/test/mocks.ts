@@ -26,6 +26,7 @@ export const mockChannel = () => {
         return {};
       },
       createContract: jest.fn(),
+      disconnect: jest.fn(),
     } as ChannelMock),
   );
 };
