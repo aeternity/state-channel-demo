@@ -130,7 +130,10 @@ function closeChannel() {
         text="Play again"
         data-testid="btn-play-again"
         @click="gameChannel.channel?.startNewRound()"
-        :disabled="channelIsClosing"
+        :disabled="channelIsClosing || gameChannel.channel.hasInsuffientBalance"
+        :title="
+          gameChannel.channel.hasInsuffientBalance ? 'Insufficient balance' : ''
+        "
       />
       <GenericButton
         text="End game"
