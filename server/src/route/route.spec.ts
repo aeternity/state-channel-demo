@@ -129,6 +129,7 @@ describe('/open', () => {
       responderId: config.address,
       responderAmount: MUTUAL_CHANNEL_CONFIGURATION.responderAmount.toString(),
       initiatorAmount: MUTUAL_CHANNEL_CONFIGURATION.initiatorAmount.toString(),
+      channelReserve: MUTUAL_CHANNEL_CONFIGURATION.channelReserve.toString(),
     });
   });
 

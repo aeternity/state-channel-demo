@@ -64,11 +64,6 @@ const earnings = computed(() => {
   return balance.minus(initialBalance);
 });
 
-const hasInsuffientBalance = computed(() => {
-  const balance = channel?.balances.user as BigNumber;
-  return balance.isLessThan(1e18);
-});
-
 function getLinkToShare() {
   return `${window.location.origin.concat(window.location.pathname)}?th=${
     channel?.savedResultsOnChainTxHash
@@ -99,10 +94,10 @@ function continueAutoplay() {
       <Button
         v-if="!props.resultsFromSharedLink && isAutoplayEnabled"
         text="Continue Autoplay"
-        :disabled="channel.channelIsClosing || hasInsuffientBalance"
+        :disabled="channel.channelIsClosing || channel.hasInsuffientBalance"
         @click="continueAutoplay()"
         :title="
-          hasInsuffientBalance
+          channel.hasInsuffientBalance
             ? 'You don\'t have enough Æ to continue autoplay'
             : ''
         "
