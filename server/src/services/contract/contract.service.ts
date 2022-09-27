@@ -5,6 +5,7 @@ import contractSource from '@aeternity/rock-paper-scissors';
 import logger from '../../logger';
 import { SignatureType, TransactionLog } from '../bot/bot.interface';
 import { sdk } from '../sdk';
+import contractBytecode from './contract.bytecode';
 import {
   ContractEvents,
   CONTRACT_CONFIGURATION,
@@ -21,7 +22,7 @@ export async function getCompiledContract(onAccount: Encoded.AccountAddress) {
     source: contractSource,
     onAccount,
   });
-  await contract.compile();
+  contract.bytecode = contractBytecode;
   return contract;
 }
 

@@ -5,7 +5,7 @@ import {
   MemoryAccount,
 } from '@aeternity/aepp-sdk';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
-import contractSource from '@aeternity/rock-paper-scissors';
+import contractBytecode from '../contract-bytecode/contract-bytecode';
 
 export const NODE_URL =
   import.meta.env.VITE_NODE_URL ?? 'http://localhost:3013';
@@ -71,33 +71,7 @@ export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
   : null;
 
 export async function verifyContractBytecode(
-  bytecode: Encoded.ContractBytearray,
-  source = contractSource
+  bytecode: Encoded.ContractBytearray
 ) {
-  let isEqual = false;
-  try {
-    await sdk.compilerApi.validateByteCode({
-      bytecode,
-      source,
-      options: {},
-    });
-    isEqual = true;
-  } catch (e) {
-    isEqual = false;
-  }
-  return isEqual;
-}
-
-/**
- * @category sdk-wrapper
- * Wrapper function to decode callData.
- */
-export async function decodeCallData(
-  calldata: Encoded.ContractBytearray,
-  bytecode: string
-) {
-  return sdk.compilerApi.decodeCalldataBytecode({
-    calldata,
-    bytecode,
-  });
+  return bytecode === contractBytecode;
 }
