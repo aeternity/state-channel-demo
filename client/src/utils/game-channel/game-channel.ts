@@ -40,6 +40,7 @@ import {
   StoredState,
   storeGameState,
 } from '../local-storage/local-storage';
+import contractBytecode from '../contract-bytecode/contract-bytecode';
 
 function timeout(ms: number) {
   return new Promise((_, reject) => {
@@ -380,7 +381,7 @@ export class GameChannel {
     this.contract = await sdk.getContractInstance({
       source: contractSource,
     });
-    await this.contract.compile();
+    this.contract.bytecode = contractBytecode;
     this.contractAddress = encodeContractAddress(
       owner,
       contractCreationChannelRound

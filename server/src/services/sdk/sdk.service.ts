@@ -90,20 +90,6 @@ export async function fundAccount(account: Encoded.AccountAddress) {
 }
 
 /**
- * @category sdk-wrapper
- * Wrapper function to decode callData.
- */
-export async function decodeCallData(
-  calldata: Encoded.ContractBytearray,
-  bytecode: string,
-) {
-  return sdk.compilerApi.decodeCalldataBytecode({
-    calldata,
-    bytecode,
-  });
-}
-
-/**
  * Since we create accounts on the fly and we fund them
  * with faucet, our node may not be yet aware of their existence.
  * Therefore, check if the node is aware by calling its API.
