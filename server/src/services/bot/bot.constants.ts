@@ -16,7 +16,7 @@ export const MUTUAL_CHANNEL_CONFIGURATION: Partial<ChannelOptions> & {
   fee: new BigNumber('0.3e18'),
   initiatorAmount: new BigNumber('4.5e18'),
   responderAmount: new BigNumber('4.5e18'),
-  channelReserve: 2,
+  channelReserve: new BigNumber('0.5e18'),
   // We're using 0 for lockPeriod in order to quickly close the channel
   // in cases where the initiator needs to solo close it and finally.
   // execute channel_settle transaction

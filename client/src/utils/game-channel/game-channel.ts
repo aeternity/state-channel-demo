@@ -62,6 +62,7 @@ export class GameChannel {
   lastOffChainTxTime = -1;
   channelIsClosing = false;
   savedResultsOnChainTxHash?: Encoded.TxHash;
+  hasInsuffientBalance = false;
   error?: {
     status: number;
     statusText: string;
@@ -455,6 +456,7 @@ export class GameChannel {
     const balances = await channel.balances([initiatorId, responderId]);
     this.balances.user = new BigNumber(balances[responderId]);
     this.balances.bot = new BigNumber(balances[initiatorId]);
+    this.checkHasInsuffientBalance();
   }
 
   async getLastEventsDecoded() {
@@ -578,7 +580,11 @@ export class GameChannel {
     // if autoplay is enabled
     if (this.autoplay.enabled) {
       // if not last round, start next round
-      if (this.gameRound.index < this.autoplay.rounds) this.startNewRound();
+      if (
+        this.gameRound.index < this.autoplay.rounds &&
+        !this.hasInsuffientBalance
+      )
+        this.startNewRound();
       // otherwise, show results
       else {
         this.autoplay.elapsedTime +=
@@ -608,6 +614,21 @@ export class GameChannel {
     this.shouldShowEndScreen = false;
     this.timerStartTime = Date.now();
     this.startNewRound();
+  }
+
+  checkHasInsuffientBalance() {
+    if (!this.channelConfig) throw new Error('Channel config is not set');
+    if (!this.balances.user) throw new Error('User balance is not set');
+    if (!this.balances.bot) throw new Error('Bot balance is not set');
+
+    const { user: userBalance, bot: botBalance } = this.balances;
+    const channelReserve = new BigNumber(
+      this.channelConfig.channelReserve ?? 0
+    );
+    this.hasInsuffientBalance =
+      userBalance.minus(this.gameRound.stake).isLessThan(channelReserve) ||
+      botBalance.minus(this.gameRound.stake).isLessThan(channelReserve);
+    return this.hasInsuffientBalance;
   }
 
   private handleMessage(message: { type: string; data: TransactionLog }) {
