@@ -68,6 +68,7 @@ describe('/status', () => {
         balances: jest.fn,
         state: jest.fn,
         poi: jest.fn,
+        disconnect: jest.fn,
       } as unknown as Channel,
       {
         initiatorId: config.address,
