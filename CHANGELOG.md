@@ -1,5 +1,41 @@
 # Changelog
 
+## [1.0.1](https://github.com/aeternity/state-channel-demo/compare/v1.0.0...v1.0.1) (2022-09-28)
+
+
+### Features
+
+* add channelCreateTx fee ([#126](https://github.com/aeternity/state-channel-demo/issues/126)) ([a3ffa12](https://github.com/aeternity/state-channel-demo/commit/a3ffa12434f98ddf95c5575eadfd548c6ef1ebe0))
+* add debug status endpoint ([0f3a42b](https://github.com/aeternity/state-channel-demo/commit/0f3a42b6fca889f51ffa883e29f6f365cc8f1218))
+* handle running out of coins ([#164](https://github.com/aeternity/state-channel-demo/issues/164)) ([f281165](https://github.com/aeternity/state-channel-demo/commit/f2811659f29dc4a427ccb077bb9610c9c5e68c75))
+* optimize performance ([#143](https://github.com/aeternity/state-channel-demo/issues/143)) ([69c15de](https://github.com/aeternity/state-channel-demo/commit/69c15de9885d0315e580079207e3fca211c20913))
+* release 1.0.1 ([eeef526](https://github.com/aeternity/state-channel-demo/commit/eeef526a07be297bc40bc88e8b6a795b124365bf))
+* release follow package.json version tag ([b40b0e3](https://github.com/aeternity/state-channel-demo/commit/b40b0e3a9cc0d65aaffa82fca42f0ad00815e792))
+* seperate nodes per env config ([cdd0f63](https://github.com/aeternity/state-channel-demo/commit/cdd0f63c30a73317d5eba64ad0aa9fe4000429d6))
+* specify release tag in workflow ([8a81d65](https://github.com/aeternity/state-channel-demo/commit/8a81d6550d5f0ad8ccb310ee26899f61a78e188d))
+* update twitter sharing text ([5f18d01](https://github.com/aeternity/state-channel-demo/commit/5f18d013972d008de96e2400239d7ea6da0581b9))
+
+
+### Bug Fixes
+
+* handle tx log unable to be sent ([46723cf](https://github.com/aeternity/state-channel-demo/commit/46723cf3d26193760ced69d80dc84de72367faa6))
+* use ws instead of wss with deployed node ([#125](https://github.com/aeternity/state-channel-demo/issues/125)) ([35ff52f](https://github.com/aeternity/state-channel-demo/commit/35ff52f6271226d521eb9ab81ca850ae2f9d7e38))
+
+
+### CI / CD
+
+* **build:** add argument to server Dockerfile ([3815176](https://github.com/aeternity/state-channel-demo/commit/3815176cebe1a1e8478e8f9c30f2f1d0f9f659a3))
+
+
+### Refactorings
+
+* **client:** remove channel proxy ([dace82d](https://github.com/aeternity/state-channel-demo/commit/dace82d1c8baa3a7430d6e2e91d0b7ec1c595b5d))
+* decode contract events instead of decoding w compiler ([#124](https://github.com/aeternity/state-channel-demo/issues/124)) ([a66c862](https://github.com/aeternity/state-channel-demo/commit/a66c862daeff7d80c7e64130010956445d363979))
+* drop usage of HTTP compiler ([#163](https://github.com/aeternity/state-channel-demo/issues/163)) ([7bec539](https://github.com/aeternity/state-channel-demo/commit/7bec5396b243bdeaaeb79cac5c3dd6aea75fdffd))
+* save results via transferFunds instead of sending an extra tx ([#147](https://github.com/aeternity/state-channel-demo/issues/147)) ([d069ce9](https://github.com/aeternity/state-channel-demo/commit/d069ce9a79c09a880de0681bb7242ccfadb7289b))
+* use a 2 minute timeout idle ([#142](https://github.com/aeternity/state-channel-demo/issues/142)) ([1edfc95](https://github.com/aeternity/state-channel-demo/commit/1edfc955c460999398edc921b3f3869b82272d42))
+* use node api to check if channel is open before reconnection ([759da65](https://github.com/aeternity/state-channel-demo/commit/759da658ce2432b6ddb31f73744acd25adcb060c))
+
 ## 1.0.0 (2022-09-09)
 
 
