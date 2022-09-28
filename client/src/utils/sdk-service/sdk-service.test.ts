@@ -90,12 +90,12 @@ describe('SDK', () => {
   describe('verifyContractBytecode()', () => {
     const wrongSource = `
       contract Remote =
-      datatype event = RemoteEvent1(int) | RemoteEvent2(string, int) | Duplicate(int)
-      stateful entrypoint emitEvents(duplicate: bool) : unit =
-      Chain.event(RemoteEvent2("test-string", 43))
-      switch(duplicate)
-        true => Chain.event(Duplicate(0))
-        false => ()
+        datatype event = RemoteEvent1(int) | RemoteEvent2(string, int) | Duplicate(int)
+        stateful entrypoint emitEvents(duplicate: bool) : unit =
+          Chain.event(RemoteEvent2("test-string", 43))
+          switch(duplicate)
+            true => Chain.event(Duplicate(0))
+            false => ()
     `;
     const gameChannel = new GameChannel();
     const fetchConfigSpy = vi.spyOn(gameChannel, 'fetchChannelConfig');
@@ -114,20 +114,18 @@ describe('SDK', () => {
       if (!contract.bytecode)
         throw new Error('Contract bytecode is not defined');
       await expect(
-        verifyContractBytecode(contract.bytecode, contractSource)
+        verifyContractBytecode(contract.bytecode)
       ).resolves.toBeTruthy();
     }, 10000);
 
     it('returns false if proposed bytecode is wrong', async () => {
       const contract = await sdk.getContractInstance({
-        source: contractSource,
+        source: wrongSource,
       });
       await contract.compile();
       if (!contract.bytecode)
         throw new Error('Contract bytecode is not defined');
-      expect(
-        verifyContractBytecode(contract.bytecode, wrongSource)
-      ).resolves.toBeFalsy();
+      expect(verifyContractBytecode(contract.bytecode)).resolves.toBeFalsy();
     });
   });
 });

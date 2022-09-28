@@ -68,6 +68,7 @@ describe('/status', () => {
         balances: jest.fn,
         state: jest.fn,
         poi: jest.fn,
+        disconnect: jest.fn,
       } as unknown as Channel,
       {
         initiatorId: config.address,
@@ -129,6 +130,7 @@ describe('/open', () => {
       responderId: config.address,
       responderAmount: MUTUAL_CHANNEL_CONFIGURATION.responderAmount.toString(),
       initiatorAmount: MUTUAL_CHANNEL_CONFIGURATION.initiatorAmount.toString(),
+      channelReserve: MUTUAL_CHANNEL_CONFIGURATION.channelReserve.toString(),
     });
   });
 

@@ -1,6 +1,5 @@
 {
   "name": "state-channel-demo-bot-service",
-  "version": "1.0.1",
   "main": "dist/index.js",
   "scripts": {
     "build": "npx tsc",

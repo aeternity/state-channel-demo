@@ -7,12 +7,14 @@ import {
 } from '@aeternity/aepp-sdk';
 import { setTimeout as awaitSetTimeout } from 'timers/promises';
 import Crypto from 'crypto';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { Moves } from '../src/services/contract';
 import {
   NETWORK_ID,
   COMPILER_URL,
   IGNORE_NODE_VERSION,
   NODE_URL,
+  sdk,
 } from '../src/services/sdk';
 
 export function timeout(ms: number) {
@@ -63,3 +65,13 @@ export async function pollForRound(desiredRound: number, channel: Channel) {
 export const createHash = async (move: Moves, key: string) => Crypto.createHash('sha256')
   .update(key + move)
   .digest('hex');
+
+export async function decodeCallData(
+  calldata: Encoded.ContractBytearray,
+  bytecode: string,
+) {
+  return sdk.compilerApi.decodeCalldataBytecode({
+    calldata,
+    bytecode,
+  });
+}

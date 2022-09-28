@@ -103,6 +103,7 @@ export async function addGameSession(
  * Removes game session from the pool after the channel is closed
  */
 export function removeGameSession(onAccount: Encoded.AccountAddress) {
+  gameSessionPool.get(onAccount)?.channelWrapper.instance.disconnect();
   gameSessionPool.delete(onAccount);
   logger.info(
     `Removed from pool game session with bot ID: ${onAccount}. Total sessions: ${gameSessionPool.size}`,
@@ -259,14 +260,20 @@ async function respondToContractCall(gameSession: GameSession) {
       onAccount: gameSession.participants.initiatorId,
     }),
   );
-  await sendCallUpdateLog(
-    result.signedTx,
-    {
-      name: ContractEvents.player1Moved,
-      value: gameSession.contractState.botMove,
-    },
-    gameSession,
-  );
+  if (result.signedTx) {
+    await sendCallUpdateLog(
+      result.signedTx,
+      {
+        name: ContractEvents.player1Moved,
+        value: gameSession.contractState.botMove,
+      },
+      gameSession,
+    );
+  } else {
+    logger.warn(
+      `${gameSession.participants.initiatorId} - No signed transaction returned from contract call`,
+    );
+  }
   gameSession.contractState.callDataToSend = null;
 }
 
