@@ -1,9 +1,9 @@
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
-import contractSource from '@aeternity/rock-paper-scissors';
-import { ContractService, RockPaperScissorsContract } from '.';
-import { createHash } from '../../../test';
-import { decodeCallData, sdk } from '../sdk';
+import { ContractService } from '.';
+import { createHash, decodeCallData } from '../../../test';
+import { sdk } from '../sdk';
 import { ContractEvents, CONTRACT_NAME, Moves } from './contract.constants';
+import { getCompiledContract } from './contract.service';
 
 describe('ContractService', () => {
   it('should be defined', () => {
@@ -13,10 +13,7 @@ describe('ContractService', () => {
   let contract: ContractInstance;
 
   beforeAll(async () => {
-    contract = (await sdk.getContractInstance({
-      source: contractSource,
-    })) as RockPaperScissorsContract;
-    await contract.compile();
+    contract = await getCompiledContract(sdk.selectedAddress);
   });
 
   describe('getRandomMoveCallData()', () => {

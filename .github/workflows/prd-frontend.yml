@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - main
-    release:
-      types: [created]
+  release:
+    types: [created]
 
 env:
   ENV: "prd"
@@ -26,8 +26,10 @@ jobs:
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          release-as: "v1.0.1"
           release-type: node
           package-name: "./client/package.json"
+          version-file: "./package.json"
           default-branch: main
           changelog-types: '[{"type":"feat","section":"Features","hidden":false},{"type":"fix","section":"Bug Fixes","hidden":false},{"type":"ci","section":"CI / CD","hidden":false},{"type":"test","section":"Testing","hidden":false},{"type":"refactor","section":"Refactorings","hidden":false},{"type":"chore","section":"Miscellaneous","hidden":false}]'
 
