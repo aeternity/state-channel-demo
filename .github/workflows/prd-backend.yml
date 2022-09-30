@@ -26,7 +26,7 @@ jobs:
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-as: "v1.0.1"
+          release-as: "v1.0.2"
           release-type: node
           package-name: "./server/package.json"
           version-file: "./package.json"
