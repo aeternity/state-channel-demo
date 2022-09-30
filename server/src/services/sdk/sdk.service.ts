@@ -96,7 +96,7 @@ export async function fundAccount(account: Encoded.AccountAddress) {
  */
 export async function pollForAccount(
   address: Encoded.AccountAddress,
-  maxTries = 10,
+  maxTries = 50,
 ): Promise<boolean> {
   try {
     return !!(await sdk.api.getAccountByPubkey(address));
