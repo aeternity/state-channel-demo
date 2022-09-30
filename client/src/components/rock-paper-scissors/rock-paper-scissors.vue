@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Selections } from '../../utils/game-channel/game-channel.types';
 import { useChannelStore } from '../../stores/channel';
 import GenericButton from '../generic-button/generic-button.vue';
 import SelectionIcon from '../selection-icon/selection-icon.vue';
+import { useIsOnMobileStore } from '../../stores/is-on-mobile';
 
 const props = defineProps<{
   isPlayerUser?: boolean;
@@ -13,6 +14,7 @@ const gameChannel = useChannelStore();
 
 const selectionClicked = ref(false);
 const channelIsClosing = ref(false);
+const isOnMobile = useIsOnMobileStore().isOnMobile;
 
 const userHasSelected = computed(() => {
   return gameChannel.channel?.getUserSelection() != Selections.none
@@ -36,15 +38,30 @@ const botSelection = computed(() =>
     : ''
 );
 
+const result = computed(() => {
+  if (gameChannel.channel?.gameRound.isCompleted) {
+    switch (gameChannel.channel?.gameRound.winner) {
+      case gameChannel.channel.channelConfig?.responderId:
+        return 1;
+      case gameChannel.channel.channelConfig?.initiatorId:
+        return 0;
+      default:
+        return -1;
+    }
+  } else {
+    return -1;
+  }
+});
+
 const status = computed(() => {
   if (!isSelectingDisabled.value) {
     return props.isPlayerUser ? 'Choose one' : 'User is selecting…';
   }
   if (gameChannel.channel?.gameRound.isCompleted) {
-    switch (gameChannel.channel?.gameRound.winner) {
-      case gameChannel.channel.channelConfig?.responderId:
+    switch (result.value) {
+      case 1:
         return props.isPlayerUser ? 'You won' : 'User won';
-      case gameChannel.channel.channelConfig?.initiatorId:
+      case 0:
         return props.isPlayerUser ? 'You lost' : 'User lost';
       default:
         return "It's a draw";
@@ -73,14 +90,17 @@ function closeChannel() {
 <template>
   <div class="rock-paper-scissors">
     <div class="header">
-      <div class="finalized-selection bot" data-testid="botSelection">
+      <div class="finalized-selection" data-testid="botSelection">
         <SelectionIcon
           v-if="
+            !isOnMobile &&
             !isPlayerUser &&
             gameChannel.channel?.gameRound.isCompleted &&
             botSelection !== Selections.none &&
             botSelection !== ''
           "
+          :victory="result === 0"
+          :defeat="result === 1"
           :type="botSelection"
         />
       </div>
@@ -92,7 +112,21 @@ function closeChannel() {
             userSelection !== Selections.none &&
             userSelection !== ''
           "
+          :victory="result === 1"
+          :defeat="result === 0"
           :type="userSelection"
+        />
+        <SelectionIcon
+          v-if="
+            isOnMobile &&
+            !isPlayerUser &&
+            gameChannel.channel?.gameRound.isCompleted &&
+            botSelection !== Selections.none &&
+            botSelection !== ''
+          "
+          :victory="result === 0"
+          :defeat="result === 1"
+          :type="botSelection"
         />
       </div>
     </div>
@@ -184,7 +218,7 @@ function closeChannel() {
     margin: 0px;
     @include for-phone-only {
       width: 100%;
-      font-size: 28px;
+      font-size: 22px;
     }
     @include for-tablet-portrait-up {
       font-size: 34px;
@@ -228,6 +262,9 @@ function closeChannel() {
   align-items: center;
   margin-top: 40px;
   padding: 0 5px;
+  @include for-phone-only {
+    margin-top: 20px;
+  }
 }
 
 .round-controls {

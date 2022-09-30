@@ -38,7 +38,7 @@ defineProps<{
     cursor: not-allowed;
   }
   @include for-phone-only {
-    font-size: 24px;
+    font-size: 22px;
   }
 }
 </style>
