@@ -101,6 +101,7 @@ async function reset() {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   align-items: center;
+  justify-content: center;
   padding: var(--padding);
   padding-bottom: 5px;
   img {
@@ -110,7 +111,11 @@ async function reset() {
     }
   }
   @include for-phone-only {
-    height: 15%;
+    grid-template-columns: 25% 50% 25%;
+    grid-template-rows: 1fr 1fr;
+    img {
+      width: 60px;
+    }
   }
   @include for-big-desktop-up {
     align-items: flex-start;
@@ -129,11 +134,20 @@ async function reset() {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
   width: fit-content;
   justify-self: flex-end;
   .button {
     margin-left: 0;
+  }
+  @include for-phone-only {
+    grid-column: 1 / 4;
+    justify-self: center;
+    width: max-content;
+    .button {
+      font-size: 12px;
+      margin: 3px;
+      padding: 5px 10px;
+    }
   }
 }
 </style>

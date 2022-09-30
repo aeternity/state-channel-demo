@@ -10,10 +10,10 @@ import { GameChannel } from './utils/game-channel/game-channel';
 import GameScreen from './components/game-screen/game-screen.vue';
 import { decode, Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { Node } from '@aeternity/aepp-sdk';
+import { useIsOnMobileStore } from './stores/is-on-mobile';
 
 const channelStore = useChannelStore();
 
-const isOnMobile = ref(false);
 const error = ref();
 
 async function initChannel() {
@@ -41,10 +41,7 @@ const th = urlParams.get('th') as Encoded.TxHash;
 const resultsFromSharedLink = ref();
 
 onMounted(async () => {
-  // check if is on mobile
-  isOnMobile.value = window.innerWidth < 768;
-  if (isOnMobile.value) return;
-
+  if (window.innerWidth < 599) useIsOnMobileStore().isOnMobile = true;
   if (th) {
     // if we have a th, we need to show the end-screen
     const node = new Node(NODE_URL);
@@ -69,15 +66,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="isOnMobile" class="mobile">
-    <p>Unfortunately this demo is not supported on mobile devices yet.</p>
-    <p>Please use another device.</p>
-  </div>
-  <div
-    v-else
-    class="container"
-    :class="{ noSelections: showingAutoplayTxLogs }"
-  >
+  <div class="container" :class="{ noSelections: showingAutoplayTxLogs }">
     <Header :responderId="resultsFromSharedLink?.responderId" />
     <div class="error" v-if="error">
       <p>
@@ -147,16 +136,6 @@ onMounted(async () => {
     @include for-big-desktop-up {
       grid-template-rows: 20% 50% 30%;
     }
-  }
-  > .mobile {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    text-align: center;
-    padding: 10px;
-    height: calc(100vh - 20px);
   }
 }
 :root {

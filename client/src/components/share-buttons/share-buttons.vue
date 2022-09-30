@@ -52,7 +52,7 @@ function createWindowConfig(width = 500, height = 500, params = '') {
 
 <template>
   <div class="share-buttons">
-    <span class="text">Share your results </span><br />
+    <span class="text">Share your results </span>
     <div class="button" @click="openShareWindow('fb')">
       <img src="../../assets/svg/facebook.svg" alt="Facebook" />
     </div>
@@ -75,12 +75,20 @@ function createWindowConfig(width = 500, height = 500, params = '') {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  @include for-phone-only {
+    flex-wrap: wrap;
+    max-width: 230px;
+  }
 }
 
 .text {
   margin-right: 10px;
   font-size: 25px;
   font-weight: 400;
+  @include for-phone-only {
+    flex-basis: 100%;
+    margin-bottom: 10px;
+  }
 }
 
 .button {

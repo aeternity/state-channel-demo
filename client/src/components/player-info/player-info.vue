@@ -33,7 +33,7 @@ defineProps<{
     font-weight: bold;
     text-align: center;
     @include for-phone-only {
-      font-size: 34px;
+      font-size: 26px;
     }
   }
 

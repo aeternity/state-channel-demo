@@ -36,13 +36,23 @@ function closeNotification() {
   width: max-content;
   max-width: 90%;
 
-  font-size: 16px;
-
   img {
     width: 16px;
     height: 16px;
     margin-left: 10px;
     cursor: pointer;
+  }
+
+  .notification-text {
+    font-size: 16px;
+  }
+
+  @include for-phone-only {
+    padding: 5px 10px;
+    width: 100%;
+    .notification-text {
+      font-size: 14px;
+    }
   }
 
   &.success {
@@ -53,9 +63,6 @@ function closeNotification() {
   }
   &.info {
     background-color: orange;
-  }
-  .notification-text {
-    font-size: medium;
   }
 }
 </style>
