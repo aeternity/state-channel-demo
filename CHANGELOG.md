@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.2](https://github.com/aeternity/state-channel-demo/compare/v1.0.1...v1.0.2) (2022-09-30)
+
+
+### Features
+
+* re-implement mobile ([647a7bf](https://github.com/aeternity/state-channel-demo/commit/647a7bf56af33fd359dfb2cf1a788272bba4cebb))
+
+
+### Bug Fixes
+
+* **main:** update release tag ([e933465](https://github.com/aeternity/state-channel-demo/commit/e9334656edc477b267ee74ffb77de3089c7d536b))
+
 ## [1.0.1](https://github.com/aeternity/state-channel-demo/compare/v1.0.0...v1.0.1) (2022-09-28)
 
 
