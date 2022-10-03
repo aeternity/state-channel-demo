@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.0.3](https://github.com/aeternity/state-channel-demo/compare/v1.0.2...v1.0.3) (2022-10-03)
+
+
+### Features
+
+* **server:** console.log fatal error along with logger ([dd450c7](https://github.com/aeternity/state-channel-demo/commit/dd450c7ce70ff2b552c10d3c9dc1da58710c4246))
+
+
+### Bug Fixes
+
+* handle channel timeout ([c101135](https://github.com/aeternity/state-channel-demo/commit/c10113533c177f47f20775e1fce0342bf24e776c))
+
+
+### Miscellaneous
+
+* maintain node logs ([c7e4e3a](https://github.com/aeternity/state-channel-demo/commit/c7e4e3a7e0b478f72d6251b392620dcea62099e2))
+
+
+### Refactorings
+
+* **server:** console.log error before using logger ([560a4a3](https://github.com/aeternity/state-channel-demo/commit/560a4a30ea6821dcf82b4b2cba716ca5031b2ef1))
+
 ## [1.0.2](https://github.com/aeternity/state-channel-demo/compare/v1.0.1...v1.0.2) (2022-09-30)
 
 

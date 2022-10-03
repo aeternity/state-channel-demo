@@ -8,6 +8,7 @@ services:
     volumes:
       - ./docker/aeternity_node_mean16.yaml:/home/aeternity/node/aeternity.yaml
       - ./docker/accounts_test.json:/home/aeternity/node/data/aecore/.genesis/accounts_test.json
+      - ./docker/logs:/home/aeternity/node/log
     networks:      
       - game_network
 

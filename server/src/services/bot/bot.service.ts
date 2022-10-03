@@ -328,6 +328,12 @@ export async function registerEvents(
   channelInstance: Channel,
   configuration: ChannelOptions,
 ) {
+  channelInstance.on('error', (error: Error) => {
+    logger.error(
+      `channel with initiator ${configuration.initiatorId} threw error: ${error.name}. Closing channel.`,
+    );
+    void handleChannelDied(configuration.initiatorId);
+  });
   channelInstance.on('statusChanged', (status) => {
     if (status === 'closed') {
       void handleChannelClose(configuration.initiatorId);
@@ -336,13 +342,6 @@ export async function registerEvents(
     if (status === 'died') {
       logger.info(`channel with initiator ${configuration.initiatorId} died.`);
       void handleChannelDied(configuration.initiatorId);
-    }
-
-    if (status === 'error') {
-      logger.error(
-        `channel with initiator ${configuration.initiatorId} threw error.`,
-      );
-      void removeGameSession(configuration.initiatorId);
     }
 
     if (status === 'open') {
