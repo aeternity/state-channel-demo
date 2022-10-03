@@ -8,6 +8,7 @@ const start = (port: string | number) => {
     });
   } catch (err) {
     logger.error(`Fatal error: ${err.toString()}`);
+    console.log(`Fatal error: ${err.toString()}`);
     process.exit();
   }
 };
