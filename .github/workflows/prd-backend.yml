@@ -18,15 +18,16 @@ jobs:
     runs-on: ubuntu-latest
     name: State channel demo backend build docker
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 100
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: GoogleCloudPlatform/release-please-action@v3
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-as: "v1.0.2"
+          release-as: "v1.0.3"
           release-type: node
           package-name: "./server/package.json"
           version-file: "./package.json"
