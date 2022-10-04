@@ -35,7 +35,7 @@ const serviceStatus: ServiceStatus = {
   channelsOpenCurrently: 0,
   channelsInitialized: 0,
   channelsOpened: 0,
-  runningSince: new Date(),
+  runningSince: Date.now(),
   env: ENVIRONMENT_CONFIG,
 };
 

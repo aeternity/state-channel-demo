@@ -40,7 +40,7 @@ describe('/status', () => {
       channelsOpenCurrently: 0,
       channelsInitialized: 0,
       channelsOpened: 0,
-      runningSince: expect.any(String),
+      runningSince: expect.any(Number),
       env: {
         ...env.development,
       },
@@ -89,7 +89,7 @@ describe('/status', () => {
       channelsOpenCurrently: 1,
       channelsInitialized: 1,
       channelsOpened: 1,
-      runningSince: expect.any(String),
+      runningSince: expect.any(Number),
       env: {
         ...env.development,
       },
