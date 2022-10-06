@@ -5,6 +5,9 @@ import replace from '@rollup/plugin-replace';
 export default defineConfig({
   optimizeDeps: {
     include: ['@aeternity/rock-paper-scissors'],
+    esbuildOptions: {
+      target: 'es2020',
+    },
   },
   plugins: [
     replace({

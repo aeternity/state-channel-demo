@@ -6,10 +6,8 @@ import {
   poll,
   unpackTx,
 } from '@aeternity/aepp-sdk';
-import contractSource from '@aeternity/rock-paper-scissors';
 import { BigNumber } from 'bignumber.js';
 import SHA from 'sha.js';
-import { useTransactionsStore } from '../../stores/transactions';
 import contractBytecode from '../contract-bytecode/contract-bytecode';
 import {
   getSavedState,
@@ -29,8 +27,16 @@ import {
   ContractEvents,
   Methods,
   Selections,
-  SignatureType,
+  SignatureTypes,
 } from './game-channel.enums';
+import {
+  transactionLogs,
+  addUserTransaction,
+  setUserTransactions,
+  setBotTransactions,
+  updateOpenChannelTransactions,
+} from '../terminal/terminal';
+import { setMoveSelectionDisability } from '../dom-manipulation/dom-manipulation';
 
 /**
  * @typedef {import("../../types").GameRound} GameRound
@@ -113,6 +119,8 @@ export class GameChannel {
    * @param {Selections} selection
    */
   async setUserSelection(selection) {
+    setMoveSelectionDisability(true);
+
     if (selection === Selections.none) {
       throw new Error('Selection should not be none');
     }
@@ -286,11 +294,11 @@ export class GameChannel {
       const transactionLog = {
         id: txHash,
         description: 'Open state channel',
-        signed: SignatureType.confirmed,
+        signed: SignatureTypes.confirmed,
         onChain: true,
         timestamp: Date.now(),
       };
-      useTransactionsStore().addUserTransaction(transactionLog, 0);
+      addUserTransaction(transactionLog, 0);
     }
 
     // if we are signing the close channel tx
@@ -298,11 +306,11 @@ export class GameChannel {
       const transactionLog = {
         id: txHash,
         description: 'Close state channel',
-        signed: SignatureType.proposed,
+        signed: SignatureTypes.proposed,
         onChain: true,
         timestamp: Date.now(),
       };
-      useTransactionsStore().addUserTransaction(transactionLog, 0);
+      addUserTransaction(transactionLog, 0);
     }
 
     // if we are signing a transaction that updates the contract
@@ -376,7 +384,7 @@ export class GameChannel {
         });
         // @ts-expect-error ts-mismatch
         if (polledTx.tx.type === 'ChannelCreateTx') {
-          useTransactionsStore().updateOpenChannelTransactions(onChainTxhash);
+          updateOpenChannelTransactions(onChainTxhash);
         }
       });
     }
@@ -389,9 +397,8 @@ export class GameChannel {
   async buildContract(contractCreationChannelRound, owner) {
     this.contractCreationChannelRound = contractCreationChannelRound;
     this.contract = await sdk.getContractInstance({
-      source: contractSource,
+      bytecode: contractBytecode,
     });
-    this.contract.bytecode = contractBytecode;
     this.contractAddress = encodeContractAddress(
       owner,
       contractCreationChannelRound
@@ -405,11 +412,11 @@ export class GameChannel {
     const transactionLog = {
       id: th,
       description: 'Deploy contract',
-      signed: SignatureType.confirmed,
+      signed: SignatureTypes.confirmed,
       onChain: false,
       timestamp: Date.now(),
     };
-    useTransactionsStore().addUserTransaction(transactionLog, 0);
+    addUserTransaction(transactionLog, 0);
 
     // if autoplay is enabled, make user selection automatically
     if (this.autoplay.enabled) {
@@ -493,7 +500,9 @@ export class GameChannel {
         this.setBotSelection(decodedEvents[0].args[0]);
         this.gameRound.hasRevealed = true;
         this.saveStateToLocalStorage();
-        this.revealRoundResult();
+        await this.revealRoundResult();
+
+        setMoveSelectionDisability(false);
         break;
       default:
         return;
@@ -512,7 +521,7 @@ export class GameChannel {
     const transactionLog = {
       id: th,
       description: ``,
-      signed: SignatureType.proposed,
+      signed: SignatureTypes.proposed,
       onChain: false,
       timestamp: Date.now(),
     };
@@ -527,13 +536,10 @@ export class GameChannel {
           break;
       }
     } else if (information.name === ContractEvents.player1Moved) {
-      transactionLog.signed = SignatureType.confirmed;
+      transactionLog.signed = SignatureTypes.confirmed;
       transactionLog.description = `Bot selected ${information.value}`;
     }
-    useTransactionsStore().addUserTransaction(
-      transactionLog,
-      this.gameRound.index
-    );
+    addUserTransaction(transactionLog, this.gameRound.index);
   }
 
   /**
@@ -655,15 +661,15 @@ export class GameChannel {
    */
   handleMessage(message) {
     if (message.type === 'add_bot_transaction_log') {
-      const txStore = useTransactionsStore();
       const txLog = message.data;
       let round =
         txLog.onChain || txLog.description === 'Deploy contract'
           ? 0
           : this.gameRound.index;
 
-      if (round > 1 && txStore.botTransactions[round - 1].length === 2) round--;
-      txStore.addBotTransaction(txLog, round);
+      if (round > 1 && transactionLogs.botTransactions[round - 1].length === 2)
+        round--;
+      transactionLogs.addBotTransaction(txLog, round);
     }
   }
 
@@ -706,10 +712,10 @@ export class GameChannel {
       gameRound: { ...this.gameRound },
       transactionLogs: {
         userTransactions: this.getTrimmedTransactions(
-          useTransactionsStore().userTransactions
+          transactionLogs.userTransactions
         ),
         botTransactions: this.getTrimmedTransactions(
-          useTransactionsStore().botTransactions
+          transactionLogs.botTransactions
         ),
       },
       contractCreationChannelRound: this.contractCreationChannelRound,
@@ -766,12 +772,8 @@ export class GameChannel {
     this.fsmId = savedState.fsmId;
     this.gameRound = savedState.gameRound;
     this.gameRound.stake = new BigNumber(savedState.gameRound.stake);
-    useTransactionsStore().setUserTransactions(
-      savedState.transactionLogs.userTransactions
-    );
-    useTransactionsStore().setBotTransactions(
-      savedState.transactionLogs.botTransactions
-    );
+    setUserTransactions(savedState.transactionLogs.userTransactions);
+    setBotTransactions(savedState.transactionLogs.botTransactions);
     this.channelConfig = savedState.channelConfig;
     await this.reconnectChannel();
     await this.buildContract(
