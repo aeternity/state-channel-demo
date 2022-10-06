@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="src/assets/images/favicon.ico" />
+    <link rel="stylesheet" href="src/css/styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>State Channel Demo</title>
     <meta property="og:type" content="website" />
@@ -13,7 +14,161 @@
     />
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="app" class="container">
+      <!-- #region Header -->
+      <div class="header">
+        <img
+          src="./src/assets/images/logo.png"
+          :class="{ clickable: canCloseChannel || canResetApp }"
+          alt="Aeternity"
+          @click="reset()"
+        />
+        <div class="center">
+          <!-- if channel is open -->
+          <div class="round-info">
+            <span class="title">Game</span>
+            <div class="info" v-if="stake">
+              <span class="stake">
+                <!-- {{ stake.dividedBy(1e18).toFormat(2) }} -->
+                STAKE: -1 Æ
+              </span>
+              <span class="info-seperator" v-if="round"> / </span>
+              <!-- ROUND: {{ round }} -->
+              <span v-if="round">ROUND: -1</span>
+            </div>
+          </div>
+        </div>
+        <div class="links">
+          <a
+            href="https://github.com/aeternity/state-channel-demo"
+            target="_blank"
+            class="button"
+            >Fork repo
+          </a>
+          <!-- if channel is initialized and disabled if no explorer url -->
+          <!-- https://testnet.aenalytics.org/accounts/${responderId} -->
+          <a href="#" class="button">Check Explorer</a>
+          <!-- if channel is initialized -->
+          <!-- :disabled="!canCloseChannel" -->
+          <button class="button" @click="channelStore.channel?.closeChannel()">
+            End Game
+          </button>
+        </div>
+      </div>
+      <!-- #endregion -->
+      <!-- #region Game-screen -->
+      <div class="game-screen">
+        <div class="user">
+          <div class="player-info">
+            <span class="name">You</span>
+            <span class="balance" v-if="balance">
+              <!-- {{ balance.dividedBy(1e18).toFormat(2) }} æ -->
+              -1 æ
+            </span>
+          </div>
+          <div class="rock-paper-scissors">
+            <div class="rock-paper-scissors__header">
+              <div class="finalized-selection">
+                <!-- empty -->
+              </div>
+              <h1 class="title">{{ status }}</h1>
+              <div class="finalized-selection">
+                <div class="selection-icon" :class="{ victory, defeat }">
+                  <!-- Here we should show the final selection of the user -->
+                  <!-- ./src/assets/images/${props.type}.png -->
+                  <img src="./src/assets/images/paper.png" />
+                </div>
+              </div>
+            </div>
+            <div v-if="!isSelectingDisabled" class="selections">
+              <button
+                :disabled="isSelectingDisabled"
+                class="button"
+                @click="makeSelection(Selections.rock)"
+              >
+                <div class="selection-icon">
+                  <img src="./src/assets/images/rock.png" />
+                </div>
+              </button>
+              <button
+                :disabled="isSelectingDisabled"
+                class="button"
+                @click="makeSelection(Selections.paper)"
+              >
+                <div class="selection-icon">
+                  <img src="./src/assets/images/paper.png" />
+                </div>
+              </button>
+              <button
+                :disabled="isSelectingDisabled"
+                class="button"
+                @click="makeSelection(Selections.scissors)"
+              >
+                <div class="selection-icon">
+                  <img src="./src/assets/images/scissors.png" />
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="bot">
+          <div class="player-info">
+            <span class="name">Bot</span>
+            <span class="balance" v-if="botBalance">
+              <!-- {{ balance.dividedBy(1e18).toFormat(2) }} æ -->
+              -1 æ
+            </span>
+          </div>
+          <div class="rock-paper-scissors">
+            <div class="rock-paper-scissors__header">
+              <div class="finalized-selection">
+                <div class="selection-icon" :class="{ victory, defeat }">
+                  <!-- Here we should show the final selection of the bot -->
+                  <!-- ./src/assets/images/${props.type}.png -->
+                  <img src="./src/assets/images/paper.png" />
+                </div>
+              </div>
+              <h1 class="title">{{ status }}</h1>
+              <div class="finalized-selection">
+                <!-- empty -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- #endregion -->
+      <!-- #region Terminal -->
+      <div class="transactions" :class="{ fullscreen: isFullscreen }">
+        <div class="terminal">
+          <div class="terminal__header">
+            <div class="title">Transactions</div>
+            <button class="expand" @click="toggleFullscreen">
+              <!-- or minimize when expanded (img)-->
+              <img
+                src="./src/assets/svg/expand.svg"
+                class="icon"
+                :class="{ active: isFullscreen }"
+              />
+            </button>
+          </div>
+          <div class="transactions-list">
+            <div class="notification info" v-if="didReconnect">
+              <div class="notification-text">
+                After reconnecting only the last 5 rounds are saved.
+              </div>
+              <img
+                src="./src/assets/svg/close.svg"
+                alt="x"
+                @click="closeNotification()"
+              />
+            </div>
+            <!-- Info text goes here -->
+            <!-- Transactions go here-->
+            No transactions yet
+          </div>
+        </div>
+      </div>
+      <!-- #endregion -->
+    </div>
   </body>
 </html>

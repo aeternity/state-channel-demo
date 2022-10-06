@@ -1,0 +1,32 @@
+.button {
+  display: inline-block;
+  font-family: unset;
+  font-size: 16px;
+  font-weight: 400;
+  border: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  padding: 10px;
+  text-align: center;
+  border-radius: 10px;
+  margin: 10px;
+  background-color: black;
+  color: white;
+  transition: background-color 50ms ease-in-out;
+  text-decoration: none;
+}
+.button:hover {
+  background-color: var(--green);
+}
+.button:disabled {
+  background-color: gray;
+  cursor: not-allowed;
+}
+@media (max-width: 599px) {
+  .button {
+    font-size: 22px;
+  }
+} /*# sourceMappingURL=button.css.map */

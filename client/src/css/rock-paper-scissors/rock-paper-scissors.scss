@@ -1,0 +1,120 @@
+@import '../mediaqueries/mediaqueries.scss';
+
+.selections {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  @include for-tablet-landscape-up {
+    flex-direction: row;
+  }
+  & > .button {
+    font-size: 50px;
+    font-family: 'Clash Display', sans-serif;
+    border: none;
+    background-color: transparent;
+    padding: 0;
+    margin: 0 10px;
+    cursor: pointer;
+    .selection-icon {
+      transition: background-color 0.1s ease-in-out;
+      &:hover {
+        background-color: var(--green);
+      }
+    }
+  }
+}
+.rock-paper-scissors {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 40px;
+  padding: 0 5px;
+  @include for-phone-only {
+    margin-top: 20px;
+  }
+
+  &__header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+    margin-bottom: 20px;
+    @include for-phone-only {
+      width: 100%;
+    }
+
+    & > .finalized-selection {
+      text-align: center;
+      text-transform: uppercase;
+      justify-self: center;
+      font-size: 60px;
+      font-weight: 600;
+      color: var(--pink);
+      &.bot {
+        color: var(--green);
+      }
+      @media (max-width: 768px) {
+        font-size: 20px;
+      }
+      @include for-tablet-portrait-up {
+        font-size: 46px;
+      }
+      @include for-desktop-up {
+        font-size: 60px;
+      }
+    }
+    & > .title {
+      font-size: 40px;
+      font-weight: 500;
+      text-align: center;
+      margin: 0px;
+      @include for-phone-only {
+        width: 100%;
+        font-size: 22px;
+      }
+      @include for-tablet-portrait-up {
+        font-size: 34px;
+        width: 250px;
+      }
+      @include for-tablet-landscape-up {
+        font-size: 40px;
+        width: 290px;
+      }
+    }
+  }
+}
+
+.round-controls {
+  display: flex;
+}
+
+.selection-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  background-color: var(--gray);
+  border-radius: 15px;
+  width: 100px;
+  height: 100px;
+  transition: background-color 0.2s ease-in-out;
+  img {
+    width: 80%;
+  }
+  &.victory {
+    background-color: var(--green);
+  }
+  &.defeat {
+    background-color: var(--pink);
+  }
+  @include for-big-desktop-up {
+    width: 120px;
+    height: 120px;
+  }
+  @include for-phone-only {
+    border-radius: 8px;
+    width: 55px;
+    height: 55px;
+  }
+}
