@@ -57,7 +57,7 @@ export const genesisFund = async (
 export async function fundThroughFaucet(
   account: Encoded.AccountAddress,
 ): Promise<void> {
-  const FAUCET_URL = 'https://faucet.aepps.com';
+  const FAUCET_URL = 'https://faucet-nodejs.prd.aepps.com';
   try {
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
     return logger.info(`Funded account ${account} through Faucet`);
