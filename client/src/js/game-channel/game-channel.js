@@ -1,4 +1,3 @@
-import { NODE_URL } from '../sdk-service/sdk-service';
 import {
   buildTxHash,
   Channel,
@@ -8,53 +7,60 @@ import {
   unpackTx,
 } from '@aeternity/aepp-sdk';
 import contractSource from '@aeternity/rock-paper-scissors';
-import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
-import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { BigNumber } from 'bignumber.js';
+import SHA from 'sha.js';
+import { useTransactionsStore } from '../../stores/transactions';
+import contractBytecode from '../contract-bytecode/contract-bytecode';
+import {
+  getSavedState,
+  storeGameState,
+  resetApp,
+} from '../local-storage/local-storage';
 import {
   keypair,
   node,
+  NODE_URL,
   refreshSdkAccount,
   returnCoinsToFaucet,
   sdk,
   verifyContractBytecode,
 } from '../sdk-service/sdk-service';
-import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
-import SHA from 'sha.js';
-import {
-  TransactionLogGroup,
-  useTransactionsStore,
-} from '../../stores/transactions';
-import { TransactionLog } from '../../components/transaction/transaction.vue';
-import { resetApp } from '../../main';
 import {
   ContractEvents,
-  GameRound,
   Methods,
   Selections,
   SignatureType,
-  Update,
-} from './game-channel.types';
-import {
-  getSavedState,
-  StoredState,
-  storeGameState,
-} from '../local-storage/local-storage';
-import contractBytecode from '../contract-bytecode/contract-bytecode';
+} from './game-channel.enums';
 
-function timeout(ms: number) {
+/**
+ * @typedef {import("../../types").GameRound} GameRound
+ * @typedef {import("../../types").Update} Update
+ * @typedef {import("./game-channel.enums").Selections} Selections
+ * @typedef {import("./game-channel.enums").Methods} Methods
+ * @typedef {import('@aeternity/aepp-sdk/es/channel/internal').ChannelOptions} ChannelOptions
+ * @typedef {import('@aeternity/aepp-sdk/es/utils/encoder').Encoded} Encoded
+ * @typedef {import('@aeternity/aepp-sdk/es/channel/internal').Channel} Channel
+ */
+
+/**
+ * @param {number} ms
+ */
+function timeout(ms) {
   return new Promise((_, reject) => {
     setTimeout(() => reject(new Error('timeout succeeded')), ms);
   });
 }
 
-let channel: Channel;
+/**
+ * @type {Channel}
+ */
+let channel;
 
 export class GameChannel {
-  channelConfig?: ChannelOptions;
-  channelRound?: number;
-  channelId?: string;
-  fsmId?: string;
+  channelConfig = {};
+  channelRound = 0;
+  channelId = null;
+  fsmId = null;
   isOpen = false;
   isOpening = false;
   isFunded = false;
@@ -62,32 +68,20 @@ export class GameChannel {
   timerStartTime = -1;
   lastOffChainTxTime = -1;
   channelIsClosing = false;
-  savedResultsOnChainTxHash?: Encoded.TxHash;
+  savedResultsOnChainTxHash = null;
   hasInsuffientBalance = false;
-  error?: {
-    status: number;
-    statusText: string;
-    message: string;
-  };
-  balances: {
-    user?: BigNumber;
-    bot?: BigNumber;
-  } = {
+  error = null;
+  balances = {
     user: undefined,
     bot: undefined,
   };
-  autoplay: {
-    enabled: boolean;
-    rounds: number;
-    extraRounds: number; // extra rounds to play when continuing autoplay
-    elapsedTime: number; // time elapsed while autoplay is playing
-  } = {
+  autoplay = {
     enabled: false,
     rounds: 10,
     extraRounds: 10,
     elapsedTime: 0,
   };
-  gameRound: GameRound = {
+  gameRound = {
     stake: new BigNumber(0),
     index: 1,
     userSelection: Selections.none,
@@ -96,15 +90,15 @@ export class GameChannel {
     shouldHandleBotAction: false,
     userInAction: false,
   };
-  contract?: ContractInstance;
-  contractAddress?: Encoded.ContractAddress;
-  contractCreationChannelRound?: number;
+  contract = null;
+  contractAddress = null;
+  contractCreationChannelRound = -1;
 
   getStatus() {
     return channel.status();
   }
 
-  getSelectionHash(selection: Selections): string {
+  getSelectionHash(selection) {
     this.gameRound.hashKey = Math.random().toString(16).substring(2, 8);
     return SHA('sha256')
       .update(this.gameRound.hashKey + selection)
@@ -115,7 +109,10 @@ export class GameChannel {
     return this.gameRound.userSelection;
   }
 
-  async setUserSelection(selection: Selections) {
+  /**
+   * @param {Selections} selection
+   */
+  async setUserSelection(selection) {
     if (selection === Selections.none) {
       throw new Error('Selection should not be none');
     }
@@ -133,11 +130,18 @@ export class GameChannel {
     }
   }
 
-  setBotSelection(selection: Selections) {
+  /**
+   * @param {Selections} selection
+   */
+  setBotSelection(selection) {
     this.gameRound.botSelection = selection;
   }
 
-  async fetchChannelConfig(): Promise<ChannelOptions> {
+  /**
+   *
+   * @returns {Promise<ChannelOptions>}
+   */
+  async fetchChannelConfig() {
     if (!sdk) throw new Error('SDK is not set');
     const res = await fetch(import.meta.env.VITE_BOT_SERVICE_URL + '/open', {
       method: 'POST',
@@ -165,10 +169,13 @@ export class GameChannel {
         };
       throw new Error(data.error);
     }
-    return data as ChannelOptions;
+    return data;
   }
 
-  async initializeChannel(config?: ChannelOptions) {
+  /**
+   * @param {ChannelOptions | undefined} config
+   */
+  async initializeChannel(config) {
     this.isOpening = true;
     if (!config) config = await this.fetchChannelConfig();
     this.channelConfig = config;
@@ -177,7 +184,6 @@ export class GameChannel {
       ...this.channelConfig,
       debug: true,
       role: 'responder',
-      // @ts-expect-error ts-mismatch
       sign: this.signTx.bind(this),
       url:
         import.meta.env.VITE_NODE_ENV == 'development'
@@ -211,7 +217,6 @@ export class GameChannel {
         ...this.channelConfig,
         debug: true,
         role: 'responder',
-        // @ts-expect-error ts-mismatch
         sign: this.signTx.bind(this),
       },
       {
@@ -251,7 +256,7 @@ export class GameChannel {
       if (!canClose) return;
       this.channelIsClosing = true;
       await channel
-        .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
+        .shutdown((tx) => this.signTx('channel_close', tx))
         .then(async () => {
           this.savedResultsOnChainTxHash = await returnCoinsToFaucet(
             this.getMessageToSaveOnChain()
@@ -264,19 +269,20 @@ export class GameChannel {
     return channelClosing;
   }
 
-  async signTx(
-    tag: string,
-    tx: Encoded.Transaction,
-    options?: {
-      updates: Update[];
-    }
-  ): Promise<Encoded.Transaction> {
+  /**
+   * @param {string} tag
+   * @param {Encoded.Transaction} tx
+   * @param {Object} [options]
+   * @param {Update[]} [options.updates]
+   * @returns {Promise<Encoded.Transaction>}
+   */
+  async signTx(tag, tx, options) {
     const update = options?.updates?.[0];
     const txHash = buildTxHash(tx);
 
     // if we are signing the open channel tx
     if (tag === 'responder_sign') {
-      const transactionLog: TransactionLog = {
+      const transactionLog = {
         id: txHash,
         description: 'Open state channel',
         signed: SignatureType.confirmed,
@@ -288,7 +294,7 @@ export class GameChannel {
 
     // if we are signing the close channel tx
     if (tag === 'channel_close') {
-      const transactionLog: TransactionLog = {
+      const transactionLog = {
         id: txHash,
         description: 'Close state channel',
         signed: SignatureType.proposed,
@@ -349,7 +355,7 @@ export class GameChannel {
         }
       });
 
-      channel.on('stateChanged', (tx: Encoded.Transaction) => {
+      channel.on('stateChanged', (tx) => {
         this.channelRound = channel.round() ?? undefined;
         if (this.isOpen) this.saveStateToLocalStorage();
 
@@ -375,10 +381,11 @@ export class GameChannel {
     }
   }
 
-  async buildContract(
-    contractCreationChannelRound: number,
-    owner: Encoded.AccountAddress
-  ) {
+  /**
+   * @param {number} contractCreationChannelRound
+   * @param {Encoded.AccountAddress} owner
+   */
+  async buildContract(contractCreationChannelRound, owner) {
     this.contractCreationChannelRound = contractCreationChannelRound;
     this.contract = await sdk.getContractInstance({
       source: contractSource,
@@ -390,8 +397,11 @@ export class GameChannel {
     );
   }
 
-  logContractDeployment(th: Encoded.TxHash) {
-    const transactionLog: TransactionLog = {
+  /**
+   * @param {Encoded.TxHash} th
+   */
+  logContractDeployment(th) {
+    const transactionLog = {
       id: th,
       description: 'Deploy contract',
       signed: SignatureType.confirmed,
@@ -406,11 +416,13 @@ export class GameChannel {
     }
   }
 
-  async callContract(
-    method: Methods,
-    params: unknown[],
-    amount?: number | BigNumber
-  ) {
+  /**
+   * @param {Methods} method
+   * @param {unknown[]} params
+   * @param {number | BigNumber} [amount]
+   * @returns
+   */
+  async callContract(method, params, amount) {
     if (!channel) {
       throw new Error('Channel is not open');
     }
@@ -428,19 +440,12 @@ export class GameChannel {
         contract: this.contractAddress,
         abiVersion: 3,
       },
-      // @ts-expect-error ts-mismatch
-      async (
-        tx,
-        options: {
-          updates: Update[];
-        }
-      ) => {
+      async (tx, options) => {
         return this.signTx(method, tx, options);
       }
     );
 
-    const value =
-      typeof params === 'string' ? params : (params.at(-1) as string);
+    const value = typeof params === 'string' ? params : params.at(-1);
 
     this.logCallUpdate(result.signedTx, {
       name: method,
@@ -467,22 +472,24 @@ export class GameChannel {
     return this.contract.decodeEvents(result.log);
   }
 
-  async handleOpponentCall(tx: Encoded.Transaction) {
+  /**
+   * @param {Encoded.Transaction} tx
+   * @returns
+   */
+  async handleOpponentCall(tx) {
     if (!this.channelConfig?.responderId)
       throw new Error('Responder id is not defined');
     if (!this.channelRound) throw new Error('Channel round is undefined');
     const decodedEvents = await this.getLastEventsDecoded();
     this.logCallUpdate(tx, {
-      name: decodedEvents[0].name as ContractEvents,
-      value: (decodedEvents[0].args as string[])[0],
+      name: decodedEvents[0].name,
+      value: decodedEvents[0].args[0],
       type: 'event',
     });
 
     switch (decodedEvents[0].name) {
       case ContractEvents.player1Moved:
-        this.setBotSelection(
-          (decodedEvents[0].args as string[])[0] as Selections
-        );
+        this.setBotSelection(decodedEvents[0].args[0]);
         this.gameRound.hasRevealed = true;
         this.saveStateToLocalStorage();
         this.revealRoundResult();
@@ -492,16 +499,16 @@ export class GameChannel {
     }
   }
 
-  async logCallUpdate(
-    tx: Encoded.Transaction,
-    information: {
-      name: Methods | ContractEvents;
-      value: string;
-      type: 'method' | 'event';
-    }
-  ) {
+  /**
+   * @param {Encoded.Transaction} tx
+   * @param {Object} information
+   * @param {Methods | ContractEvents} name
+   * @param {string} value
+   * @param {'method' | 'event'} type
+   */
+  async logCallUpdate(tx, information) {
     const th = buildTxHash(tx);
-    const transactionLog: TransactionLog = {
+    const transactionLog = {
       id: th,
       description: ``,
       signed: SignatureType.proposed,
@@ -528,7 +535,11 @@ export class GameChannel {
     );
   }
 
-  async getRoundContractCall(caller: Encoded.AccountAddress, round: number) {
+  /**
+   * @param {Encoded.AccountAddress}
+   * @param {number} round
+   */
+  async getRoundContractCall(caller, round) {
     if (!this.contract) throw new Error('Contract is not set');
     if (!this.contractAddress) throw new Error('Contract address is not set');
 
@@ -568,7 +579,10 @@ export class GameChannel {
     return this.finishGameRound(winner);
   }
 
-  async finishGameRound(winner?: Encoded.AccountAddress) {
+  /**
+   * @param {Encoded.AccountAddress} [winner]
+   */
+  async finishGameRound(winner) {
     this.gameRound.winner = winner;
     this.gameRound.isCompleted = true;
     this.gameRound.userInAction = false;
@@ -633,10 +647,15 @@ export class GameChannel {
     return this.hasInsuffientBalance;
   }
 
-  private handleMessage(message: { type: string; data: TransactionLog }) {
+  /**
+   * @param {Obect} message
+   * @param {string} message.type
+   * @param {TransactionLog} message.data
+   */
+  handleMessage(message) {
     if (message.type === 'add_bot_transaction_log') {
       const txStore = useTransactionsStore();
-      const txLog = message.data as TransactionLog;
+      const txLog = message.data;
       let round =
         txLog.onChain || txLog.description === 'Deploy contract'
           ? 0
@@ -650,8 +669,8 @@ export class GameChannel {
   getMessageToSaveOnChain() {
     if (!this.channelConfig) throw new Error('Channel config is not set');
 
-    const initialBalance = this.channelConfig?.responderAmount as BigNumber;
-    const balance = this.balances.user as BigNumber;
+    const initialBalance = this.channelConfig?.responderAmount;
+    const balance = this.balances.user;
     const earnings = balance.minus(initialBalance);
 
     const data = {
@@ -673,9 +692,9 @@ export class GameChannel {
       this.autoplay.enabled
     )
       return;
-    const stateToSave: StoredState = {
+    const stateToSave = {
       keypair: getSavedState()?.keypair || keypair,
-      channelId: this.channelId as Encoded.Channel,
+      channelId: this.channelId,
       fsmId: this.fsmId,
       channelConfig: {
         ...this.channelConfig,
@@ -697,7 +716,7 @@ export class GameChannel {
     storeGameState(stateToSave);
   }
 
-  getTrimmedTransactions(logs: TransactionLogGroup): TransactionLogGroup {
+  getTrimmedTransactions(logs) {
     if (Object.keys(logs).length <= 6) return logs;
 
     const trimmedLogs = Object.assign({}, logs);
@@ -715,9 +734,10 @@ export class GameChannel {
    * If it hangs, we retry once more with the initiator.
    * the channel.getContractCall() method may result in a hanging
    * promise, without rejecting. Therefore we consider it rejected on a timeout.
+   *
+   * @param {Encoded.AccountAddress} [caller]
    */
-  // @ts-expect-error timeout typing
-  async fetchLastContractCall(caller?: Encoded.AccountAddress) {
+  async fetchLastContractCall(caller) {
     if (!this.channelConfig)
       throw new Error('Channel configuration is undefined');
 
@@ -781,7 +801,10 @@ export class GameChannel {
     }
   }
 
-  private getRandomSelection(): Selections {
+  /**
+   * @returns {Promise<Selections>}
+   */
+  getRandomSelection() {
     const randomSelection = Math.floor(Math.random() * 3);
     return Object.values(Selections)[randomSelection];
   }
