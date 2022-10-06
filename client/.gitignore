@@ -6,9 +6,9 @@ npm-debug.log*
 node_modules
 dist
 dist-ssr
-tests/__snapshots__
-coverage
 *.local
+
+*.css.map
 
 # Editor directories and files
 .vscode/*

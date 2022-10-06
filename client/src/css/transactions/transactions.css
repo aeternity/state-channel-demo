@@ -1,0 +1,186 @@
+.transactions {
+  grid-area: transactions;
+  background-color: var(--gray);
+  padding: var(--padding);
+  padding-bottom: min(20px, var(--padding));
+  max-width: 100%;
+  transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  display: flex;
+  flex-direction: column;
+}
+.transactions.fullscreen {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  padding-bottom: var(--padding);
+  width: calc(100% - var(--padding) * 2);
+  height: calc(100vh - var(--padding) * 2);
+}
+.transactions .terminal__header {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--gray);
+}
+.transactions .terminal__header .title {
+  width: 50%;
+  font-weight: 500;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+.transactions .terminal__header .expand {
+  position: absolute;
+  right: 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 28px;
+  font-weight: 500;
+  background: unset;
+  border: unset;
+  font-family: unset;
+  color: unset;
+}
+.transactions .terminal__header .expand span {
+  margin-right: 10px;
+}
+.transactions .terminal__header .expand:hover {
+  cursor: pointer;
+}
+@media (max-width: 599px) {
+  .transactions .terminal__header .expand {
+    display: flex;
+  }
+  .transactions .terminal__header .expand span {
+    display: none;
+  }
+}
+.transactions .terminal__header .expand .icon {
+  width: 28px;
+  height: 28px;
+  margin-right: 15px;
+}
+@media (max-width: 599px) {
+  .transactions .terminal__header .expand .icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 0;
+  }
+}
+@media (min-width: 600px) {
+  .transactions .terminal__header .expand .icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 5px;
+  }
+}
+@media (min-width: 900px) {
+  .transactions .terminal__header .expand .icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+  }
+}
+@media (min-width: 1200px) {
+  .transactions .terminal__header .expand .icon {
+    width: 28px;
+    height: 28px;
+    margin-right: 15px;
+  }
+}
+@media (max-width: 599px) {
+  .transactions .terminal__header .title,
+  .transactions .terminal__header .expand {
+    font-size: 16px;
+  }
+}
+@media (min-width: 600px) {
+  .transactions .terminal__header .title,
+  .transactions .terminal__header .expand {
+    font-size: 18px;
+  }
+}
+@media (min-width: 900px) {
+  .transactions .terminal__header .title,
+  .transactions .terminal__header .expand {
+    font-size: 24px;
+  }
+}
+@media (min-width: 1200px) {
+  .transactions .terminal__header .title,
+  .transactions .terminal__header .expand {
+    font-size: 28px;
+  }
+}
+.transactions .terminal {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  width: 100%;
+  height: -webkit-max-content;
+  height: -moz-max-content;
+  height: max-content;
+}
+.transactions .terminal .transactions-list {
+  display: flex;
+  flex-direction: column;
+}
+.transactions .terminal .transactions-list .empty-list {
+  font-family: 'DM Mono', monospace;
+  font-size: 16px;
+}
+.transactions .terminal .transactions-list .transaction-pair {
+  display: flex;
+  flex-direction: row;
+  padding: 5px;
+  border-radius: 5px;
+}
+.transactions .terminal .transactions-list .transaction-pair:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.transactions
+  .terminal
+  .transactions-list
+  .transaction-pair
+  .single-transaction {
+  width: 100%;
+  display: flex;
+}
+.transactions
+  .terminal
+  .transactions-list
+  .transaction-pair
+  .single-transaction
+  .single-transaction-text {
+  display: none;
+}
+@media (max-width: 599px) {
+  .transactions
+    .terminal
+    .transactions-list
+    .transaction-pair
+    .single-transaction
+    .single-transaction-text {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    padding-right: 7px;
+  }
+}
+@media (max-width: 599px) {
+  .transactions .terminal .transactions-list .transaction-pair {
+    flex-direction: column;
+  }
+} /*# sourceMappingURL=transactions.css.map */
