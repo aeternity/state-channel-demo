@@ -6,6 +6,7 @@
 @import './transactions/transactions.scss';
 @import './notification/notification.scss';
 @import './ascii-text-banner/ascii-text-banner.scss';
+@import './toggle-button/toggle-button.scss';
 
 #app {
   font-family: 'Clash Display', sans-serif;
@@ -16,7 +17,7 @@
   &.container {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: 15% 45% 40%;
+    grid-template-rows: 15% 50% 35%;
     gap: 0px 0px;
     grid-auto-flow: column;
     grid-template-areas:
