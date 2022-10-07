@@ -2,6 +2,7 @@ import { setMoveSelectionDisability } from './src/js/dom-manipulation/dom-manipu
 import { gameChannel } from './src/js/game-channel/game-channel';
 import { Selections } from './src/js/game-channel/game-channel.enums';
 import { initSdk } from './src/js/sdk-service/sdk-service';
+import './src/js/autoplay/autoplay-btn.controler';
 
 initSdk();
 
