@@ -22,7 +22,8 @@
   "dependencies": {
     "vite": "^3.1.6",
     "@aeternity/aepp-sdk": "^12.1.1",
-    "sha.js": "^2.4.11"
+    "sha.js": "^2.4.11",
+    "@aeternity/rock-paper-scissors": "../contract"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.2",

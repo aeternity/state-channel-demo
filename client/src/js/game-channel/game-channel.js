@@ -8,7 +8,7 @@ import {
 } from '@aeternity/aepp-sdk';
 import { BigNumber } from 'bignumber.js';
 import SHA from 'sha.js';
-import contractBytecode from '../contract-bytecode/contract-bytecode';
+import contractSource from '@aeternity/rock-paper-scissors';
 import {
   getSavedState,
   storeGameState,
@@ -33,10 +33,12 @@ import {
   transactionLogs,
   addUserTransaction,
   setUserTransactions,
+  addBotTransaction,
   setBotTransactions,
   updateOpenChannelTransactions,
 } from '../terminal/terminal';
-import { setMoveSelectionDisability } from '../dom-manipulation/dom-manipulation';
+import { DomMiddleware } from './game-channel.middleware';
+import * as DOMUpdate from '../dom-manipulation/dom-manipulation';
 
 /**
  * @typedef {import("../../types").GameRound} GameRound
@@ -119,7 +121,7 @@ export class GameChannel {
    * @param {Selections} selection
    */
   async setUserSelection(selection) {
-    setMoveSelectionDisability(true);
+    DOMUpdate.setMoveSelectionDisability(true);
 
     if (selection === Selections.none) {
       throw new Error('Selection should not be none');
@@ -128,6 +130,9 @@ export class GameChannel {
     this.gameRound.userInAction = true;
     this.saveStateToLocalStorage();
 
+    const hash = this.getSelectionHash(selection);
+
+    console.log({ hash });
     const result = await this.callContract(Methods.provide_hash, [
       this.getSelectionHash(selection),
     ]);
@@ -136,6 +141,8 @@ export class GameChannel {
       console.error(result);
       throw new Error('Selection was not accepted');
     }
+
+    DOMUpdate.setMoveStatus('user', 'Waiting for bot...');
   }
 
   /**
@@ -278,6 +285,18 @@ export class GameChannel {
   }
 
   /**
+   * wait for contract to be deployed and then execute callback
+   * @param {Function} callback
+   */
+  async pollForContract(callback) {
+    if (this.contractAddress) {
+      callback();
+    } else {
+      setTimeout(() => this.pollForContract(callback), 100);
+    }
+  }
+
+  /**
    * @param {string} tag
    * @param {Encoded.Transaction} tx
    * @param {Object} [options]
@@ -324,7 +343,6 @@ export class GameChannel {
       if (!update.owner) throw new Error('Owner is not set');
       if (!isContractValid) throw new Error('Contract is not valid');
 
-      // @ts-expect-error ts-mismatch
       void this.buildContract(unpackTx(tx).tx.round, update.owner).then(() => {
         this.logContractDeployment(txHash);
         this.saveStateToLocalStorage();
@@ -354,7 +372,6 @@ export class GameChannel {
           if (!this.fsmId) this.fsmId = channel.fsmId();
           this.updateBalances();
         }
-
         if (status === 'closed' || status === 'died') {
           alert(
             'Node triggered a timeout and the channel has died. App will reset.'
@@ -396,7 +413,7 @@ export class GameChannel {
   async buildContract(contractCreationChannelRound, owner) {
     this.contractCreationChannelRound = contractCreationChannelRound;
     this.contract = await sdk.getContractInstance({
-      bytecode: contractBytecode,
+      source: contractSource,
     });
     this.contractAddress = encodeContractAddress(
       owner,
@@ -501,7 +518,7 @@ export class GameChannel {
         this.saveStateToLocalStorage();
         await this.revealRoundResult();
 
-        setMoveSelectionDisability(false);
+        DOMUpdate.setMoveSelectionDisability(false);
         break;
       default:
         return;
@@ -668,7 +685,7 @@ export class GameChannel {
 
       if (round > 1 && transactionLogs.botTransactions[round - 1].length === 2)
         round--;
-      transactionLogs.addBotTransaction(txLog, round);
+      addBotTransaction(txLog, round);
     }
   }
 
@@ -811,3 +828,26 @@ export class GameChannel {
     return Object.values(Selections)[randomSelection];
   }
 }
+
+/**
+ * In order to perform dom updates without bloating current code base,
+ * we add a callback (middleware) to every GameChannel method which
+ * updates the dom based on current game state
+ */
+for (const key of Object.getOwnPropertyNames(GameChannel.prototype)) {
+  const method = GameChannel.prototype[key];
+  if (method.constructor.name === 'AsyncFunction') {
+    GameChannel.prototype[key] = async function (...args) {
+      let result = await method.call(this, ...args);
+      DomMiddleware(this);
+      return result;
+    };
+  } else
+    GameChannel.prototype[key] = function (...args) {
+      let result = method.call(this, ...args);
+      DomMiddleware(this);
+      return result;
+    };
+}
+
+export const gameChannel = new GameChannel();
