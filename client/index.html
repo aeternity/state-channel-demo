@@ -13,16 +13,18 @@
       content="The game of rock-paper-scissors implemented on the æternity blockchain using state channels"
     />
   </head>
+
   <body>
     <div id="app" class="container">
       <!-- #region Header -->
       <div class="header">
-        <img
-          src="./src/assets/images/logo.png"
-          :class="{ clickable: canCloseChannel || canResetApp }"
-          alt="Aeternity"
-          @click="reset()"
-        />
+        <button id="reset">
+          <img
+            src="./src/assets/images/logo.png"
+            :class="{ clickable: canCloseChannel || canResetApp }"
+            alt="Aeternity"
+          />
+        </button>
         <div class="center">
           <!-- if channel is open -->
           <div class="round-info">
@@ -50,9 +52,7 @@
           <a href="#" class="button">Check Explorer</a>
           <!-- if channel is initialized -->
           <!-- :disabled="!canCloseChannel" -->
-          <button class="button" @click="channelStore.channel?.closeChannel()">
-            End Game
-          </button>
+          <button id="end-game" disabled class="button">End Game</button>
         </div>
       </div>
       <!-- #endregion -->
@@ -61,17 +61,14 @@
         <div class="user">
           <div class="player-info">
             <span class="name">You</span>
-            <span class="balance" v-if="balance">
-              <!-- {{ balance.dividedBy(1e18).toFormat(2) }} æ -->
-              -1 æ
-            </span>
+            <span class="balance"></span>
           </div>
           <div class="rock-paper-scissors">
             <div class="rock-paper-scissors__header">
               <div class="finalized-selection">
                 <!-- empty -->
               </div>
-              <h1 class="title">{{ status }}</h1>
+              <h1 class="status title"></h1>
               <div class="finalized-selection">
                 <div class="selection-icon" :class="{ victory, defeat }">
                   <!-- Here we should show the final selection of the user -->
@@ -80,30 +77,18 @@
                 </div>
               </div>
             </div>
-            <div v-if="!isSelectingDisabled" class="selections">
-              <button
-                :disabled="isSelectingDisabled"
-                class="button"
-                @click="makeSelection(Selections.rock)"
-              >
+            <div class="selections">
+              <button class="button">
                 <div class="selection-icon">
                   <img src="./src/assets/images/rock.png" />
                 </div>
               </button>
-              <button
-                :disabled="isSelectingDisabled"
-                class="button"
-                @click="makeSelection(Selections.paper)"
-              >
+              <button class="button">
                 <div class="selection-icon">
                   <img src="./src/assets/images/paper.png" />
                 </div>
               </button>
-              <button
-                :disabled="isSelectingDisabled"
-                class="button"
-                @click="makeSelection(Selections.scissors)"
-              >
+              <button class="button">
                 <div class="selection-icon">
                   <img src="./src/assets/images/scissors.png" />
                 </div>
@@ -114,10 +99,7 @@
         <div class="bot">
           <div class="player-info">
             <span class="name">Bot</span>
-            <span class="balance" v-if="botBalance">
-              <!-- {{ balance.dividedBy(1e18).toFormat(2) }} æ -->
-              -1 æ
-            </span>
+            <span class="balance"></span>
           </div>
           <div class="rock-paper-scissors">
             <div class="rock-paper-scissors__header">
@@ -128,7 +110,7 @@
                   <img src="./src/assets/images/paper.png" />
                 </div>
               </div>
-              <h1 class="title">{{ status }}</h1>
+              <h1 class="status title"></h1>
               <div class="finalized-selection">
                 <!-- empty -->
               </div>
@@ -170,5 +152,6 @@
       </div>
       <!-- #endregion -->
     </div>
+    <script type="module" src="main.js"></script>
   </body>
 </html>

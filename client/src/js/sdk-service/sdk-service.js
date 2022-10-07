@@ -4,8 +4,18 @@ import {
   generateKeyPair,
   MemoryAccount,
 } from '@aeternity/aepp-sdk';
-import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import contractBytecode from '../contract-bytecode/contract-bytecode';
+
+/**
+ * @typedef {import("@aeternity/aepp-sdk").AeSdk} AeSdk
+ */
+
+/**
+ * @type {AeSdk}
+ */
+export let sdk;
+export let node;
+export const keypair = generateKeyPair();
 
 export const NODE_URL =
   import.meta.env.VITE_NODE_URL ?? 'http://localhost:3013';
@@ -14,12 +24,7 @@ export const COMPILER_URL =
 export const IS_USING_LOCAL_NODE = !import.meta.env.VITE_NODE_URL.includes(
   'testnet'
 );
-const FAUCET_PUBLIC_ADDRESS = import.meta.env
-  .VITE_FAUCET_PUBLIC_ADDRESS as Encoded.AccountAddress;
-
-export let sdk: AeSdk;
-export let node: Node;
-export const keypair = generateKeyPair();
+const FAUCET_PUBLIC_ADDRESS = import.meta.env.VITE_FAUCET_PUBLIC_ADDRESS;
 
 export async function refreshSdkAccount() {
   if (sdk.selectedAddress) sdk.removeAccount(sdk.selectedAddress);
@@ -42,13 +47,13 @@ export async function initSdk() {
   sdk = await getNewSdk();
 }
 
-export async function returnCoinsToFaucet(
-  payload?: string
-): Promise<Encoded.TxHash | undefined> {
+/**
+ * @param {string} payload
+ * @returns {`th_${string}` | undefined}
+ */
+export async function returnCoinsToFaucet(payload) {
   if (!sdk) return;
-  const userBalance = await sdk.getBalance(
-    sdk.selectedAddress as Encoded.AccountAddress
-  );
+  const userBalance = await sdk.getBalance(sdk.selectedAddress);
   if (BigInt(userBalance) <= 0) return;
   try {
     const result = await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
@@ -61,7 +66,7 @@ export async function returnCoinsToFaucet(
 }
 
 // ! LOCAL NODE USAGE ONLY
-export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
+export const FAUCET_ACCOUNT = import.meta.env.VITE_FAUCET_SECRET_KEY
   ? new MemoryAccount({
       keypair: {
         publicKey: FAUCET_PUBLIC_ADDRESS,
@@ -70,8 +75,9 @@ export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
     })
   : null;
 
-export async function verifyContractBytecode(
-  bytecode: Encoded.ContractBytearray
-) {
+/**
+ * @param {`cb_${string}`} bytecode
+ */
+export function verifyContractBytecode(bytecode) {
   return bytecode === contractBytecode;
 }
