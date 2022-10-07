@@ -123,7 +123,7 @@
       <div class="transactions" :class="{ fullscreen: isFullscreen }">
         <div class="terminal">
           <div class="terminal__header">
-            <div class="title">Transactions</div>
+            <div class="title">Terminal</div>
             <button class="expand" @click="toggleFullscreen">
               <!-- or minimize when expanded (img)-->
               <img
@@ -133,20 +133,81 @@
               />
             </button>
           </div>
-          <div class="transactions-list">
-            <div class="notification info" v-if="didReconnect">
-              <div class="notification-text">
-                After reconnecting only the last 5 rounds are saved.
-              </div>
-              <img
-                src="./src/assets/svg/close.svg"
-                alt="x"
-                @click="closeNotification()"
-              />
+          <div class="ascii-text-banner">
+            <pre>
+  ______                                 _                             _         _                   
+ / _____) _           _                 | |                           | |       | |                   
+( (____ _| |_ _____ _| |_ _____     ____| |__  _____ ____  ____  _____| |     __| |_____ ____   ___  
+ \____ (_   _|____ (_   _) ___ |   / ___)  _ \(____ |  _ \|  _ \| ___ | |    / _  | ___ |    \ / _ \ 
+ _____) )| |_/ ___ | | |_| ____|  ( (___| | | / ___ | | | | | | | ____| |   ( (_| | ____| | | | |_| |
+(______/  \__)_____|  \__)_____)   \____)_| |_\_____|_| |_|_| |_|_____)\_)   \____|_____)_|_|_|\___/ 
+                                                                                          by Æternity
+            </pre>
+          </div>
+
+          <div class="terminal__info">
+            <p>
+              State channels refer to the process in which users transact with
+              one another directly outside of the blockchain, or ‘off-chain,’
+              and greatly minimize their use of ‘on-chain’ operations.
+            </p>
+            <p>
+              By clicking start game you are initiating state channel with our
+              bot and you make the possibilities of the game practically
+              endless. After the game is over, you can see every action recorded
+              on the blockchain by checking our explorer.
+            </p>
+            <p>
+              When being <strong>idle for 2 minutes</strong>, a timeout is
+              triggered and the state channel closes.
+            </p>
+          </div>
+          <div class="notification info" v-if="didReconnect">
+            <div class="notification-text">
+              After reconnecting only the last 5 rounds are saved.
             </div>
-            <!-- Info text goes here -->
+            <img
+              src="./src/assets/svg/close.svg"
+              alt="x"
+              @click="closeNotification()"
+            />
+          </div>
+          <div class="transactions-list">
             <!-- Transactions go here-->
-            No transactions yet
+            <div class="transaction-pair">
+              <div
+                class="transaction on-chain"
+                v-if="transaction && transaction.id"
+              >
+                <span>[BOT]</span>
+                <span> - 20:30:01 -</span>
+                <span :title="transaction.id"> th_H34d...qz - </span>
+                <span>Bot opened state Channel - signed</span>
+              </div>
+              <div
+                class="transaction on-chain"
+                v-if="transaction && transaction.id"
+              >
+                <span>[USER]</span>
+                <span> - 20:30:01 -</span>
+                <span :title="transaction.id"> th_H34d...qz - </span>
+                <span>User opened state Channel - co-signed</span>
+              </div>
+            </div>
+            <div class="transaction-pair">
+              <div class="transaction" v-if="transaction && transaction.id">
+                <span>[BOT]</span>
+                <span> - 20:30:03 -</span>
+                <span :title="transaction.id"> th_adg3...rq - </span>
+                <span>Bot deployed the contract - signed</span>
+              </div>
+              <div class="transaction" v-if="transaction && transaction.id">
+                <span>[USER]</span>
+                <span> - 20:30:03 -</span>
+                <span :title="transaction.id"> th_adg3...rq - </span>
+                <span>User deployed the contract - co-signed</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

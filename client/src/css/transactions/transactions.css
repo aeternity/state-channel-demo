@@ -1,8 +1,7 @@
 .transactions {
   grid-area: transactions;
   background-color: var(--gray);
-  padding: var(--padding);
-  padding-bottom: min(20px, var(--padding));
+  padding: min(30px, var(--padding)) var(--padding);
   max-width: 100%;
   transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
   display: flex;
@@ -124,6 +123,23 @@
     font-size: 28px;
   }
 }
+.transactions .terminal__info {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+}
+@media (max-width: 599px) {
+  .transactions .terminal__info {
+    font-size: 12px;
+  }
+}
+@media (min-width: 600px) {
+  .transactions .terminal__info {
+    font-size: 14px;
+  }
+}
+.transactions .terminal__info p {
+  margin: 10px 0;
+}
 .transactions .terminal {
   display: flex;
   flex-direction: column;
@@ -143,44 +159,47 @@
 }
 .transactions .terminal .transactions-list .transaction-pair {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   padding: 5px;
   border-radius: 5px;
 }
 .transactions .terminal .transactions-list .transaction-pair:nth-of-type(odd) {
   background-color: rgba(255, 255, 255, 0.5);
 }
-.transactions
-  .terminal
-  .transactions-list
-  .transaction-pair
-  .single-transaction {
-  width: 100%;
-  display: flex;
-}
-.transactions
-  .terminal
-  .transactions-list
-  .transaction-pair
-  .single-transaction
-  .single-transaction-text {
-  display: none;
+.transactions .terminal .transactions-list .transaction-pair .transaction {
+  font-family: 'DM Mono', monospace;
+  font-size: 16px;
+  margin-bottom: 5px;
+  text-align: left;
+  color: var(--green);
 }
 @media (max-width: 599px) {
-  .transactions
-    .terminal
-    .transactions-list
-    .transaction-pair
-    .single-transaction
-    .single-transaction-text {
-    display: block;
+  .transactions .terminal .transactions-list .transaction-pair .transaction {
+    font-size: 11px;
+  }
+}
+@media (min-width: 600px) {
+  .transactions .terminal .transactions-list .transaction-pair .transaction {
     font-size: 12px;
-    font-weight: 500;
-    padding-right: 7px;
   }
 }
-@media (max-width: 599px) {
-  .transactions .terminal .transactions-list .transaction-pair {
-    flex-direction: column;
+@media (min-width: 900px) {
+  .transactions .terminal .transactions-list .transaction-pair .transaction {
+    font-size: 16px;
   }
+}
+.transactions
+  .terminal
+  .transactions-list
+  .transaction-pair
+  .transaction
+  .info {
+  margin-left: 20px;
+}
+.transactions
+  .terminal
+  .transactions-list
+  .transaction-pair
+  .transaction:first-child {
+  color: var(--pink);
 } /*# sourceMappingURL=transactions.css.map */

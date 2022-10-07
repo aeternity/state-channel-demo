@@ -3,8 +3,7 @@
 .transactions {
   grid-area: transactions;
   background-color: var(--gray);
-  padding: var(--padding);
-  padding-bottom: min(20px, var(--padding));
+  padding: min(30px, var(--padding)) var(--padding);
   max-width: 100%;
   transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
   display: flex;
@@ -19,90 +18,105 @@
     width: calc(100% - var(--padding) * 2);
     height: calc(100vh - var(--padding) * 2);
   }
-  .terminal__header {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding-bottom: 10px;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background-color: var(--gray);
-    .title {
-      width: 50%;
-      font-weight: 500;
+  .terminal {
+    &__header {
       width: 100%;
       display: flex;
-      justify-content: space-between;
-    }
-    .expand {
-      position: absolute;
-      right: 0;
-      user-select: none;
-      display: flex;
       flex-direction: row;
-      align-items: center;
-      font-size: 28px;
-      font-weight: 500;
-
-      background: unset;
-      border: unset;
-      font-family: unset;
-      color: unset;
-
-      span {
-        margin-right: 10px;
-      }
-
-      &:hover {
-        cursor: pointer;
-      }
-      @include for-phone-only {
+      justify-content: space-between;
+      padding-bottom: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background-color: var(--gray);
+      .title {
+        width: 50%;
+        font-weight: 500;
+        width: 100%;
         display: flex;
-        span {
-          display: none;
-        }
+        justify-content: space-between;
       }
-      .icon {
-        width: 28px;
-        height: 28px;
-        margin-right: 15px;
-        @include for-phone-only {
-          width: 16px;
-          height: 16px;
-          margin-right: 0;
-        }
-        @include for-tablet-portrait-up {
-          width: 18px;
-          height: 18px;
-          margin-right: 5px;
-        }
-        @include for-tablet-landscape-up {
-          width: 24px;
-          height: 24px;
+      .expand {
+        position: absolute;
+        right: 0;
+        user-select: none;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        font-size: 28px;
+        font-weight: 500;
+
+        background: unset;
+        border: unset;
+        font-family: unset;
+        color: unset;
+
+        span {
           margin-right: 10px;
         }
-        @include for-desktop-up {
+
+        &:hover {
+          cursor: pointer;
+        }
+        @include for-phone-only {
+          display: flex;
+          span {
+            display: none;
+          }
+        }
+        .icon {
           width: 28px;
           height: 28px;
           margin-right: 15px;
+          @include for-phone-only {
+            width: 16px;
+            height: 16px;
+            margin-right: 0;
+          }
+          @include for-tablet-portrait-up {
+            width: 18px;
+            height: 18px;
+            margin-right: 5px;
+          }
+          @include for-tablet-landscape-up {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+          }
+          @include for-desktop-up {
+            width: 28px;
+            height: 28px;
+            margin-right: 15px;
+          }
+        }
+      }
+      .title,
+      .expand {
+        @include for-phone-only {
+          font-size: 16px;
+        }
+        @include for-tablet-portrait-up {
+          font-size: 18px;
+        }
+        @include for-tablet-landscape-up {
+          font-size: 24px;
+        }
+        @include for-desktop-up {
+          font-size: 28px;
         }
       }
     }
-    .title,
-    .expand {
+    &__info {
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
       @include for-phone-only {
-        font-size: 16px;
+        font-size: 12px;
       }
       @include for-tablet-portrait-up {
-        font-size: 18px;
+        font-size: 14px;
       }
-      @include for-tablet-landscape-up {
-        font-size: 24px;
-      }
-      @include for-desktop-up {
-        font-size: 28px;
+      p {
+        margin: 10px 0;
       }
     }
   }
@@ -121,27 +135,34 @@
       }
       .transaction-pair {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         padding: 5px;
         border-radius: 5px;
         &:nth-of-type(odd) {
           background-color: rgba(255, 255, 255, 0.5);
         }
-        .single-transaction {
-          width: 100%;
-          display: flex;
-          .single-transaction-text {
-            display: none;
-            @include for-phone-only {
-              display: block;
-              font-size: 12px;
-              font-weight: 500;
-              padding-right: 7px;
-            }
+        .transaction {
+          font-family: 'DM Mono', monospace;
+          font-size: 16px;
+          margin-bottom: 5px;
+
+          text-align: left;
+          color: var(--green);
+          @include for-phone-only {
+            font-size: 11px;
           }
-        }
-        @include for-phone-only {
-          flex-direction: column;
+          @include for-tablet-portrait-up {
+            font-size: 12px;
+          }
+          @include for-tablet-landscape-up {
+            font-size: 16px;
+          }
+          .info {
+            margin-left: 20px;
+          }
+          &:first-child {
+            color: var(--pink);
+          }
         }
       }
     }

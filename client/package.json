@@ -12,7 +12,7 @@
     "lint-frontend": "lint-staged"
   },
   "lint-staged": {
-    "*.{js}": [
+    "*.js": [
       "eslint --quiet --fix"
     ],
     "*.{json,md,html,js}": [
