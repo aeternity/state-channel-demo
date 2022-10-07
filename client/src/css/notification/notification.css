@@ -6,6 +6,7 @@
   width: -moz-max-content;
   width: max-content;
   max-width: 90%;
+  margin-bottom: 5px;
 }
 .notification img {
   width: 16px;

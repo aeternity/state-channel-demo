@@ -1,0 +1,14 @@
+@import '../mediaqueries/mediaqueries.scss';
+
+.ascii-text-banner {
+  display: none;
+
+  @include for-tablet-landscape-up {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pre {
+      width: max-content;
+    }
+  }
+}
