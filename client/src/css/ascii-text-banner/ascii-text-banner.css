@@ -1,0 +1,15 @@
+.ascii-text-banner {
+  display: none;
+}
+@media (min-width: 900px) {
+  .ascii-text-banner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .ascii-text-banner pre {
+    width: -webkit-max-content;
+    width: -moz-max-content;
+    width: max-content;
+  }
+} /*# sourceMappingURL=ascii-text-banner.css.map */
