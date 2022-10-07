@@ -6,6 +6,13 @@ import {
 } from '@aeternity/aepp-sdk';
 import contractBytecode from '../contract-bytecode/contract-bytecode';
 
+/**
+ * @typedef {import("@aeternity/aepp-sdk").AeSdk} AeSdk
+ */
+
+/**
+ * @type {AeSdk}
+ */
 export let sdk;
 export let node;
 export const keypair = generateKeyPair();
