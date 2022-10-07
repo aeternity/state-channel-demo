@@ -91,7 +91,7 @@ jobs:
 
       - name: Latest Develop Branch Deploy on Push
         if: github.event_name == 'push'
-        uses: aeternity/ae-github-actions/argocd-pr-sync@v4
+        uses: aeternity/ae-github-actions/argocd-pr-sync@v6
         with:
           git-sha: ${{ steps.git-sha.outputs.git-sha }}
           url-prefix: develop
