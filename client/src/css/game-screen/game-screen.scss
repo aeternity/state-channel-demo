@@ -70,3 +70,11 @@
     }
   }
 }
+
+.autoplay {
+  margin-top: 20px;
+  @include for-phone-only {
+    margin-top: 5px;
+    margin-bottom: 10px;
+  }
+}
