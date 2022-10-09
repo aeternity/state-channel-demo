@@ -38,7 +38,6 @@ import {
   updateOpenChannelTransactions,
 } from '../terminal/terminal';
 import { DomMiddleware } from './game-channel.middleware';
-import * as DOMUpdate from '../dom-manipulation/dom-manipulation';
 
 /**
  * @typedef {import("../../types").GameRound} GameRound
@@ -65,6 +64,9 @@ function timeout(ms) {
 let channel;
 
 export class GameChannel {
+  /**
+   * @type {ChannelOptions}
+   */
   channelConfig = {};
   channelRound = 0;
   channelId = null;
@@ -97,6 +99,7 @@ export class GameChannel {
     isCompleted: false,
     shouldHandleBotAction: false,
     userInAction: false,
+    winner: null,
   };
   contract = null;
   contractAddress = null;
@@ -121,8 +124,6 @@ export class GameChannel {
    * @param {Selections} selection
    */
   async setUserSelection(selection) {
-    DOMUpdate.setMoveSelectionDisability(true);
-
     if (selection === Selections.none) {
       throw new Error('Selection should not be none');
     }
@@ -130,9 +131,6 @@ export class GameChannel {
     this.gameRound.userInAction = true;
     this.saveStateToLocalStorage();
 
-    const hash = this.getSelectionHash(selection);
-
-    console.log({ hash });
     const result = await this.callContract(Methods.provide_hash, [
       this.getSelectionHash(selection),
     ]);
@@ -141,8 +139,6 @@ export class GameChannel {
       console.error(result);
       throw new Error('Selection was not accepted');
     }
-
-    DOMUpdate.setMoveStatus('user', 'Waiting for bot...');
   }
 
   /**
@@ -518,7 +514,6 @@ export class GameChannel {
         this.saveStateToLocalStorage();
         await this.revealRoundResult();
 
-        DOMUpdate.setMoveSelectionDisability(false);
         break;
       default:
         return;
@@ -630,7 +625,7 @@ export class GameChannel {
           this.lastOffChainTxTime - this.timerStartTime;
         this.shouldShowEndScreen = true;
       }
-    }
+    } else this.startNewRound();
   }
 
   startNewRound() {
@@ -836,6 +831,8 @@ export class GameChannel {
  */
 for (const key of Object.getOwnPropertyNames(GameChannel.prototype)) {
   const method = GameChannel.prototype[key];
+  const excludedMethods = ['pollForContract'];
+  if (excludedMethods.includes(key)) continue;
   if (method.constructor.name === 'AsyncFunction') {
     GameChannel.prototype[key] = async function (...args) {
       let result = await method.call(this, ...args);
