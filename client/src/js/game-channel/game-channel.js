@@ -38,7 +38,6 @@ import {
   updateOpenChannelTransactions,
 } from '../terminal/terminal';
 import { DomMiddleware } from './game-channel.middleware';
-
 /**
  * @typedef {import("../../types").GameRound} GameRound
  * @typedef {import("../../types").Update} Update
@@ -80,6 +79,7 @@ export class GameChannel {
   channelIsClosing = false;
   savedResultsOnChainTxHash = null;
   hasInsuffientBalance = false;
+  shouldHandleReconnection = false;
   error = null;
   balances = {
     user: undefined,
@@ -792,6 +792,7 @@ export class GameChannel {
       savedState.contractCreationChannelRound,
       savedState.channelConfig?.initiatorId
     );
+    this.shouldHandleReconnection = true;
     await this.updateBalances();
 
     if (savedState.gameRound.userSelection === Selections.none) return;
@@ -832,7 +833,12 @@ export class GameChannel {
  */
 for (const key of Object.getOwnPropertyNames(GameChannel.prototype)) {
   const method = GameChannel.prototype[key];
-  const excludedMethods = ['pollForContract'];
+  const excludedMethods = [
+    'pollForContract',
+    'restoreGameState',
+    'reconnectChannel',
+    'registerEvents',
+  ];
   if (excludedMethods.includes(key)) continue;
   if (method.constructor.name === 'AsyncFunction') {
     GameChannel.prototype[key] = async function (...args) {

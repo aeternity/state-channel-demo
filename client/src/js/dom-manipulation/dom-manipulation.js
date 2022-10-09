@@ -154,9 +154,12 @@ export function resetSelections() {
 }
 
 /**
- * @param {'user' | 'bot' | 'none'} result
+ * @param {'user' | 'bot' | 'none'} winner
  */
 export function colorizeSelections(winner) {
+  if (winner !== 'user' && winner !== 'bot' && winner !== 'none') {
+    throw new Error('invalid winner selector');
+  }
   const userSelection = _getParticipantSelectionIcon('user');
   const botSelection = _getParticipantSelectionIcon('bot');
   if (winner == 'user') {
