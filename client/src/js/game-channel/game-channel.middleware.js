@@ -1,17 +1,36 @@
 import * as DOMUpdate from '../dom-manipulation/dom-manipulation';
 
+/**
+ * @typedef {import("../game-channel/game-channel").GameChannel} gameChannel
+ */
+
 let resetPromise = null;
 
 /**
- * @param {import("../game-channel/game-channel").GameChannel} gameChannel
+ * @param {gameChannel} gameChannel
+ */
+const handleReset = async (gameChannel) => {
+  if (resetPromise) return;
+  resetPromise = setTimeout(() => {
+    gameChannel.shouldHandleReconnection = false;
+    DOMUpdate.setMoveStatus('bot', 'Waiting for user...');
+    DOMUpdate.resetSelections();
+    resetPromise = null;
+  }, 1000);
+};
+
+/**
+ * @param {gameChannel} gameChannel
  */
 export function DomMiddleware(gameChannel) {
   if (gameChannel.isOpen) {
-    DOMUpdate.setParticipantBalance('user', gameChannel.balances.user);
-    DOMUpdate.setParticipantBalance('bot', gameChannel.balances.bot);
+    if (gameChannel.balances.user && gameChannel.balances.bot) {
+      DOMUpdate.setParticipantBalance('user', gameChannel.balances.user);
+      DOMUpdate.setParticipantBalance('bot', gameChannel.balances.bot);
+    }
     DOMUpdate.setGameRoundIndex(gameChannel.gameRound.index);
     DOMUpdate.setStakeAmount(gameChannel.gameRound.stake);
-    DOMUpdate.showGameInfo(false);
+    DOMUpdate.showGameInfo();
 
     const canReset = gameChannel.isOpen && gameChannel.shouldShowEndScreen;
     const canClose =
@@ -52,12 +71,11 @@ export function DomMiddleware(gameChannel) {
           break;
       }
       DOMUpdate.colorizeSelections(winner);
-    } else if (gameChannel.gameRound.botSelection == 'none' && !resetPromise) {
-      resetPromise = setTimeout(() => {
-        DOMUpdate.setMoveStatus('bot', 'Waiting for user...');
-        DOMUpdate.resetSelections();
-        resetPromise = null;
-      }, 1000);
+    } else if (gameChannel.gameRound.botSelection == 'none') {
+      handleReset(gameChannel);
+    }
+    if (gameChannel.shouldHandleReconnection) {
+      handleReset(gameChannel);
     }
   }
 }
