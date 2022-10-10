@@ -145,13 +145,17 @@ export function setFinalizedSelection(participant, selection) {
   image.style.display = 'block';
 }
 
-export function resetSelections() {
+export function hideSelections() {
   const userSelection = _getParticipantSelectionIcon('user');
   const botSelection = _getParticipantSelectionIcon('bot');
   userSelection.classList.remove('victory', 'defeat', 'draw');
   botSelection.classList.remove('victory', 'defeat', 'draw');
   userSelection.style.display = 'none';
   botSelection.style.display = 'none';
+}
+
+export function resetSelections() {
+  hideSelections();
   setMoveSelectionDisability(false);
 }
 
@@ -203,6 +207,42 @@ export function setEndGameDisability(isDisabled) {
  *
  * @param {GameChannel} gameChannel
  */
+export async function enableAutoplayView(gameChannel) {
+  setMoveStatus('bot', '');
+  hideElement('.selections'); //* these do different things
+  hideSelections();
+
+  if (!gameChannel.isOpen) {
+    setMoveStatus('user', 'Initializing channel...');
+    gameChannel.pollForContract(() => {
+      // we need to check again because autoplay could be toggled in the meantime
+      if (gameChannel.autoplay.enabled) {
+        setMoveStatus('user', 'Autoplay engaged');
+      } else disableAutoplayView(gameChannel);
+    });
+  } else setMoveStatus('user', 'Autoplay engaged');
+}
+
+/**
+ *
+ * @param {GameChannel} gameChannel
+ */
+export function disableAutoplayView(gameChannel) {
+  if (!gameChannel.isOpen && !gameChannel.autoplay.enabled) {
+    gameChannel.pollForContract(() => {
+      // we need to check again because autoplay could be toggled in the meantime
+      if (!gameChannel.autoplay.enabled) {
+        showElement('.selections');
+        setMoveStatus('user', '');
+      }
+    });
+  }
+}
+
+/**
+ *
+ * @param {GameChannel} gameChannel
+ */
 export function handleAppMount(gameChannel) {
   document.getElementById('reset').addEventListener('click', resetApp);
   document.querySelectorAll('.selections button').forEach((button, index) => {
@@ -212,6 +252,7 @@ export function handleAppMount(gameChannel) {
         setMoveStatus('user', 'Initializing channel...');
         await gameChannel.initializeChannel();
       }
+      gameChannel.gameRound.userInAction = true;
       const selection = Object.values(Selections)[index];
       if (gameChannel.contractAddress)
         await gameChannel.setUserSelection(selection);

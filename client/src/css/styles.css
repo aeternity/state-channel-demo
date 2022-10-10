@@ -64,7 +64,6 @@
 }
 .header button {
   border: none;
-  background: no-repeat;
   text-align: left;
 }
 .header button img {
@@ -97,6 +96,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  text-align: center;
   width: -webkit-fit-content;
   width: -moz-fit-content;
   width: fit-content;
@@ -772,7 +772,7 @@
 #app.container {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: 15% 50% 35%;
+  grid-template-rows: 15% 40% 45%;
   gap: 0px 0px;
   grid-auto-flow: column;
   grid-template-areas: 'header' 'body' 'transactions';

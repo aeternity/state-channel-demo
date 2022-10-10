@@ -1,4 +1,5 @@
 import * as DOMUpdate from '../dom-manipulation/dom-manipulation';
+import { gameChannel } from '../game-channel/game-channel';
 
 /**
  * @typedef {import("../game-channel/game-channel").GameChannel} gameChannel
@@ -19,6 +20,11 @@ const handleReset = async (gameChannel) => {
 
 const resetRound = async () => {
   setTimeout(() => {
+    if (gameChannel.autoplay.enabled) {
+      DOMUpdate.setMoveStatus('bot', '');
+      DOMUpdate.hideSelections();
+      return;
+    }
     DOMUpdate.setMoveStatus('bot', 'Waiting for user...');
     DOMUpdate.resetSelections();
     DOMUpdate.setMoveStatus('user', '');
@@ -50,46 +56,50 @@ export function DomMiddleware(gameChannel) {
     if (canClose) {
       DOMUpdate.setEndGameDisability(false);
     } else DOMUpdate.setEndGameDisability(true);
-
-    if (gameChannel.gameRound.userSelection != 'none') {
-      DOMUpdate.setMoveStatus('user', 'Waiting for bot...');
-      DOMUpdate.setMoveStatus('bot', '');
-      DOMUpdate.setFinalizedSelection(
-        'user',
-        gameChannel.gameRound.userSelection
-      );
-      DOMUpdate.setMoveSelectionDisability(true);
-    }
-
-    if (gameChannel.gameRound.isCompleted) {
-      DOMUpdate.setMoveStatus('user', '');
-      DOMUpdate.setFinalizedSelection(
-        'bot',
-        gameChannel.gameRound.botSelection
-      );
-      let winner = 'none';
-      switch (gameChannel.gameRound.winner) {
-        case gameChannel.channelConfig.initiatorId:
-          winner = 'bot';
-          break;
-        case gameChannel.channelConfig.responderId:
-          winner = 'user';
-          break;
+    if (!gameChannel.autoplay.enabled) {
+      if (gameChannel.gameRound.userSelection != 'none') {
+        DOMUpdate.setMoveStatus('user', 'Waiting for bot...');
+        DOMUpdate.setMoveStatus('bot', '');
+        DOMUpdate.setFinalizedSelection(
+          'user',
+          gameChannel.gameRound.userSelection
+        );
+        DOMUpdate.setMoveSelectionDisability(true);
       }
-      DOMUpdate.colorizeSelections(winner);
-      if (winner == 'user') {
-        DOMUpdate.setMoveStatus('user', 'You won!');
-      } else if (winner == 'bot') {
-        DOMUpdate.setMoveStatus('bot', 'Bot won!');
-      } else {
-        DOMUpdate.setMoveStatus('user', "It's a draw!");
+
+      if (gameChannel.gameRound.isCompleted) {
+        DOMUpdate.setMoveStatus('user', '');
+        DOMUpdate.setFinalizedSelection(
+          'bot',
+          gameChannel.gameRound.botSelection
+        );
+        let winner = 'none';
+        switch (gameChannel.gameRound.winner) {
+          case gameChannel.channelConfig.initiatorId:
+            winner = 'bot';
+            break;
+          case gameChannel.channelConfig.responderId:
+            winner = 'user';
+            break;
+        }
+        DOMUpdate.colorizeSelections(winner);
+        if (winner == 'user') {
+          DOMUpdate.setMoveStatus('user', 'You win!');
+        } else if (winner == 'bot') {
+          DOMUpdate.setMoveStatus('bot', 'Bot wins!');
+        } else {
+          DOMUpdate.setMoveStatus('user', "It's a draw!");
+        }
+        resetRound();
       }
-      resetRound();
-    } else if (gameChannel.gameRound.botSelection == 'none') {
-      handleReset(gameChannel);
     }
-    if (gameChannel.shouldHandleReconnection) {
-      handleReset(gameChannel);
+    if (!gameChannel.gameRound.isCompleted) {
+      if (gameChannel.gameRound.botSelection == 'none') {
+        handleReset(gameChannel);
+      }
+      if (gameChannel.shouldHandleReconnection) {
+        handleReset(gameChannel);
+      }
     }
   }
 }
