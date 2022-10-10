@@ -91,7 +91,7 @@ async function initiatorSignTx(
     updates: {
       call_data: Encoded.ContractBytearray;
       contract_id: Encoded.ContractAddress;
-      op: 'OffChainCallContract' | 'OffChainNewContract';
+      op: string;
       code?: Encoded.ContractBytearray;
       owner?: Encoded.AccountAddress;
       caller_id?: Encoded.AccountAddress;
@@ -186,7 +186,36 @@ export async function registerEvents(
 }
 ```
 
-## Step 7: Reconnecting
+## Step 7: Deploying contract on channel
+Here, the initiator has to deploy the contract on the channel. Then, responder will recieve a
+`OffChainNewContract` operation which will need to be
+co-signed to be confirmed by them.
+
+```js
+const CONTRACT_CONFIGURATION = {
+  // initial deposit for contract balance
+  deposit: 0e18,
+  vmVersion: 5,
+  abiVersion: 3,
+};
+const contract = await sdk.getContractInstance({
+    source: contractSource,
+    onAccount,
+});
+await contract.compile();
+await initiatorChannel.createContract(
+  {
+    ...CONTRACT_CONFIGURATION,
+    code: contract.bytecode,
+    callData: contract.calldata.encode(CONTRACT_NAME, Methods.init, [
+      ...Object.values(config),
+    ]) as Encoded.ContractBytearray,
+  },
+  async (tx) => aeSdk.signTransaction(tx);
+);
+```
+
+## Step 8: Reconnecting
 In cases where we have saved the channel state locally for example via `localStorage`, we can reconnect to the channel.
 Utility functions used
 - [checkIfChannelIsStillOpen](#checkIfChannelIsStillOpen)
@@ -214,7 +243,7 @@ async function reconnectChannel(channel,savedState) {
 }
 ```
 
-## Step 8: Closing channel
+## Step 9: Closing channel
 There are 2 scenarions
 
 ### Channel is mutually closed
@@ -265,6 +294,50 @@ In this case, a participant has to execute 2 on-chain transactions in order to c
   });
 ```
 
+# Depost & Withdraw Actions
+Throughout the channel lifecycle, participants can deposit 
+and withdraw funds from the channel.
+
+After the channel had been opened any of the participants can initiate a deposit/withdraw.
+The process closely resembles the update. The most notable difference is that the
+transaction has been co-signed: it is `channel_deposit_tx` / `channel_withdraw_tx` 
+and after the procedure is finished - it is being posted on-chain.
+Any of the participants can initiate a deposit/withdraw. The only requirements are:
+- Channel is already opened
+- No off-chain update/deposit/withdrawal is currently being performed
+- Channel is not being closed or in a solo closing state
+- The deposit amount must be equal to or greater than zero, and cannot exceed
+the available balance on the channel (minus the `channel_reserve`)
+
+`deposit` and `withdraw` can accept 3 callbacks as the 3rd argument, for example:
+```js
+await initiatorChannel.deposit(
+  1e18,
+  initiatorSign,
+  { onOnChainTx, onOwnDepositLocked, onDepositLocked }
+);
+```
+Where 
+- After the other party had signed the deposit/withdraw transaction, the transaction is posted
+on-chain and `onOnChainTx` callback is called with on-chain transaction as first argument.
+- After computing transaction hash it can be tracked on the chain: entering the mempool,
+block inclusion and a number of confirmations.
+- After the `minimum_depth` block confirmations `onOwnDepositLocked` callback is called
+(without any arguments).
+- When the other party had confirmed that the block height needed is reached
+`onDepositLocked` callback is called (without any arguments).
+## Deposit
+
+```js
+// 1AE
+const depositAmount = 1e18;
+initiatorChannel.deposit(depositAmount, initiatorSignTx);
+```
+
+## Withdraw
+```js
+await initiatorChannel.withdraw(1e18,initiatorSign);
+```
 
 # Utility Functions
 ## `verifyContractBytecode`
@@ -286,7 +359,6 @@ async function verifyContractBytecode(
   }
   return isEqual;
 }
-
 ```
 
 ## `buildContract`
