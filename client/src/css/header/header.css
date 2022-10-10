@@ -7,10 +7,15 @@
   padding: var(--padding);
   padding-bottom: 5px;
 }
-.header img {
+.header button {
+  border: none;
+  background: no-repeat;
+  text-align: left;
+}
+.header button img {
   width: 110px;
 }
-.header img.clickable {
+.header button img.clickable {
   cursor: pointer;
 }
 @media (max-width: 599px) {

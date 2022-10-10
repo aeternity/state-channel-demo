@@ -17,14 +17,28 @@
 .user,
 .bot {
   display: grid;
-  grid-template-rows: 15% 85%;
+  grid-template-rows: 15% 75% 10%;
   @include for-phone-only {
     margin-top: 10px;
+    .balance {
+      font-size: 16px;
+    }
+  }
+  .balance {
+    font-size: 30px;
+    text-align: right;
+    margin-right: var(--padding);
+    font-weight: 500;
+    color: var(--pink);
   }
 }
 .user {
   grid-area: user;
   border-right: 1px solid var(--pink);
+  .balance {
+    text-align: left;
+    margin-left: var(--padding);
+  }
   @include for-phone-only {
     height: 65%;
     border-right: none;
@@ -55,18 +69,6 @@
     text-align: center;
     @include for-phone-only {
       font-size: 26px;
-    }
-  }
-
-  .balance {
-    grid-area: balance;
-    font-size: 30px;
-    text-align: right;
-    margin-right: 20px;
-    font-weight: 500;
-    color: var(--pink);
-    @include for-phone-only {
-      font-size: 16px;
     }
   }
 }
