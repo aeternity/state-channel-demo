@@ -18,7 +18,7 @@
     <div id="app" class="container">
       <!-- #region Header -->
       <div class="header">
-        <button id="reset">
+        <button id="reset" style="background-color: transparent; border: none">
           <img
             src="./src/assets/images/logo.png"
             :class="{ clickable: canCloseChannel || canResetApp }"
@@ -29,14 +29,14 @@
           <!-- if channel is open -->
           <div class="round-info">
             <span class="title">Game</span>
-            <div class="info" v-if="stake">
+            <div class="info" style="opacity: 0">
               <span class="stake">
-                <!-- {{ stake.dividedBy(1e18).toFormat(2) }} -->
-                STAKE: -1 Æ
+                STAKE: <span class="stake-value"></span> Æ
               </span>
-              <span class="info-seperator" v-if="round"> / </span>
-              <!-- ROUND: {{ round }} -->
-              <span v-if="round">ROUND: -1</span>
+              <span class="info-seperator"> / </span>
+              <span class="round-wrapper"
+                >ROUND: <span class="round-index"></span
+              ></span>
             </div>
           </div>
         </div>
@@ -70,7 +70,7 @@
               </div>
               <h1 class="status title"></h1>
               <div class="finalized-selection">
-                <div class="selection-icon" :class="{ victory, defeat }">
+                <div class="selection-icon" style="display: none">
                   <!-- Here we should show the final selection of the user -->
                   <!-- ./src/assets/images/${props.type}.png -->
                   <img src="./src/assets/images/paper.png" />
@@ -113,7 +113,7 @@
           <div class="rock-paper-scissors">
             <div class="rock-paper-scissors__header">
               <div class="finalized-selection">
-                <div class="selection-icon" :class="{ victory, defeat }">
+                <div class="selection-icon" style="display: none">
                   <!-- Here we should show the final selection of the bot -->
                   <!-- ./src/assets/images/${props.type}.png -->
                   <img src="./src/assets/images/paper.png" />

@@ -1,10 +1,25 @@
+import { Selections } from '../game-channel/game-channel.enums';
+
 /**
  * @typedef {import("bignumber.js").BigNumber} BigNumber
  * @typedef {'user' | 'bot'} Participant
  * @typedef {import("../game-channel/game-channel.enums").Selections} Selections
+ * @typedef {import("../game-channel/game-channel").GameChannel} GameChannel
  */
 
 import { resetApp } from '../local-storage/local-storage';
+
+/**
+ * @param {Participant} participant
+ */
+function _getParticipantSelectionIcon(participant) {
+  if (participant !== 'user' && participant !== 'bot')
+    throw new Error('Invalid participant');
+
+  return document.querySelector(
+    `.${participant} .finalized-selection .selection-icon`
+  );
+}
 
 /**
  * @param {string} id
@@ -74,13 +89,32 @@ export function hideElement(selector) {
   element.style.display = 'none';
 }
 
+export function showGameInfo() {
+  document.querySelector('.info').style.opacity = '1';
+}
+
 /**
  * @param {boolean} disability
  */
 export function setMoveSelectionDisability(isDisabled) {
   document.querySelector('.selections').style.display = isDisabled
     ? 'none'
-    : 'initial';
+    : 'flex';
+}
+/**
+ * @param {BigNumber} amount
+ */
+export function setStakeAmount(amount) {
+  document.querySelector('.stake-value').textContent = amount
+    .dividedBy(1e18)
+    .toFormat(2);
+}
+
+/**
+ * @param {number} round
+ */
+export function setGameRoundIndex(index) {
+  document.querySelector('.round-index').textContent = index;
 }
 
 /**
@@ -103,10 +137,38 @@ export function setFinalizedSelection(participant, selection) {
   if (participant != 'user' && participant != 'bot') {
     throw new Error('invalid participant selector');
   }
-  const wrapper = document.querySelector(
-    `.${participant} .finalized-selection .selection-icon`
-  );
+  const wrapper = _getParticipantSelectionIcon(participant);
+
+  wrapper.style.display = 'flex';
   wrapper.querySelector('img').src = `./src/assets/images/${selection}.png`;
+}
+
+export function resetSelections() {
+  const userSelection = _getParticipantSelectionIcon('user');
+  const botSelection = _getParticipantSelectionIcon('bot');
+  userSelection.classList.remove('victory', 'defeat', 'draw');
+  botSelection.classList.remove('victory', 'defeat', 'draw');
+  userSelection.style.display = 'none';
+  botSelection.style.display = 'none';
+  setMoveSelectionDisability(false);
+}
+
+/**
+ * @param {'user' | 'bot' | 'none'} winner
+ */
+export function colorizeSelections(winner) {
+  if (winner !== 'user' && winner !== 'bot' && winner !== 'none') {
+    throw new Error('invalid winner selector');
+  }
+  const userSelection = _getParticipantSelectionIcon('user');
+  const botSelection = _getParticipantSelectionIcon('bot');
+  if (winner == 'user') {
+    userSelection.classList.add('victory');
+    botSelection.classList.add('defeat');
+  } else if (winner == 'bot') {
+    userSelection.classList.add('defeat');
+    botSelection.classList.add('victory');
+  }
 }
 
 /**
@@ -135,6 +197,25 @@ export function setEndGameDisability(isDisabled) {
   document.querySelector('#end-game').disabled = isDisabled;
 }
 
-export function handleAppMount() {
+/**
+ *
+ * @param {GameChannel} gameChannel
+ */
+export function handleAppMount(gameChannel) {
   document.getElementById('reset').addEventListener('click', resetApp);
+  document.querySelectorAll('.selections button').forEach((button, index) => {
+    button.addEventListener('click', async () => {
+      if (!gameChannel.isOpen && !gameChannel.isOpening) {
+        setMoveSelectionDisability(true);
+        await gameChannel.initializeChannel();
+      }
+      const selection = Object.values(Selections)[index];
+      if (gameChannel.contractAddress)
+        await gameChannel.setUserSelection(selection);
+      else
+        await gameChannel.pollForContract(() =>
+          gameChannel.setUserSelection(selection)
+        );
+    });
+  });
 }
