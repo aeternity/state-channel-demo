@@ -87,9 +87,6 @@ export class GameChannel {
   };
   autoplay = {
     enabled: false,
-    rounds: 10,
-    extraRounds: 10,
-    elapsedTime: 0,
   };
   gameRound = {
     stake: new BigNumber(0),
@@ -431,7 +428,7 @@ export class GameChannel {
     addUserTransaction(transactionLog, 0);
 
     // if autoplay is enabled, make user selection automatically
-    if (this.autoplay.enabled) {
+    if (this.autoplay.enabled && !this.gameRound.userInAction) {
       this.setUserSelection(this.getRandomSelection());
     }
   }
@@ -611,21 +608,7 @@ export class GameChannel {
       await channel.cleanContractCalls();
     }
 
-    // if autoplay is enabled
-    if (this.autoplay.enabled) {
-      // if not last round, start next round
-      if (
-        this.gameRound.index < this.autoplay.rounds &&
-        !this.hasInsuffientBalance
-      )
-        this.startNewRound();
-      // otherwise, show results
-      else {
-        this.autoplay.elapsedTime +=
-          this.lastOffChainTxTime - this.timerStartTime;
-        this.shouldShowEndScreen = true;
-      }
-    } else this.startNewRound();
+    if (!this.hasInsuffientBalance) this.startNewRound();
   }
 
   startNewRound() {
@@ -638,16 +621,24 @@ export class GameChannel {
     this.gameRound.winner = undefined;
 
     // if autoplay is enabled, make user selection automatically
-    if (this.autoplay.enabled && this.gameRound.index <= this.autoplay.rounds) {
+    if (this.autoplay.enabled && !this.gameRound.userInAction) {
       this.setUserSelection(this.getRandomSelection());
     }
   }
 
-  continueAutoplay() {
-    this.autoplay.rounds += this.autoplay.extraRounds;
-    this.shouldShowEndScreen = false;
-    this.timerStartTime = Date.now();
-    this.startNewRound();
+  async engageAutoplay() {
+    this.autoplay.enabled = true;
+    if (!this.isOpen && !this.isOpening) {
+      await this.initializeChannel();
+    }
+    if (
+      this.isOpen &&
+      this.contractAddress &&
+      !this.gameRound.userInAction &&
+      this.gameRound.userSelection === 'none'
+    ) {
+      this.setUserSelection(this.getRandomSelection());
+    }
   }
 
   checkHasInsuffientBalance() {
@@ -694,7 +685,6 @@ export class GameChannel {
     const data = {
       rounds: this.gameRound.index,
       isLastRoundCompleted: this.gameRound.isCompleted,
-      elapsedTime: this.autoplay.elapsedTime,
       earnings: earnings,
       responderId: this.channelConfig.responderId,
     };
@@ -704,12 +694,7 @@ export class GameChannel {
   }
 
   saveStateToLocalStorage() {
-    if (
-      !this.channelConfig ||
-      !this.contractCreationChannelRound ||
-      this.autoplay.enabled
-    )
-      return;
+    if (!this.channelConfig || !this.contractCreationChannelRound) return;
     const stateToSave = {
       keypair: getSavedState()?.keypair || keypair,
       channelId: this.channelId,
@@ -807,6 +792,11 @@ export class GameChannel {
         !savedState.gameRound.isCompleted
       ) {
         return this.handleRoundResult();
+      } else if (
+        savedState.gameRound.isCompleted &&
+        !this.hasInsuffientBalance
+      ) {
+        this.startNewRound();
       }
     } catch (e) {
       alert(

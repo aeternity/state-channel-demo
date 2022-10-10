@@ -9,7 +9,6 @@
 }
 .header button {
   border: none;
-  background: no-repeat;
   text-align: left;
 }
 .header button img {
@@ -42,6 +41,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  text-align: center;
   width: -webkit-fit-content;
   width: -moz-fit-content;
   width: fit-content;
