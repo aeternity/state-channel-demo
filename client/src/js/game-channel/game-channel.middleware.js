@@ -13,10 +13,16 @@ const handleReset = async (gameChannel) => {
   if (resetPromise) return;
   resetPromise = setTimeout(() => {
     gameChannel.shouldHandleReconnection = false;
-    DOMUpdate.setMoveStatus('bot', 'Waiting for user...');
-    DOMUpdate.resetSelections();
     resetPromise = null;
   }, 1000);
+};
+
+const resetRound = async () => {
+  setTimeout(() => {
+    DOMUpdate.setMoveStatus('bot', 'Waiting for user...');
+    DOMUpdate.resetSelections();
+    DOMUpdate.setMoveStatus('user', '');
+  }, 3000);
 };
 
 /**
@@ -61,7 +67,7 @@ export function DomMiddleware(gameChannel) {
         'bot',
         gameChannel.gameRound.botSelection
       );
-      let winner;
+      let winner = 'none';
       switch (gameChannel.gameRound.winner) {
         case gameChannel.channelConfig.initiatorId:
           winner = 'bot';
@@ -71,6 +77,14 @@ export function DomMiddleware(gameChannel) {
           break;
       }
       DOMUpdate.colorizeSelections(winner);
+      if (winner == 'user') {
+        DOMUpdate.setMoveStatus('user', 'You won!');
+      } else if (winner == 'bot') {
+        DOMUpdate.setMoveStatus('bot', 'Bot won!');
+      } else {
+        DOMUpdate.setMoveStatus('user', "It's a draw!");
+      }
+      resetRound();
     } else if (gameChannel.gameRound.botSelection == 'none') {
       handleReset(gameChannel);
     }
