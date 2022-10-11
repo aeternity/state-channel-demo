@@ -8,7 +8,7 @@ import {
 } from '@aeternity/aepp-sdk';
 import { BigNumber } from 'bignumber.js';
 import SHA from 'sha.js';
-import contractSource from '@aeternity/rock-paper-scissors';
+import { contractSource } from '../contract/contract';
 import {
   getSavedState,
   storeGameState,

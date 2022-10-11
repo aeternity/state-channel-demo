@@ -4,7 +4,7 @@ import {
   generateKeyPair,
   MemoryAccount,
 } from '@aeternity/aepp-sdk';
-import contractBytecode from '../contract-bytecode/contract-bytecode';
+import { contractBytecode } from '../contract/contract';
 
 /**
  * @typedef {import("@aeternity/aepp-sdk").AeSdk} AeSdk
