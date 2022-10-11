@@ -17,7 +17,7 @@
 .user,
 .bot {
   display: grid;
-  grid-template-rows: 15% 75% 10%;
+  grid-template-rows: 30px calc(100% - 60px) 30px;
   @include for-phone-only {
     margin-top: 10px;
     .balance {
@@ -64,11 +64,14 @@
 
   .name {
     grid-area: name;
-    font-size: 50px;
+    font-size: 30px;
     font-weight: bold;
     text-align: center;
     @include for-phone-only {
       font-size: 26px;
+    }
+    @include for-big-desktop-up {
+      font-size: 40px;
     }
   }
 }
