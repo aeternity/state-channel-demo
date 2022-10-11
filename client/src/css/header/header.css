@@ -12,7 +12,7 @@
   text-align: left;
 }
 .header button img {
-  width: 110px;
+  width: 80px;
 }
 .header button img.clickable {
   cursor: pointer;
@@ -32,7 +32,6 @@
   }
 }
 .header.end-screen img {
-  width: 110px;
   cursor: pointer;
 }
 
@@ -48,7 +47,9 @@
   justify-self: flex-end;
 }
 .links .button {
+  text-align: center;
   margin-left: 0;
+  font-size: 14px;
 }
 @media (max-width: 599px) {
   .links {
@@ -73,7 +74,6 @@
 }
 .center .round-info .title {
   text-align: center;
-  font-size: 50px;
   font-weight: bold;
 }
 @media (max-width: 599px) {
@@ -83,7 +83,7 @@
 }
 @media (min-width: 600px) {
   .center .round-info .title {
-    font-size: 40px;
+    font-size: 30px;
   }
 }
 .center .round-info .info {

@@ -108,13 +108,7 @@
     }
     &__info {
       font-family: 'DM Mono', monospace;
-      font-size: 14px;
-      @include for-phone-only {
-        font-size: 12px;
-      }
-      @include for-tablet-portrait-up {
-        font-size: 14px;
-      }
+      font-size: 12px;
       p {
         margin: 10px 0;
       }
