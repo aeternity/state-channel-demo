@@ -8,10 +8,15 @@
   justify-content: center;
   padding: var(--padding);
   padding-bottom: 5px;
-  img {
-    width: 110px;
-    &.clickable {
-      cursor: pointer;
+  button {
+    border: none;
+    background: no-repeat;
+    text-align: left;
+    img {
+      width: 110px;
+      &.clickable {
+        cursor: pointer;
+      }
     }
   }
   @include for-phone-only {

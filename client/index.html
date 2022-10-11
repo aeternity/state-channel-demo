@@ -61,7 +61,6 @@
         <div class="user">
           <div class="player-info">
             <span class="name">You</span>
-            <span class="balance"></span>
           </div>
           <div class="rock-paper-scissors">
             <div class="rock-paper-scissors__header">
@@ -71,9 +70,10 @@
               <h1 class="status title"></h1>
               <div class="finalized-selection">
                 <div class="selection-icon" style="display: none">
-                  <!-- Here we should show the final selection of the user -->
-                  <!-- ./src/assets/images/${props.type}.png -->
-                  <img src="./src/assets/images/paper.png" />
+                  <img
+                    src="./src/assets/images/paper.png"
+                    style="display: none"
+                  />
                 </div>
               </div>
             </div>
@@ -104,19 +104,20 @@
             </div>
             <!-- #endregion -->
           </div>
+          <div class="balance" id="user-balance"></div>
         </div>
         <div class="bot">
           <div class="player-info">
             <span class="name">Bot</span>
-            <span class="balance"></span>
           </div>
           <div class="rock-paper-scissors">
             <div class="rock-paper-scissors__header">
               <div class="finalized-selection">
                 <div class="selection-icon" style="display: none">
-                  <!-- Here we should show the final selection of the bot -->
-                  <!-- ./src/assets/images/${props.type}.png -->
-                  <img src="./src/assets/images/paper.png" />
+                  <img
+                    src="./src/assets/images/paper.png"
+                    style="display: none"
+                  />
                 </div>
               </div>
               <h1 class="status title"></h1>
@@ -125,6 +126,7 @@
               </div>
             </div>
           </div>
+          <div class="balance" id="bot-balance"></div>
         </div>
       </div>
       <!-- #endregion -->

@@ -159,18 +159,34 @@
 .user,
 .bot {
   display: grid;
-  grid-template-rows: 15% 85%;
+  grid-template-rows: 15% 75% 10%;
 }
 @media (max-width: 599px) {
   .user,
   .bot {
     margin-top: 10px;
   }
+  .user .balance,
+  .bot .balance {
+    font-size: 16px;
+  }
+}
+.user .balance,
+.bot .balance {
+  font-size: 30px;
+  text-align: right;
+  margin-right: var(--padding);
+  font-weight: 500;
+  color: var(--pink);
 }
 
 .user {
   grid-area: user;
   border-right: 1px solid var(--pink);
+}
+.user .balance {
+  text-align: left;
+  margin-left: var(--padding);
 }
 @media (max-width: 599px) {
   .user {
@@ -208,19 +224,6 @@
 @media (max-width: 599px) {
   .player-info .name {
     font-size: 26px;
-  }
-}
-.player-info .balance {
-  grid-area: balance;
-  font-size: 30px;
-  text-align: right;
-  margin-right: 20px;
-  font-weight: 500;
-  color: var(--pink);
-}
-@media (max-width: 599px) {
-  .player-info .balance {
-    font-size: 16px;
   }
 }
 

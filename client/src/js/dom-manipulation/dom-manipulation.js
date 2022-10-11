@@ -125,7 +125,7 @@ export function setParticipantBalance(participant, balance) {
   if (participant != 'user' && participant != 'bot') {
     throw new Error('invalid participant selector');
   }
-  document.querySelector(`.${participant} .balance`).textContent =
+  document.getElementById(`${participant}-balance`).textContent =
     balance.dividedBy(1e18).toFormat(2) + 'æ';
 }
 
@@ -138,9 +138,11 @@ export function setFinalizedSelection(participant, selection) {
     throw new Error('invalid participant selector');
   }
   const wrapper = _getParticipantSelectionIcon(participant);
+  const image = wrapper.querySelector('img');
 
   wrapper.style.display = 'flex';
-  wrapper.querySelector('img').src = `./src/assets/images/${selection}.png`;
+  image.src = `./src/assets/images/${selection}.png`;
+  image.style.display = 'block';
 }
 
 export function resetSelections() {
@@ -207,6 +209,7 @@ export function handleAppMount(gameChannel) {
     button.addEventListener('click', async () => {
       if (!gameChannel.isOpen && !gameChannel.isOpening) {
         setMoveSelectionDisability(true);
+        setMoveStatus('user', 'Initializing channel...');
         await gameChannel.initializeChannel();
       }
       const selection = Object.values(Selections)[index];
