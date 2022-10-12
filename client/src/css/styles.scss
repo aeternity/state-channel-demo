@@ -17,7 +17,7 @@
   &.container {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: 15% 40% 45%;
+    grid-template-rows: 90px 32% calc(68% - 90px);
     gap: 0px 0px;
     grid-auto-flow: column;
     grid-template-areas:
@@ -26,9 +26,6 @@
       'transactions';
     height: 100vh;
 
-    &.noSelections {
-      grid-template-rows: 20% 5% 75%;
-    }
     > .error {
       display: flex;
       flex-direction: column;
@@ -37,6 +34,9 @@
       font-weight: 500;
       font-size: 25px;
       text-align: center;
+    }
+    @include for-phone-only {
+      grid-template-rows: 90px 45% calc(55% - 90px);
     }
     @include for-big-desktop-up {
       grid-template-rows: 20% 35% 45%;

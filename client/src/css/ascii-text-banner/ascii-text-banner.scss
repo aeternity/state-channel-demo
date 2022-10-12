@@ -1,14 +1,17 @@
 @import '../mediaqueries/mediaqueries.scss';
 
 .ascii-text-banner {
-  display: none;
-
-  @include for-tablet-landscape-up {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    pre {
-      width: max-content;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pre {
+    width: max-content;
+    font-size: 7px;
+    @include for-phone-only {
+      font-size: 4px;
+    }
+    @include for-tablet-landscape-up {
+      font-size: 9px;
     }
   }
 }

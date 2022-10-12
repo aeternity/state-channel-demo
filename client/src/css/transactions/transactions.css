@@ -125,17 +125,7 @@
 }
 .transactions .terminal__info {
   font-family: 'DM Mono', monospace;
-  font-size: 14px;
-}
-@media (max-width: 599px) {
-  .transactions .terminal__info {
-    font-size: 12px;
-  }
-}
-@media (min-width: 600px) {
-  .transactions .terminal__info {
-    font-size: 14px;
-  }
+  font-size: 12px;
 }
 .transactions .terminal__info p {
   margin: 10px 0;

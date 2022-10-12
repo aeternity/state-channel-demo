@@ -12,7 +12,7 @@
     border: none;
     text-align: left;
     img {
-      width: 110px;
+      width: 80px;
       &.clickable {
         cursor: pointer;
       }
@@ -31,7 +31,6 @@
 
   &.end-screen {
     img {
-      width: 110px;
       cursor: pointer;
     }
   }
@@ -46,7 +45,9 @@
   width: fit-content;
   justify-self: flex-end;
   .button {
+    text-align: center;
     margin-left: 0;
+    font-size: 14px;
   }
   @include for-phone-only {
     grid-column: 1 / 4;
@@ -69,13 +70,12 @@
 
     .title {
       text-align: center;
-      font-size: 50px;
       font-weight: bold;
       @include for-phone-only {
         font-size: 26px;
       }
       @include for-tablet-portrait-up {
-        font-size: 40px;
+        font-size: 30px;
       }
     }
 
