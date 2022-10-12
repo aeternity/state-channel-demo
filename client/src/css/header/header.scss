@@ -10,7 +10,6 @@
   padding-bottom: 5px;
   button {
     border: none;
-    background: no-repeat;
     text-align: left;
     img {
       width: 110px;
@@ -43,6 +42,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  text-align: center;
   width: fit-content;
   justify-self: flex-end;
   .button {
