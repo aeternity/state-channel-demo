@@ -6,7 +6,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ['@aeternity/rock-paper-scissors'],
     esbuildOptions: {
-      target: 'es2020',
+      supported: {
+        bigint: true,
+      },
     },
   },
   plugins: [
@@ -44,9 +46,5 @@ export default defineConfig({
   },
   build: {
     target: 'es2020',
-    commonjsOptions: {
-      exclude: ['@aeternity/rock-paper-scissors'],
-      include: [],
-    },
   },
 });
