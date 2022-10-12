@@ -65,6 +65,24 @@ export async function returnCoinsToFaucet(payload) {
   }
 }
 
+export async function fundThroughFaucet(retries = 10) {
+  const FAUCET_URL = 'https://faucet.aepps.com';
+  try {
+    const res = await fetch(`${FAUCET_URL}/account/${sdk.selectedAddress}`, {
+      method: 'POST',
+    });
+    if (res.status != 200) throw new Error(`${res.statusText} - ${res.status}`);
+  } catch (e) {
+    if (retries > 0) {
+      await refreshSdkAccount();
+      return fundThroughFaucet(retries - 1);
+    } else {
+      console.error(e);
+      throw new Error(`Faucet was unable to fund account`);
+    }
+  }
+}
+
 // ! LOCAL NODE USAGE ONLY
 export const FAUCET_ACCOUNT = import.meta.env.VITE_FAUCET_SECRET_KEY
   ? new MemoryAccount({
