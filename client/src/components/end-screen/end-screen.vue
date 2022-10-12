@@ -64,11 +64,12 @@ const earnings = computed(() => {
   return balance.minus(initialBalance);
 });
 
-function getLinkToShare() {
-  return `${window.location.origin.concat(window.location.pathname)}?th=${
-    channel?.savedResultsOnChainTxHash
-  }`;
-}
+const getLinkToShare = computed(
+  () =>
+    `${window.location.origin.concat(window.location.pathname)}?th=${
+      channel?.savedResultsOnChainTxHash
+    }`
+);
 
 function closeChannel() {
   channel?.closeChannel();
@@ -109,9 +110,23 @@ function continueAutoplay() {
         @click="closeChannel()"
       />
       <div class="share-results" v-if="!props.resultsFromSharedLink">
-        <ShareButtons v-if="!channel.isOpen" :url="getLinkToShare()" />
-        <div v-else-if="channel.channelIsClosing" class="text">
+        <ShareButtons
+          v-if="!channel.isOpen && channel.savedResultsOnChainTxHash"
+          :url="getLinkToShare"
+        />
+        <div
+          v-else-if="channel.channelIsClosing && channel.isOpen"
+          class="text"
+        >
           Channel is closing...
+        </div>
+        <div
+          v-else-if="
+            !channel.savedResultsOnChainTxHash && channel.channelIsClosing
+          "
+          class="text"
+        >
+          Saving results...
         </div>
       </div>
       <Button
