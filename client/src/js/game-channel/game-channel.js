@@ -15,6 +15,7 @@ import {
   resetApp,
 } from '../local-storage/local-storage';
 import {
+  fundThroughFaucet,
   keypair,
   node,
   NODE_URL,
@@ -151,6 +152,9 @@ export class GameChannel {
    */
   async fetchChannelConfig() {
     if (!sdk) throw new Error('SDK is not set');
+    if (!import.meta.env.VITE_NODE_URL.includes('localhost')) {
+      await fundThroughFaucet();
+    }
     const res = await fetch(import.meta.env.VITE_BOT_SERVICE_URL + '/open', {
       method: 'POST',
       headers: {
