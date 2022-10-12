@@ -253,12 +253,13 @@ export class GameChannel {
       await channel
         .shutdown((tx: Encoded.Transaction) => this.signTx('channel_close', tx))
         .then(async () => {
-          this.savedResultsOnChainTxHash = await returnCoinsToFaucet(
-            this.getMessageToSaveOnChain()
-          );
           this.shouldShowEndScreen = true;
           this.isOpen = false;
           channel.disconnect();
+
+          returnCoinsToFaucet(this.getMessageToSaveOnChain()).then(
+            async (txHash) => (this.savedResultsOnChainTxHash = txHash)
+          );
         });
     });
     return channelClosing;
