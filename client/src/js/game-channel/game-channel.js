@@ -39,6 +39,7 @@ import {
   updateOpenChannelTransactions,
 } from '../terminal/terminal';
 import { DomMiddleware } from './game-channel.middleware';
+import { setLogsNotificationVisible } from '../dom-manipulation/dom-manipulation';
 /**
  * @typedef {import("../../types").GameRound} GameRound
  * @typedef {import("../../types").Update} Update
@@ -47,6 +48,8 @@ import { DomMiddleware } from './game-channel.middleware';
  * @typedef {import('@aeternity/aepp-sdk/es/channel/internal').ChannelOptions} ChannelOptions
  * @typedef {import('@aeternity/aepp-sdk/es/utils/encoder').Encoded} Encoded
  * @typedef {import('@aeternity/aepp-sdk/es/channel/internal').Channel} Channel
+ * @typedef {import("../../types").TransactionLog} TransactionLog
+ * @typedef { import("../../types").StoredState } StoredState
  */
 
 /**
@@ -189,6 +192,14 @@ export class GameChannel {
    */
   async initializeChannel(config) {
     this.isOpening = true;
+    const log = {
+      onChain: false,
+      description:
+        'User invited a bot to initialise a state channel connection',
+      timestamp: Date.now(),
+    };
+    addUserTransaction(log, 0);
+
     if (!config) config = await this.fetchChannelConfig();
     this.channelConfig = config;
     this.isFunded = true;
@@ -238,6 +249,8 @@ export class GameChannel {
         round: this.channelRound,
       }
     );
+
+    setLogsNotificationVisible(true);
 
     this.isFunded = true;
     this.isOpen = true;
@@ -308,7 +321,8 @@ export class GameChannel {
     if (tag === 'responder_sign') {
       const transactionLog = {
         id: txHash,
-        description: 'Open state channel',
+        description:
+          'User co-signed bot’s transaction to initialise a state channel connection',
         signed: SignatureTypes.confirmed,
         onChain: true,
         timestamp: Date.now(),
@@ -320,7 +334,7 @@ export class GameChannel {
     if (tag === 'channel_close') {
       const transactionLog = {
         id: txHash,
-        description: 'Close state channel',
+        description: 'User closed state channel connection',
         signed: SignatureTypes.proposed,
         onChain: true,
         timestamp: Date.now(),
@@ -424,7 +438,8 @@ export class GameChannel {
   logContractDeployment(th) {
     const transactionLog = {
       id: th,
-      description: 'Deploy contract',
+      description:
+        'User co-signed bot’s transaction and verified validity of deployed game contract in state channel',
       signed: SignatureTypes.confirmed,
       onChain: false,
       timestamp: Date.now(),
@@ -541,15 +556,15 @@ export class GameChannel {
       transactionLog.description = `User called ${information.name}()`;
       switch (information.name) {
         case Methods.provide_hash:
-          transactionLog.description = `User hashed his selection`;
+          transactionLog.description = `User signed a contract call with hashed game move`;
           break;
         case Methods.reveal:
-          transactionLog.description = `User revealed his selection: ${information.value}`;
+          transactionLog.description = `User signed a contract call with revealed game move: ${information.value}, providing also the hash key to state channel`;
           break;
       }
     } else if (information.name === ContractEvents.player1Moved) {
       transactionLog.signed = SignatureTypes.confirmed;
-      transactionLog.description = `Bot selected ${information.value}`;
+      transactionLog.description = `User co-signed a contract call with bot’s game move: ${information.value}`;
     }
     addUserTransaction(transactionLog, this.gameRound.index);
   }
@@ -669,13 +684,14 @@ export class GameChannel {
     if (message.type === 'add_bot_transaction_log') {
       const txLog = message.data;
       let round =
-        txLog.onChain || txLog.description === 'Deploy contract'
+        txLog.onChain || txLog.description.includes('deployed game contract')
           ? 0
           : this.gameRound.index;
 
       if (round > 1 && transactionLogs.botTransactions[round - 1].length === 2)
         round--;
       addBotTransaction(txLog, round);
+      this.saveStateToLocalStorage();
     }
   }
 
@@ -760,10 +776,11 @@ export class GameChannel {
     }
   }
 
-  async restoreGameState() {
-    const savedState = getSavedState();
-    if (!savedState) return;
-    if (savedState?.gameRound.userInAction) return localStorage.clear();
+  /**
+   *
+   * @param {StoredState} savedState
+   */
+  async restoreGameState(savedState) {
     await sdk.addAccount(new MemoryAccount({ keypair: savedState.keypair }), {
       select: true,
     });

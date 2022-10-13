@@ -27,6 +27,7 @@
   }
   @include for-big-desktop-up {
     align-items: flex-start;
+    padding-top: calc(var(--padding) * 0.5);
   }
 
   &.end-screen {

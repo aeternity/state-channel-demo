@@ -24,6 +24,14 @@ export interface TransactionLogGroup {
   [round: number]: Array<TransactionLog>;
 }
 
+export interface TransactionLog {
+  id: Encoded.TxHash;
+  onChain: boolean;
+  description: string;
+  signed: SignatureType;
+  timestamp: number;
+}
+
 export interface StoredState {
   // In a real application, this should be more private
   keypair: {

@@ -39,7 +39,7 @@
       grid-template-rows: 90px 45% calc(55% - 90px);
     }
     @include for-big-desktop-up {
-      grid-template-rows: 20% 35% 45%;
+      grid-template-rows: 120px 25% calc(75% - 120px);
     }
   }
 }
