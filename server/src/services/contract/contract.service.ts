@@ -71,7 +71,8 @@ export async function deployContract(
       const log: TransactionLog = {
         id: buildTxHash(tx),
         onChain: false,
-        description: 'Deploy contract',
+        description:
+          'Bot signed a transaction and deployed game contract in state channel',
         timestamp: Date.now(),
         signed: SignatureType.proposed,
       };

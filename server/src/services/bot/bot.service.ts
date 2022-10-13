@@ -137,17 +137,17 @@ export async function sendCallUpdateLog(
   };
   switch (event.name) {
     case ContractEvents.player0ProvidedHash:
-      txLog.description = 'User hashed his selection';
+      txLog.description = 'Bot co-signed a contract call with user’s hashed game move';
       break;
     case ContractEvents.player0Revealed: {
       const selection = event.value;
-      txLog.description = `User revealed his selection: ${selection}`;
+      txLog.description = `Bot co-signed user’s contract call with revealed game move: ${selection}`;
       break;
     }
     case ContractEvents.player1Moved: {
       txLog.signed = SignatureType.proposed;
       const selection = event.value;
-      txLog.description = `Bot selected ${selection}`;
+      txLog.description = `Bot signed a contract call with game move: ${selection}`;
       break;
     }
     default:
@@ -473,7 +473,8 @@ export async function generateGameSession(
       if (tag === 'initiator_sign') {
         // we are signing the channel open transaction
         openStateChannelTxLog = {
-          description: 'Open state channel',
+          description:
+            'Bot signed a transaction to initialise state channel connection',
           id: buildTxHash(tx),
           onChain: true,
           signed: SignatureType.proposed,
@@ -487,7 +488,8 @@ export async function generateGameSession(
           {
             type: 'add_bot_transaction_log',
             data: {
-              description: 'Close state channel',
+              description:
+                'Bot co-signed user’s transaction to close state channel connection',
               id: buildTxHash(tx),
               onChain: true,
               signed: SignatureType.confirmed,

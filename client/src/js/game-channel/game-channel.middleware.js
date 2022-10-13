@@ -35,6 +35,7 @@ const resetRound = async () => {
  * @param {gameChannel} gameChannel
  */
 export function DomMiddleware(gameChannel) {
+  if (gameChannel.error) DOMUpdate.addErrorLog(gameChannel.error);
   if (gameChannel.isOpen) {
     if (gameChannel.balances.user && gameChannel.balances.bot) {
       DOMUpdate.setParticipantBalance('user', gameChannel.balances.user);

@@ -1,13 +1,15 @@
-import { Selections } from '../game-channel/game-channel.enums';
+import { Selections, SignatureTypes } from '../game-channel/game-channel.enums';
+import { formatDate, formatTxId } from '../utils/utils';
+import { resetApp } from '../local-storage/local-storage';
 
 /**
  * @typedef {import("bignumber.js").BigNumber} BigNumber
+ * @typedef {import("../../types").TransactionLog} TransactionLog
+ * @typedef {import("../../types").TransactionLogGroup} TransactionLogGroup
  * @typedef {'user' | 'bot'} Participant
  * @typedef {import("../game-channel/game-channel.enums").Selections} Selections
  * @typedef {import("../game-channel/game-channel").GameChannel} GameChannel
  */
-
-import { resetApp } from '../local-storage/local-storage';
 
 /**
  * @param {Participant} participant
@@ -241,9 +243,146 @@ export function disableAutoplayView(gameChannel) {
 
 /**
  *
+ * @param {TransactionLog} transaction
+ * @param {boolean} isUser
+ */
+export function renderTransactionLog(transaction, isUser) {
+  const transactionsList = document.querySelector('.transactions-list');
+  const transactionPair =
+    document.querySelector(`#tx-pair-${transaction.id}`) ??
+    createNewTransactionPair(transaction.id);
+  const tx = createNewTransaction(transaction, isUser);
+  if (transaction.signed === SignatureTypes.proposed) {
+    transactionPair.prepend(tx);
+  } else {
+    transactionPair.append(tx);
+  }
+  transactionsList.scrollIntoView(false);
+}
+
+/**
+ *
+ * @param {string} id
+ * @returns {HTMLDivElement} transactionPair
+ */
+function createNewTransactionPair(id) {
+  const transactionsList = document.querySelector('.transactions-list');
+  const txPair = document.createElement('div');
+  transactionsList.appendChild(txPair);
+  txPair.classList.add('transaction-pair');
+  txPair.id = `tx-pair-${id}`;
+
+  return txPair;
+}
+
+/**
+ *
+ * @param {TransactionLog} transaction
+ * @param {boolean} isUser
+ * @returns {HTMLDivElement} transaction
+ */
+function createNewTransaction(transaction, isUser) {
+  const txEl = document.createElement('div');
+  txEl.classList.add('transaction');
+  if (transaction.onChain) txEl.classList.add('on-chain');
+  if (isUser) txEl.classList.add('is-user');
+  txEl.id = transaction.id;
+  txEl.innerHTML = `
+    <span>${isUser ? '[USER]' : '[BOT]'}</span>
+    <span> - ${formatDate(transaction.timestamp)} -</span>
+    <span title="${transaction.id ?? ''}">
+      ${transaction.id ? `${formatTxId(transaction.id)} -` : ''}
+    </span>
+    <span>
+      ${transaction.description} 
+    </span>
+    ${
+      transaction.onChain ? '<span class="on-chain-pill">on-chain</span>' : ''
+    }`;
+
+  return txEl;
+}
+
+/**
+ *
+ * @param {string} id
+ */
+export function removeTransactionsPair(id) {
+  const transactionsList = document.querySelector('.transactions-list');
+  const transactionPair = document.querySelector(`#tx-pair-${id}`);
+  transactionsList.removeChild(transactionPair);
+  console.warn('removed transaction pair', id);
+}
+
+/**
+ *
+ * @param {TransactionLogGroup} transactionLogGroup
+ * @param {boolean} isUser
+ */
+export function renderTransactionLogs(transactionLogGroup, isUser) {
+  for (const rounds of Object.values(transactionLogGroup)) {
+    for (const transaction of rounds) {
+      renderTransactionLog(transaction, isUser);
+    }
+  }
+}
+
+/**
+ *
+ * @param {object} error
+ */
+export function addErrorLog(error) {
+  if (document.querySelector(`#tx-pair-error-${error.timestamp}`)) return;
+
+  const transactionsList = document.querySelector('.transactions-list');
+  const errorEl = document.createElement('div');
+  errorEl.classList.add('error', 'transaction');
+  errorEl.innerHTML = `
+    <span>${'[ERROR]'}</span>
+    <span> - ${formatDate(error.timestamp)} -</span>
+    <span>${error.message}</span>
+    `;
+
+  const txPair = createNewTransactionPair(`error-${error.timestamp}`);
+  txPair.append(errorEl);
+  transactionsList.appendChild(txPair);
+  transactionsList.scrollIntoView(false);
+}
+
+/**
+ *
+ * @param {boolean} isVisible
+ */
+export function setLogsNotificationVisible(isVisible) {
+  const notification = document.querySelector('#logs-notification');
+  if (isVisible) {
+    notification.style.display = 'flex';
+  } else {
+    notification.style.display = 'none';
+  }
+}
+
+function handleTerminalExpand() {
+  const terminal = document.querySelector('.transactions');
+  const expandBtnIcon = document.querySelector('#expand-terminal-icon');
+  terminal.classList.toggle('fullscreen');
+  const icon = terminal.classList.contains('fullscreen')
+    ? 'images/minimize.png'
+    : 'svg/expand.svg';
+  expandBtnIcon.src = `./src/assets/${icon}`;
+}
+
+/**
+ *
  * @param {GameChannel} gameChannel
  */
 export function handleAppMount(gameChannel) {
+  document
+    .querySelector('#logs-notification-close')
+    .addEventListener('click', () => setLogsNotificationVisible(false));
+  document
+    .querySelector('#expand-terminal')
+    .addEventListener('click', handleTerminalExpand);
   document.getElementById('reset').addEventListener('click', resetApp);
   document.querySelectorAll('.selections button').forEach((button, index) => {
     button.addEventListener('click', async () => {
