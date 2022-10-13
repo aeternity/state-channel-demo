@@ -62,9 +62,8 @@ export async function fundThroughFaucet(
     await axios.post(`${FAUCET_URL}/account/${account}`, {});
     return logger.info(`Funded account ${account} through Faucet`);
   } catch (error) {
-    const errorMessage = `account ${account} is greylisted.`;
-    logger.error(errorMessage);
-    throw new Error(errorMessage);
+    logger.error(error);
+    throw error;
   }
 }
 
