@@ -19,7 +19,6 @@ import {
   keypair,
   node,
   NODE_URL,
-  refreshSdkAccount,
   returnCoinsToFaucet,
   sdk,
   verifyContractBytecode,
@@ -84,7 +83,6 @@ export class GameChannel {
   savedResultsOnChainTxHash = null;
   hasInsuffientBalance = false;
   shouldHandleReconnection = false;
-  error = null;
   balances = {
     user: undefined,
     bot: undefined,
@@ -171,19 +169,7 @@ export class GameChannel {
     });
     const data = await res.json();
     this.gameRound.stake = new BigNumber(data.gameStake);
-    if (res.status != 200) {
-      if (data.error.includes('greylisted')) {
-        console.log('Greylisted account, retrying with new account');
-        await refreshSdkAccount();
-        return this.fetchChannelConfig();
-      } else
-        this.error = {
-          status: res.status,
-          statusText: res.statusText,
-          message: data.error || 'Error while fetching channel config',
-        };
-      throw new Error(data.error);
-    }
+    if (data.error) throw new Error(`Bot service error - ${data.error}`);
     return data;
   }
 
