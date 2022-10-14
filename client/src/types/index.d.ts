@@ -49,3 +49,10 @@ export interface StoredState {
   };
   contractCreationChannelRound: number;
 }
+
+export interface SharedResults {
+  rounds: number;
+  isLastRoundCompleted: boolean;
+  earnings: BigNumber;
+  responderId: Encoded.AccountAddress;
+}

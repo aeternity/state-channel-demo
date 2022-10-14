@@ -18,12 +18,8 @@
     <div id="app" class="container">
       <!-- #region Header -->
       <div class="header">
-        <button id="reset" style="background-color: transparent; border: none">
-          <img
-            src="./src/assets/images/logo.png"
-            :class="{ clickable: canCloseChannel || canResetApp }"
-            alt="Aeternity"
-          />
+        <button id="reset" disabled>
+          <img src="./src/assets/images/logo.png" alt="Aeternity" />
         </button>
         <div class="center">
           <!-- if channel is open -->
@@ -47,9 +43,9 @@
             class="button"
             >Fork repo
           </a>
-          <!-- if channel is initialized and disabled if no explorer url -->
-          <!-- https://testnet.aenalytics.org/accounts/${responderId} -->
-          <a href="#" class="button">Check Explorer</a>
+          <a id="check-explorer-btn" class="button disabled" target="_blank"
+            >Check Explorer</a
+          >
           <button id="end-game" disabled class="button">End Game</button>
         </div>
       </div>
@@ -184,6 +180,9 @@
         </div>
       </div>
       <!-- #endregion -->
+      <div id="end-screen" class="end-screen">
+        <!-- end-screen -->
+      </div>
     </div>
     <script type="module" src="main.js"></script>
   </body>

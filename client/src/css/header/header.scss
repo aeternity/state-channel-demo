@@ -8,13 +8,18 @@
   justify-content: center;
   padding: var(--padding);
   padding-bottom: 5px;
-  button {
+  #reset {
     border: none;
+    background-color: transparent;
     text-align: left;
+    width: max-content;
     img {
       width: 80px;
-      &.clickable {
-        cursor: pointer;
+      cursor: pointer;
+    }
+    &:disabled {
+      img {
+        cursor: default;
       }
     }
   }
@@ -49,6 +54,10 @@
     text-align: center;
     margin-left: 0;
     font-size: 14px;
+    &.disabled {
+      cursor: not-allowed;
+      background-color: gray;
+    }
   }
   @include for-phone-only {
     grid-column: 1 / 4;
