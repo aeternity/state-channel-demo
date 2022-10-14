@@ -35,7 +35,6 @@ const resetRound = async () => {
  * @param {gameChannel} gameChannel
  */
 export function DomMiddleware(gameChannel) {
-  if (gameChannel.error) DOMUpdate.addErrorLog(gameChannel.error);
   if (gameChannel.shouldShowEndScreen) {
     DOMUpdate.showEndScreen(gameChannel);
     DOMUpdate.setResetDisability(false);
