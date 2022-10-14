@@ -140,7 +140,7 @@
         }
         .transaction {
           font-family: 'DM Mono', monospace;
-          font-size: 16px;
+          font-size: 14px;
           margin-bottom: 5px;
 
           text-align: left;
@@ -152,7 +152,7 @@
             font-size: 12px;
           }
           @include for-tablet-landscape-up {
-            font-size: 16px;
+            font-size: 14px;
           }
           .info {
             margin-left: 20px;
@@ -169,6 +169,7 @@
             padding: 2px 8px;
             border-radius: 8px;
             margin-left: 5px;
+            white-space: nowrap;
           }
         }
       }

@@ -22,3 +22,24 @@ export function formatDate(timestamp) {
 export function formatTxId(id) {
   return id.length > 10 ? id.slice(0, 5) + '…' + id.slice(-5) : id;
 }
+
+/**
+ *
+ * @param {'fb' | 'linkedin' | 'twitter' | 'whatsapp'} to
+ */
+export function openShareWindow(url) {
+  const configWindow = createWindowConfig();
+  return window.open(url, 'Share this', configWindow);
+}
+
+/**
+ *
+ * @param {number} width
+ * @param {number} height
+ * @returns
+ */
+function createWindowConfig(width = 500, height = 500) {
+  const left = screen.width / 2 - width / 2;
+  const top = screen.height / 2 - height / 2;
+  return `width=${width},height=${height},left=${left},top=${top}`;
+}
