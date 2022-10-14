@@ -163,7 +163,7 @@
 }
 .transactions .terminal .transactions-list .transaction-pair .transaction {
   font-family: 'DM Mono', monospace;
-  font-size: 16px;
+  font-size: 14px;
   margin-bottom: 5px;
   text-align: left;
   color: var(--pink);
@@ -180,7 +180,7 @@
 }
 @media (min-width: 900px) {
   .transactions .terminal .transactions-list .transaction-pair .transaction {
-    font-size: 16px;
+    font-size: 14px;
   }
 }
 .transactions
@@ -216,4 +216,5 @@
   padding: 2px 8px;
   border-radius: 8px;
   margin-left: 5px;
+  white-space: nowrap;
 } /*# sourceMappingURL=transactions.css.map */

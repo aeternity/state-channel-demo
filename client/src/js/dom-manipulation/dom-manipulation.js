@@ -1,9 +1,13 @@
 import { Selections, SignatureTypes } from '../game-channel/game-channel.enums';
-import { formatDate, formatTxId } from '../utils/utils';
+import { formatDate, formatTxId, openShareWindow } from '../utils/utils';
 import { resetApp } from '../local-storage/local-storage';
+import { renderEndScreen } from './end-screen';
+import { decode, Node } from '@aeternity/aepp-sdk';
+import { NODE_URL } from '../sdk-service/sdk-service';
 
 /**
  * @typedef {import("bignumber.js").BigNumber} BigNumber
+ * @typedef {import('@aeternity/aepp-sdk/es/utils/encoder').Encoded} Encoded
  * @typedef {import("../../types").TransactionLog} TransactionLog
  * @typedef {import("../../types").TransactionLogGroup} TransactionLogGroup
  * @typedef {'user' | 'bot'} Participant
@@ -96,7 +100,7 @@ export function showGameInfo() {
 }
 
 /**
- * @param {boolean} disability
+ * @param {boolean} isDisabled
  */
 export function setMoveSelectionDisability(isDisabled) {
   document.querySelector('.selections').style.display = isDisabled
@@ -117,6 +121,15 @@ export function setStakeAmount(amount) {
  */
 export function setGameRoundIndex(index) {
   document.querySelector('.round-index').textContent = index;
+}
+
+/**
+ * @param {Encoded.AccountAddress} responderId
+ */
+export function setCheckExplorerBtnUrl(responderId) {
+  const checkExplorerBtn = document.querySelector('#check-explorer-btn');
+  checkExplorerBtn.href = `https://testnet.aenalytics.org/accounts/${responderId}`;
+  checkExplorerBtn.classList.remove('disabled');
 }
 
 /**
@@ -270,7 +283,7 @@ function createNewTransactionPair(id) {
   const txPair = document.createElement('div');
   transactionsList.appendChild(txPair);
   txPair.classList.add('transaction-pair');
-  txPair.id = `tx-pair-${id}`;
+  txPair.id = `tx-pair-${id ?? Math.floor(Math.random() * 1000)}`;
 
   return txPair;
 }
@@ -311,7 +324,6 @@ export function removeTransactionsPair(id) {
   const transactionsList = document.querySelector('.transactions-list');
   const transactionPair = document.querySelector(`#tx-pair-${id}`);
   transactionsList.removeChild(transactionPair);
-  console.warn('removed transaction pair', id);
 }
 
 /**
@@ -372,6 +384,73 @@ function handleTerminalExpand() {
   expandBtnIcon.src = `./src/assets/${icon}`;
 }
 
+export function showEndScreen() {
+  renderEndScreen();
+}
+
+/**
+ *
+ * @param {Encoded.TxHash} hash
+ */
+export function showShareButtons(hash) {
+  const linkToShare = window.location.origin.concat(
+    window.location.pathname,
+    '?th=',
+    hash
+  );
+  const message =
+    'I just played a game of rock-paper-scissors on the æternity blockchain.\n';
+  const twitterΜessage =
+    message.replace('æternity', '@aeternity') +
+    '#Æ #æternity #AE #aeternityblockchain #web3 #blockchaintechnology\n';
+
+  const fbUrl = `https://www.facebook.com/sharer/sharer.php?&u=${encodeURIComponent(
+    linkToShare
+  )}`;
+
+  const linkedInUrl = `https://www.linkedin.com/shareArticle?url=${encodeURIComponent(
+    linkToShare
+  )}`;
+
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+    twitterΜessage
+  )}&url=${encodeURIComponent(linkToShare)}`;
+
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+    message + linkToShare
+  )}`;
+
+  const html = ` 
+    <div class="share-buttons">
+      <span class="text">Share your results </span>
+      <div class="button" id="fb" >
+        <img src="./src/assets/svg/facebook.svg" alt="Facebook" />
+      </div>
+      <div class="button" id="linkedin" >
+        <img src="./src/assets/svg/linkedin.svg" alt="LinkedIn" />
+      </div>
+      <div class="button" id="twitter" >
+        <img src="./src/assets/svg/twitter.svg" alt="Twitter" />
+      </div>
+      <div class="button" id="whatsapp" >
+        <img src="./src/assets/svg/whatsapp.svg" alt="WhatsApp" />
+      </div>
+    </div>`;
+  const shareResults = document.querySelector('.share-results');
+  const shareButtons = document.createElement('div');
+  shareButtons.innerHTML = html;
+  shareButtons.querySelector('#fb').onclick = () => openShareWindow(fbUrl);
+  shareButtons.querySelector('#linkedin').onclick = () =>
+    openShareWindow(linkedInUrl);
+  shareButtons.querySelector('#twitter').onclick = () =>
+    openShareWindow(twitterUrl);
+  shareButtons.querySelector('#whatsapp').onclick = () =>
+    openShareWindow(whatsappUrl);
+
+  shareResults.removeChild(shareResults.querySelector('#saving-results'));
+  shareResults.appendChild(shareButtons);
+}
+
 /**
  *
  * @param {GameChannel} gameChannel
@@ -384,6 +463,13 @@ export function handleAppMount(gameChannel) {
     .querySelector('#expand-terminal')
     .addEventListener('click', handleTerminalExpand);
   document.getElementById('reset').addEventListener('click', resetApp);
+  document.getElementById('end-game').addEventListener('click', () => {
+    hideSelections();
+    setMoveSelectionDisability(true);
+    document.querySelector('.autoplay').style.display = 'none';
+    setMoveStatus('user', 'Channel is closing...');
+    gameChannel.closeChannel();
+  });
   document.querySelectorAll('.selections button').forEach((button, index) => {
     button.addEventListener('click', async () => {
       if (!gameChannel.isOpen && !gameChannel.isOpening) {
@@ -401,4 +487,25 @@ export function handleAppMount(gameChannel) {
         );
     });
   });
+}
+
+export function handleSharedResults() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const th = urlParams.get('th');
+  let resultsFromSharedLink = '';
+  if (th) {
+    // if we have a th, we need to show the end-screen
+    const node = new Node(NODE_URL);
+    node
+      .getTransactionByHash(th)
+      .then((tx) => {
+        resultsFromSharedLink = JSON.parse(decode(tx.tx.payload).toString());
+        renderEndScreen(resultsFromSharedLink);
+        setCheckExplorerBtnUrl(resultsFromSharedLink.responderId);
+        hideElement('#end-game');
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+  }
 }

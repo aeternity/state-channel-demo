@@ -287,8 +287,9 @@ export class GameChannel {
           this.isOpen = false;
           channel.disconnect();
 
-          returnCoinsToFaucet(this.getMessageToSaveOnChain()).then(
-            async (txHash) => (this.savedResultsOnChainTxHash = txHash)
+          const resultsMessage = this.getMessageToSaveOnChain();
+          this.savedResultsOnChainTxHash = await returnCoinsToFaucet(
+            resultsMessage
           );
         });
     });
@@ -557,7 +558,7 @@ export class GameChannel {
       transactionLog.description = `User called ${information.name}()`;
       switch (information.name) {
         case Methods.provide_hash:
-          transactionLog.description = `User signed a contract call with hashed game move`;
+          transactionLog.description = `User signed a contract call with hashed game move: ${information.value}`;
           break;
         case Methods.reveal:
           transactionLog.description = `User signed a contract call with revealed game move: ${information.value}, providing also the hash key to state channel`;

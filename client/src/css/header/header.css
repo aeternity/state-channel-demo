@@ -7,15 +7,20 @@
   padding: var(--padding);
   padding-bottom: 5px;
 }
-.header button {
+.header #reset {
   border: none;
+  background-color: transparent;
   text-align: left;
+  width: -webkit-max-content;
+  width: -moz-max-content;
+  width: max-content;
 }
-.header button img {
+.header #reset img {
   width: 80px;
-}
-.header button img.clickable {
   cursor: pointer;
+}
+.header #reset:disabled img {
+  cursor: default;
 }
 @media (max-width: 599px) {
   .header {
@@ -51,6 +56,10 @@
   text-align: center;
   margin-left: 0;
   font-size: 14px;
+}
+.links .button.disabled {
+  cursor: not-allowed;
+  background-color: gray;
 }
 @media (max-width: 599px) {
   .links {
