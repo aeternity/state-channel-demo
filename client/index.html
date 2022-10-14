@@ -129,16 +129,15 @@
       </div>
       <!-- #endregion -->
       <!-- #region Terminal -->
-      <div class="transactions" :class="{ fullscreen: isFullscreen }">
+      <div class="transactions">
         <div class="terminal">
           <div class="terminal__header">
             <div class="title">Terminal</div>
-            <button class="expand" @click="toggleFullscreen">
-              <!-- or minimize when expanded (img)-->
+            <button class="expand" id="expand-terminal">
               <img
+                id="expand-terminal-icon"
                 src="./src/assets/svg/expand.svg"
                 class="icon"
-                :class="{ active: isFullscreen }"
               />
             </button>
           </div>
@@ -153,7 +152,6 @@
                                                                                           by Æternity
             </pre>
           </div>
-
           <div class="terminal__info">
             <p>
               State channels refer to the process in which users transact with
@@ -171,53 +169,18 @@
               triggered and the state channel closes.
             </p>
           </div>
-          <div class="notification info" v-if="didReconnect">
+          <div class="notification info" id="logs-notification">
             <div class="notification-text">
               After reconnecting only the last 5 rounds are saved.
             </div>
             <img
               src="./src/assets/svg/close.svg"
               alt="x"
+              id="logs-notification-close"
               @click="closeNotification()"
             />
           </div>
-          <div class="transactions-list">
-            <!-- Transactions go here-->
-            <div class="transaction-pair">
-              <div
-                class="transaction on-chain"
-                v-if="transaction && transaction.id"
-              >
-                <span>[BOT]</span>
-                <span> - 20:30:01 -</span>
-                <span :title="transaction.id"> th_H34d...qz - </span>
-                <span>Bot opened state Channel - signed</span>
-              </div>
-              <div
-                class="transaction on-chain"
-                v-if="transaction && transaction.id"
-              >
-                <span>[USER]</span>
-                <span> - 20:30:01 -</span>
-                <span :title="transaction.id"> th_H34d...qz - </span>
-                <span>User opened state Channel - co-signed</span>
-              </div>
-            </div>
-            <div class="transaction-pair">
-              <div class="transaction" v-if="transaction && transaction.id">
-                <span>[BOT]</span>
-                <span> - 20:30:03 -</span>
-                <span :title="transaction.id"> th_adg3...rq - </span>
-                <span>Bot deployed the contract - signed</span>
-              </div>
-              <div class="transaction" v-if="transaction && transaction.id">
-                <span>[USER]</span>
-                <span> - 20:30:03 -</span>
-                <span :title="transaction.id"> th_adg3...rq - </span>
-                <span>User deployed the contract - co-signed</span>
-              </div>
-            </div>
-          </div>
+          <div class="transactions-list"></div>
         </div>
       </div>
       <!-- #endregion -->

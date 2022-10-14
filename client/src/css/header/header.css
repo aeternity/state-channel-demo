@@ -29,6 +29,7 @@
 @media (min-width: 1800px) {
   .header {
     align-items: flex-start;
+    padding-top: calc(var(--padding) * 0.5);
   }
 }
 .header.end-screen img {

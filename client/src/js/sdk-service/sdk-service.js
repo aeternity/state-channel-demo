@@ -5,6 +5,7 @@ import {
   MemoryAccount,
 } from '@aeternity/aepp-sdk';
 import { contractBytecode } from '../contract/contract';
+import { addUserTransaction } from '../terminal/terminal';
 
 /**
  * @typedef {import("@aeternity/aepp-sdk").AeSdk} AeSdk
@@ -15,7 +16,7 @@ import { contractBytecode } from '../contract/contract';
  */
 export let sdk;
 export let node;
-export const keypair = generateKeyPair();
+export let keypair;
 
 export const NODE_URL =
   import.meta.env.VITE_NODE_URL ?? 'http://localhost:3013';
@@ -28,18 +29,25 @@ const FAUCET_PUBLIC_ADDRESS = import.meta.env.VITE_FAUCET_PUBLIC_ADDRESS;
 
 export async function refreshSdkAccount() {
   if (sdk.selectedAddress) sdk.removeAccount(sdk.selectedAddress);
-  const account = new MemoryAccount({ keypair: generateKeyPair() });
+  keypair = generateKeyPair();
+  const account = new MemoryAccount({ keypair });
   await sdk.addAccount(account, { select: true });
+
+  const log = {
+    id: await account.address(),
+    onChain: false,
+    description: 'User initialized a Memory Account',
+    timestamp: Date.now(),
+  };
+  addUserTransaction(log, 0);
 }
 
 export async function getNewSdk() {
-  const account = new MemoryAccount({ keypair });
   node = new Node(NODE_URL);
   const newSdk = new AeSdk({
     nodes: [{ name: 'testnet', instance: node }],
     compilerUrl: COMPILER_URL,
   });
-  await newSdk.addAccount(account, { select: true });
   return newSdk;
 }
 
@@ -59,6 +67,12 @@ export async function returnCoinsToFaucet(payload) {
     const result = await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
       payload,
     });
+    const log = {
+      onChain: true,
+      description: 'User returned coins to faucet',
+      timestamp: Date.now(),
+    };
+    addUserTransaction(log, 0);
     return result.hash;
   } catch (e) {
     console.error({ e }, 'failed to return funds to faucet');
@@ -72,6 +86,12 @@ export async function fundThroughFaucet(retries = 10) {
       method: 'POST',
     });
     if (res.status != 200) throw new Error(`${res.statusText} - ${res.status}`);
+    const log = {
+      onChain: true,
+      description: 'User topped up coins from faucet',
+      timestamp: Date.now(),
+    };
+    addUserTransaction(log, 0);
   } catch (e) {
     if (retries > 0) {
       await refreshSdkAccount();
