@@ -10,6 +10,7 @@ import { NODE_URL } from '../sdk-service/sdk-service';
  * @typedef {import('@aeternity/aepp-sdk/es/utils/encoder').Encoded} Encoded
  * @typedef {import("../../types").TransactionLog} TransactionLog
  * @typedef {import("../../types").TransactionLogGroup} TransactionLogGroup
+ * @typedef {import("../../types").ErrorLog} ErrorLog
  * @typedef {'user' | 'bot'} Participant
  * @typedef {import("../game-channel/game-channel.enums").Selections} Selections
  * @typedef {import("../game-channel/game-channel").GameChannel} GameChannel
@@ -340,8 +341,7 @@ export function renderTransactionLogs(transactionLogGroup, isUser) {
 }
 
 /**
- *
- * @param {object} error
+ * @param {ErrorLog} error
  */
 export function addErrorLog(error) {
   if (document.querySelector(`#tx-pair-error-${error.timestamp}`)) return;
@@ -455,7 +455,45 @@ export function showShareButtons(hash) {
  *
  * @param {GameChannel} gameChannel
  */
+function addAutoplayListener(gameChannel) {
+  const checkbox = document.getElementById('autoplay_button');
+  checkbox.addEventListener('change', function () {
+    if (checkbox.checked) {
+      checkbox.closest('.toggle__button').classList.add('active');
+      gameChannel.engageAutoplay();
+      enableAutoplayView(gameChannel);
+    } else {
+      checkbox.closest('.toggle__button').classList.remove('active');
+      gameChannel.autoplay.enabled = false;
+      disableAutoplayView(gameChannel);
+    }
+  });
+}
+
+function addErrorListener() {
+  window.addEventListener('error', function (error) {
+    addErrorLog({
+      message: error,
+      timestamp: Date.now(),
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function (error) {
+    addErrorLog({
+      message:
+        error.reason.message ?? 'Unhandled rejection, see browser console',
+      timestamp: Date.now(),
+    });
+  });
+}
+
+/**
+ *
+ * @param {GameChannel} gameChannel
+ */
 export function handleAppMount(gameChannel) {
+  addErrorListener(gameChannel);
+  addAutoplayListener(gameChannel);
   document
     .querySelector('#logs-notification-close')
     .addEventListener('click', () => setLogsNotificationVisible(false));
