@@ -39,7 +39,7 @@ cd client && npm run dev:testnet
 
 | name             | port |
 | ---------------- | ---- |
-| frontend - vuejs | 8000 |
+| frontend | 8000 |
 | backend - nodejs | 3000 |
 | Aeternity node   | 3013 |
 | Sophia Compiler  | 3080 |

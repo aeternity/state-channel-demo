@@ -9,7 +9,9 @@
     "lint": "eslint --ext .js,.vue,.ts --ignore-path .gitignore --fix src tests",
     "format": "prettier .  --write",
     "prepare": "cd .. && husky install .husky",
-    "lint-frontend": "lint-staged"
+    "lint-frontend": "lint-staged",
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "lint-staged": {
     "*.js": [
@@ -20,21 +22,25 @@
     ]
   },
   "dependencies": {
-    "vite": "^3.1.6",
     "@aeternity/aepp-sdk": "^12.1.1",
+    "@aeternity/rock-paper-scissors": "../contract",
     "sha.js": "^2.4.11",
-    "@aeternity/rock-paper-scissors": "../contract"
+    "vite": "^3.1.6"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.2",
     "@commitlint/config-conventional": "^17.0.2",
+    "@rollup/plugin-replace": "^4.0.0",
+    "@testing-library/dom": "^8.19.0",
     "eslint": "^8.18.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-vue": "^9.1.1",
-    "@rollup/plugin-replace": "^4.0.0",
+    "happy-dom": "^7.5.7",
     "husky": "^8.0.1",
     "lint-staged": "^13.0.2",
-    "prettier": "2.7.1"
+    "node-fetch": "^3.2.10",
+    "prettier": "2.7.1",
+    "vitest": "^0.24.1"
   }
 }

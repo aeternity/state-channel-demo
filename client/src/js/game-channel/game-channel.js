@@ -189,9 +189,11 @@ export class GameChannel {
     if (!config) config = await this.fetchChannelConfig();
     this.channelConfig = config;
     this.isFunded = true;
+
+    const shouldEnableDebug = !import.meta.env.MODE === 'test';
     channel = await Channel.initialize({
       ...this.channelConfig,
-      debug: true,
+      debug: shouldEnableDebug,
       role: 'responder',
       sign: this.signTx.bind(this),
       url:
@@ -224,7 +226,7 @@ export class GameChannel {
     channel = await Channel.reconnect(
       {
         ...this.channelConfig,
-        debug: true,
+        debug: !import.meta.env.MODE === 'test',
         role: 'responder',
         sign: this.signTx.bind(this),
       },
