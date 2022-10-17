@@ -4,6 +4,15 @@ import { resetApp } from '../local-storage/local-storage';
 import { renderEndScreen } from './end-screen';
 import { decode, Node } from '@aeternity/aepp-sdk';
 import { NODE_URL } from '../sdk-service/sdk-service';
+import facebookSVG from '../../assets/svg/facebook.svg';
+import linkedinSVG from '../../assets/svg/linkedin.svg';
+import twitterSVG from '../../assets/svg/twitter.svg';
+import whatsappSVG from '../../assets/svg/twitter.svg';
+import minimizeIMG from '../../assets/images/minimize.png';
+import expandSVG from '../../assets/svg/expand.svg';
+import paperIMG from '../../assets/images/scissors.png';
+import scissorsIMG from '../../assets/images/paper.png';
+import rockIMG from '../../assets/images/rock.png';
 
 /**
  * @typedef {import("bignumber.js").BigNumber} BigNumber
@@ -156,8 +165,23 @@ export function setFinalizedSelection(participant, selection) {
   const wrapper = _getParticipantSelectionIcon(participant);
   const image = wrapper.querySelector('img');
 
+  let icon = '';
+  switch (selection) {
+    case 'rock':
+      icon = rockIMG;
+      break;
+    case 'paper':
+      icon = paperIMG;
+      break;
+    case 'scissors':
+      icon = scissorsIMG;
+      break;
+    default:
+      throw new Error('invalid selection');
+  }
+
   wrapper.style.display = 'flex';
-  image.src = `./src/assets/images/${selection}.png`;
+  image.src = new URL(icon, import.meta.url).href;
   image.style.display = 'block';
 }
 
@@ -379,9 +403,9 @@ function handleTerminalExpand() {
   const expandBtnIcon = document.querySelector('#expand-terminal-icon');
   terminal.classList.toggle('fullscreen');
   const icon = terminal.classList.contains('fullscreen')
-    ? 'images/minimize.png'
-    : 'svg/expand.svg';
-  expandBtnIcon.src = `./src/assets/${icon}`;
+    ? minimizeIMG
+    : expandSVG;
+  expandBtnIcon.src = new URL(icon, import.meta.url).href;
 }
 
 export function showEndScreen() {
@@ -424,16 +448,21 @@ export function showShareButtons(hash) {
     <div class="share-buttons">
       <span class="text">Share your results </span>
       <div class="button" id="fb" >
-        <img src="./src/assets/svg/facebook.svg" alt="Facebook" />
+        <img src="${
+          new URL(facebookSVG, import.meta.url).href
+        }" alt="Facebook" />
       </div>
       <div class="button" id="linkedin" >
-        <img src="./src/assets/svg/linkedin.svg" alt="LinkedIn" />
+        <img src="
+        ${new URL(linkedinSVG, import.meta.url).href}" alt="LinkedIn" />
       </div>
       <div class="button" id="twitter" >
-        <img src="./src/assets/svg/twitter.svg" alt="Twitter" />
+        <img src="
+        ${new URL(twitterSVG, import.meta.url).href}" alt="Twitter" />
       </div>
       <div class="button" id="whatsapp" >
-        <img src="./src/assets/svg/whatsapp.svg" alt="WhatsApp" />
+        <img src="
+        ${new URL(whatsappSVG, import.meta.url).href}" alt="WhatsApp" />
       </div>
     </div>`;
   const shareResults = document.querySelector('.share-results');
