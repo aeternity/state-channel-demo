@@ -274,8 +274,13 @@ export function disableAutoplayView(gameChannel) {
       if (!gameChannel.autoplay.enabled) {
         showElement('.selections');
         setMoveStatus('user', '');
+        toggleAutoplayBtn(false);
       }
     });
+  } else if (gameChannel.isOpen) {
+    setMoveStatus('user', '');
+    showElement('.selections');
+    toggleAutoplayBtn(false);
   }
 }
 
@@ -488,15 +493,29 @@ function addAutoplayListener(gameChannel) {
   const checkbox = document.getElementById('autoplay_button');
   checkbox.addEventListener('change', function () {
     if (checkbox.checked) {
-      checkbox.closest('.toggle__button').classList.add('active');
+      toggleAutoplayBtn(true);
       gameChannel.engageAutoplay();
       enableAutoplayView(gameChannel);
     } else {
-      checkbox.closest('.toggle__button').classList.remove('active');
+      toggleAutoplayBtn(false);
       gameChannel.autoplay.enabled = false;
       disableAutoplayView(gameChannel);
     }
   });
+}
+
+/**
+ *
+ * @param {boolean} isChecked
+ */
+function toggleAutoplayBtn(isChecked) {
+  const checkbox = document.getElementById('autoplay_button');
+  if (isChecked) {
+    checkbox.closest('.toggle__button').classList.add('active');
+  } else {
+    checkbox.closest('.toggle__button').classList.remove('active');
+    document.getElementById('autoplay_button').checked = false;
+  }
 }
 
 function addErrorListener() {

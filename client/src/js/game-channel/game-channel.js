@@ -38,7 +38,10 @@ import {
   updateOpenChannelTransactions,
 } from '../terminal/terminal';
 import { DomMiddleware } from './game-channel.middleware';
-import { setLogsNotificationVisible } from '../dom-manipulation/dom-manipulation';
+import {
+  disableAutoplayView,
+  setLogsNotificationVisible,
+} from '../dom-manipulation/dom-manipulation';
 /**
  * @typedef {import("../../types").GameRound} GameRound
  * @typedef {import("../../types").Update} Update
@@ -89,6 +92,8 @@ export class GameChannel {
   };
   autoplay = {
     enabled: false,
+    firstRoundIndex: 0,
+    limit: 200,
   };
   gameRound = {
     stake: new BigNumber(0),
@@ -630,13 +635,25 @@ export class GameChannel {
     this.gameRound.winner = undefined;
 
     // if autoplay is enabled, make user selection automatically
-    if (this.autoplay.enabled && !this.gameRound.userInAction) {
+    if (
+      this.autoplay.enabled &&
+      !this.gameRound.userInAction &&
+      this.gameRound.index <=
+        this.autoplay.limit + this.autoplay.firstRoundIndex
+    ) {
       this.setUserSelection(this.getRandomSelection());
+    } else if (
+      this.autoplay.enabled &&
+      this.gameRound.index > this.autoplay.limit + this.autoplay.firstRoundIndex
+    ) {
+      this.autoplay.enabled = false;
+      disableAutoplayView(this);
     }
   }
 
   async engageAutoplay() {
     this.autoplay.enabled = true;
+    this.autoplay.firstRoundIndex = this.gameRound.index - 1;
     if (!this.isOpen && !this.isOpening) {
       await this.initializeChannel();
     }
