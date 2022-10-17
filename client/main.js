@@ -6,16 +6,22 @@ import {
 import { gameChannel } from './src/js/game-channel/game-channel';
 import { getSavedState } from './src/js/local-storage/local-storage';
 
-handleSharedResults();
-initSdk().then(async () => {
-  const savedState = getSavedState();
-  if (!savedState) {
-    refreshSdkAccount();
-  } else if (savedState?.gameRound.userInAction) {
-    localStorage.clear();
-    refreshSdkAccount();
-  } else {
-    await gameChannel.restoreGameState(savedState);
-  }
-  handleAppMount(gameChannel);
-});
+export function init() {
+  handleSharedResults();
+  initSdk().then(async () => {
+    const savedState = getSavedState();
+    if (!savedState) {
+      refreshSdkAccount();
+    } else if (savedState?.gameRound.userInAction) {
+      localStorage.clear();
+      refreshSdkAccount();
+    } else {
+      await gameChannel.restoreGameState(savedState);
+    }
+    handleAppMount(gameChannel);
+  });
+}
+
+if (!(import.meta.env.MODE === 'test')) {
+  init();
+}
