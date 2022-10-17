@@ -34,7 +34,7 @@
 }
 @media (max-width: 599px) {
   .rock-paper-scissors {
-    margin-top: 20px;
+    margin-top: 10px;
   }
 }
 @media (min-width: 1800px) {
@@ -164,6 +164,14 @@
   display: grid;
   grid-template-rows: 30px calc(100% - 60px) 30px;
 }
+.user .balance,
+.bot .balance {
+  font-size: 30px;
+  text-align: right;
+  margin-right: var(--padding);
+  font-weight: 500;
+  color: var(--pink);
+}
 @media (max-width: 599px) {
   .user,
   .bot {
@@ -173,14 +181,6 @@
   .bot .balance {
     font-size: 16px;
   }
-}
-.user .balance,
-.bot .balance {
-  font-size: 30px;
-  text-align: right;
-  margin-right: var(--padding);
-  font-weight: 500;
-  color: var(--pink);
 }
 
 .user {

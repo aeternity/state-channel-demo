@@ -183,6 +183,10 @@
     font-size: 14px;
   }
 }
+.transactions .terminal .transactions-list .transaction-pair .transaction span {
+  word-wrap: break-word;
+  word-break: break-word;
+}
 .transactions
   .terminal
   .transactions-list

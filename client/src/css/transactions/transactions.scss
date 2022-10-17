@@ -154,6 +154,11 @@
           @include for-tablet-landscape-up {
             font-size: 14px;
           }
+
+          span {
+            word-wrap: break-word;
+            word-break: break-word;
+          }
           .info {
             margin-left: 20px;
           }

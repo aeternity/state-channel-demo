@@ -34,7 +34,7 @@
     align-items: center;
     @include for-phone-only {
       flex-wrap: wrap;
-      max-width: 230px;
+      max-width: 250px;
     }
     .text {
       margin-right: 10px;
