@@ -10,8 +10,8 @@ import twitterSVG from '../../assets/svg/twitter.svg';
 import whatsappSVG from '../../assets/svg/twitter.svg';
 import minimizeIMG from '../../assets/images/minimize.png';
 import expandSVG from '../../assets/svg/expand.svg';
-import paperIMG from '../../assets/images/scissors.png';
-import scissorsIMG from '../../assets/images/paper.png';
+import paperIMG from '../../assets/images/paper.png';
+import scissorsIMG from '../../assets/images/scissors.png';
 import rockIMG from '../../assets/images/rock.png';
 
 /**
