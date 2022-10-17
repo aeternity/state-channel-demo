@@ -74,104 +74,110 @@ describe('e2e', async () => {
     );
   }, 30000);
 
-  it('e2e', async () => {
-    expect(
-      document
-        .getElementById('check-explorer-btn')
-        .classList.contains('disabled')
-    ).toBe(true);
-    expect(document.getElementById('end-game').disabled).toBe(true);
-    document.querySelector('.selections button').click();
-    await awaitDelay(50);
+  it(
+    'e2e',
+    async () => {
+      expect(
+        document
+          .getElementById('check-explorer-btn')
+          .classList.contains('disabled')
+      ).toBe(true);
+      expect(document.getElementById('end-game').disabled).toBe(true);
+      document.querySelector('.selections button').click();
+      await awaitDelay(50);
 
-    const statusSelector = '.status.title';
-    expect(document.querySelector(statusSelector).textContent).toBe(
-      'Initializing channel...'
-    );
-    await pollForOutcome();
-    // end of initialization & pick
+      const statusSelector = '.status.title';
+      expect(document.querySelector(statusSelector).textContent).toBe(
+        'Initializing channel...'
+      );
+      await pollForOutcome();
+      // end of initialization & pick
 
-    expect(document.querySelector('.selections').style.display).toBe('none');
-    await awaitDelay(5000);
-    expect(document.querySelector('.selections').style.display).toBe('flex');
-    expect(document.querySelector('.round-index').textContent).toBe('2');
-    // end of single round
+      expect(document.querySelector('.selections').style.display).toBe('none');
+      await awaitDelay(5000);
+      expect(document.querySelector('.selections').style.display).toBe('flex');
+      expect(document.querySelector('.round-index').textContent).toBe('2');
+      // end of single round
 
-    const logs = document.querySelector('.transactions-list').childNodes;
-    expect(logs.length).toBe(7);
-    expect(logs[0].textContent.includes('User initialized a Memory Account'));
-    expect(logs[1].textContent.includes('User invited a bot'));
-    expect(logs[2].textContent.includes('initialise state channel connection'));
-    expect(logs[2].textContent.includes('User co-signed'));
-    expect(logs[3].textContent.includes('deployed game contract'));
-    expect(logs[3].textContent.includes('verified validity'));
-    expect(logs[4].textContent.includes('hashed game move'));
-    expect(logs[4].textContent.includes('contract call with game move'));
-    expect(logs[5].textContent.includes('contract call with game move'));
-    expect(
-      logs[5].textContent.includes(
-        'User co-signed a contract call with bot’s game move'
-      )
-    );
-    expect(logs[6].textContent.includes('with revealed game move'));
-    expect(
-      logs[6].textContent.includes(
-        'Bot co-signed user’s contract call with revealed'
-      )
-    );
-    // end of logs
+      const logs = document.querySelector('.transactions-list').childNodes;
+      expect(logs.length).toBe(7);
+      expect(logs[0].textContent.includes('User initialized a Memory Account'));
+      expect(logs[1].textContent.includes('User invited a bot'));
+      expect(
+        logs[2].textContent.includes('initialise state channel connection')
+      );
+      expect(logs[2].textContent.includes('User co-signed'));
+      expect(logs[3].textContent.includes('deployed game contract'));
+      expect(logs[3].textContent.includes('verified validity'));
+      expect(logs[4].textContent.includes('hashed game move'));
+      expect(logs[4].textContent.includes('contract call with game move'));
+      expect(logs[5].textContent.includes('contract call with game move'));
+      expect(
+        logs[5].textContent.includes(
+          'User co-signed a contract call with bot’s game move'
+        )
+      );
+      expect(logs[6].textContent.includes('with revealed game move'));
+      expect(
+        logs[6].textContent.includes(
+          'Bot co-signed user’s contract call with revealed'
+        )
+      );
+      // end of logs
 
-    gameChannel.restoreGameState(
-      JSON.parse(window.localStorage.getItem('gameState'))
-    );
-    await awaitDelay(3000);
-    expect(document.querySelector('#logs-notification').style.display).toBe(
-      'flex'
-    );
-    // end of reconnect
+      gameChannel.restoreGameState(
+        JSON.parse(window.localStorage.getItem('gameState'))
+      );
+      await awaitDelay(3000);
+      expect(document.querySelector('#logs-notification').style.display).toBe(
+        'flex'
+      );
+      // end of reconnect
 
-    expect(
-      document
-        .getElementById('check-explorer-btn')
-        .classList.contains('disabled')
-    ).toBe(false);
-    expect(document.getElementById('end-game').disabled).toBe(false);
+      expect(
+        document
+          .getElementById('check-explorer-btn')
+          .classList.contains('disabled')
+      ).toBe(false);
+      expect(document.getElementById('end-game').disabled).toBe(false);
 
-    global.document.querySelector('#autoplay_button').checked = true;
-    autoplayButtonChangeDispatch();
-    expect(global.document.querySelector('.selections').style.display).toBe(
-      'none'
-    );
-    await awaitDelay(8000);
-    global.document.querySelector('#autoplay_button').checked = false;
-    autoplayButtonChangeDispatch();
-    await awaitDelay(8000);
-    expect(
-      parseInt(global.document.querySelector('.round-index').textContent)
-    ).toBeGreaterThan(3);
-    expect(global.document.querySelector('.selections').style.display).toBe(
-      'flex'
-    );
-    expect(
-      document.querySelector('.transactions-list').childNodes.length
-    ).toBeGreaterThan(10);
-    // end of autoplay
+      global.document.querySelector('#autoplay_button').checked = true;
+      autoplayButtonChangeDispatch();
+      expect(global.document.querySelector('.selections').style.display).toBe(
+        'none'
+      );
+      await awaitDelay(8000);
+      global.document.querySelector('#autoplay_button').checked = false;
+      autoplayButtonChangeDispatch();
+      await awaitDelay(8000);
+      expect(
+        parseInt(global.document.querySelector('.round-index').textContent)
+      ).toBeGreaterThan(3);
+      expect(global.document.querySelector('.selections').style.display).toBe(
+        'flex'
+      );
+      expect(
+        document.querySelector('.transactions-list').childNodes.length
+      ).toBeGreaterThan(10);
+      // end of autoplay
 
-    document.getElementById('end-game').click();
-    await awaitDelay(5000);
-    expect(
-      document.querySelector('#end-screen .title').textContent.includes('Æ')
-    );
-    expect(
-      document.querySelector('#end-screen .title').textContent.includes('You')
-    );
+      document.getElementById('end-game').click();
+      await awaitDelay(5000);
+      expect(
+        document.querySelector('#end-screen .title').textContent.includes('Æ')
+      );
+      expect(
+        document.querySelector('#end-screen .title').textContent.includes('You')
+      );
 
-    expect(
-      document
-        .getElementById('check-explorer-btn')
-        .classList.contains('disabled')
-    ).toBe(false);
-    expect(document.getElementById('end-game').disabled).toBe(true);
-    // end of end-game screen
-  }, 120000);
+      expect(
+        document
+          .getElementById('check-explorer-btn')
+          .classList.contains('disabled')
+      ).toBe(false);
+      expect(document.getElementById('end-game').disabled).toBe(true);
+      // end of end-game screen
+    },
+    4 * 60000
+  );
 });
