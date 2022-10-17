@@ -247,7 +247,6 @@ export class GameChannel {
   }
 
   async closeChannel() {
-    localStorage.clear();
     if (!channel) {
       throw new Error('Channel is not open');
     }
@@ -281,6 +280,7 @@ export class GameChannel {
           );
         });
     });
+    localStorage.clear();
     return channelClosing;
   }
 
