@@ -19,7 +19,6 @@ import {
   keypair,
   node,
   NODE_URL,
-  refreshSdkAccount,
   returnCoinsToFaucet,
   sdk,
   verifyContractBytecode,
@@ -84,7 +83,6 @@ export class GameChannel {
   savedResultsOnChainTxHash = null;
   hasInsuffientBalance = false;
   shouldHandleReconnection = false;
-  error = null;
   balances = {
     user: undefined,
     bot: undefined,
@@ -171,19 +169,7 @@ export class GameChannel {
     });
     const data = await res.json();
     this.gameRound.stake = new BigNumber(data.gameStake);
-    if (res.status != 200) {
-      if (data.error.includes('greylisted')) {
-        console.log('Greylisted account, retrying with new account');
-        await refreshSdkAccount();
-        return this.fetchChannelConfig();
-      } else
-        this.error = {
-          status: res.status,
-          statusText: res.statusText,
-          message: data.error || 'Error while fetching channel config',
-        };
-      throw new Error(data.error);
-    }
+    if (data.error) throw new Error(`Bot service error - ${data.error}`);
     return data;
   }
 
@@ -283,12 +269,14 @@ export class GameChannel {
       await channel
         .shutdown((tx) => this.signTx('channel_close', tx))
         .then(async () => {
-          this.savedResultsOnChainTxHash = await returnCoinsToFaucet(
-            this.getMessageToSaveOnChain()
-          );
           this.shouldShowEndScreen = true;
           this.isOpen = false;
           channel.disconnect();
+
+          const resultsMessage = this.getMessageToSaveOnChain();
+          this.savedResultsOnChainTxHash = await returnCoinsToFaucet(
+            resultsMessage
+          );
         });
     });
     return channelClosing;
@@ -556,7 +544,7 @@ export class GameChannel {
       transactionLog.description = `User called ${information.name}()`;
       switch (information.name) {
         case Methods.provide_hash:
-          transactionLog.description = `User signed a contract call with hashed game move`;
+          transactionLog.description = `User signed a contract call with hashed game move: ${information.value}`;
           break;
         case Methods.reveal:
           transactionLog.description = `User signed a contract call with revealed game move: ${information.value}, providing also the hash key to state channel`;

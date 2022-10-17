@@ -3,9 +3,8 @@
  */
 
 export function resetApp() {
-  window.location.search = '';
   localStorage.removeItem('gameState');
-  window.location.reload();
+  window.location.href = window.location.origin;
 }
 
 /**

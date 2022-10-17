@@ -35,21 +35,30 @@ const resetRound = async () => {
  * @param {gameChannel} gameChannel
  */
 export function DomMiddleware(gameChannel) {
-  if (gameChannel.error) DOMUpdate.addErrorLog(gameChannel.error);
+  if (gameChannel.shouldShowEndScreen) {
+    DOMUpdate.showEndScreen(gameChannel);
+    DOMUpdate.setResetDisability(false);
+  }
+  if (gameChannel.savedResultsOnChainTxHash) {
+    DOMUpdate.showShareButtons(gameChannel.savedResultsOnChainTxHash);
+  }
   if (gameChannel.isOpen) {
     if (gameChannel.balances.user && gameChannel.balances.bot) {
       DOMUpdate.setParticipantBalance('user', gameChannel.balances.user);
       DOMUpdate.setParticipantBalance('bot', gameChannel.balances.bot);
     }
     DOMUpdate.setGameRoundIndex(gameChannel.gameRound.index);
+    DOMUpdate.setCheckExplorerBtnUrl(gameChannel.channelConfig.responderId);
     DOMUpdate.setStakeAmount(gameChannel.gameRound.stake);
     DOMUpdate.showGameInfo();
 
-    const canReset = gameChannel.isOpen && gameChannel.shouldShowEndScreen;
+    const canReset = !gameChannel.isOpen && gameChannel.shouldShowEndScreen;
     const canClose =
+      gameChannel.contractAddress &&
       gameChannel.isOpen &&
+      gameChannel.isFunded &&
       !gameChannel.gameRound.userInAction &&
-      gameChannel.channelIsClosing;
+      !gameChannel.channelIsClosing;
 
     if (canReset || canClose) {
       DOMUpdate.setResetDisability(false);

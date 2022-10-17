@@ -1,3 +1,11 @@
+import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
+import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { BigNumber } from 'bignumber.js';
+import {
+  Selections,
+  SignatureTypes,
+} from '../js/game-channel/game-channel.enums';
+
 export interface GameRound {
   stake: BigNumber;
   index: number;
@@ -20,6 +28,11 @@ export interface Update {
   caller_id?: Encoded.AccountAddress;
 }
 
+export interface ErrorLog {
+  message: string;
+  timestamp: number;
+}
+
 export interface TransactionLogGroup {
   [round: number]: Array<TransactionLog>;
 }
@@ -28,7 +41,7 @@ export interface TransactionLog {
   id: Encoded.TxHash;
   onChain: boolean;
   description: string;
-  signed: SignatureType;
+  signed: SignatureTypes;
   timestamp: number;
 }
 
@@ -48,4 +61,11 @@ export interface StoredState {
     botTransactions: TransactionLogGroup;
   };
   contractCreationChannelRound: number;
+}
+
+export interface SharedResults {
+  rounds: number;
+  isLastRoundCompleted: boolean;
+  earnings: BigNumber;
+  responderId: Encoded.AccountAddress;
 }

@@ -57,7 +57,7 @@ export async function initSdk() {
 
 /**
  * @param {string} payload
- * @returns {`th_${string}` | undefined}
+ * @returns {Promise<`th_${string}`> | undefined}
  */
 export async function returnCoinsToFaucet(payload) {
   if (!sdk) return;
