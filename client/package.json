@@ -5,54 +5,42 @@
     "dev": "vite",
     "dev:testnet": "vite --mode testnet",
     "dev:host": "vite --host",
-    "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "test": "vitest",
-    "coverage": "vitest run --coverage",
+    "build": "vite build",
     "lint": "eslint --ext .js,.vue,.ts --ignore-path .gitignore --fix src tests",
     "format": "prettier .  --write",
     "prepare": "cd .. && husky install .husky",
-    "lint-frontend": "lint-staged"
+    "lint-frontend": "lint-staged",
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "lint-staged": {
-    "*.{js,ts,vue}": [
+    "*.js": [
       "eslint --quiet --fix"
     ],
-    "*.{json,md,html,js,vue,ts}": [
+    "*.{json,md,html,js}": [
       "npm run format"
     ]
   },
   "dependencies": {
     "@aeternity/aepp-sdk": "^12.1.1",
     "@aeternity/rock-paper-scissors": "../contract",
-    "@rushstack/eslint-patch": "^1.1.4",
-    "@vitejs/plugin-vue": "^2.3.3",
-    "@vue/eslint-config-typescript": "^11.0.0",
-    "@vue/test-utils": "^2.0.0",
-    "pinia": "^2.0.14",
     "sha.js": "^2.4.11",
-    "vite": "^2.9.9",
-    "vitest": "^0.15.2",
-    "vue": "^3.2.25"
+    "vite": "^3.1.6"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.2",
     "@commitlint/config-conventional": "^17.0.2",
-    "@pinia/testing": "^0.0.12",
     "@rollup/plugin-replace": "^4.0.0",
-    "@testing-library/vue": "^6.6.0",
-    "c8": "^7.11.3",
-    "cross-fetch": "^3.1.5",
+    "@testing-library/dom": "^8.19.0",
     "eslint": "^8.18.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-vue": "^9.1.1",
-    "happy-dom": "^5.3.4",
+    "happy-dom": "^7.5.7",
     "husky": "^8.0.1",
     "lint-staged": "^13.0.2",
+    "node-fetch": "^3.2.10",
     "prettier": "2.7.1",
-    "sass": "^1.52.3",
-    "typescript": "^4.5.4",
-    "vue-tsc": "^0.40.13"
+    "vitest": "^0.24.1"
   }
 }

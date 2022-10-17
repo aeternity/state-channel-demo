@@ -1,0 +1,109 @@
+@import '../mediaqueries/mediaqueries.scss';
+
+.header {
+  grid-area: header;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  justify-content: center;
+  padding: var(--padding);
+  padding-bottom: 5px;
+  #reset {
+    border: none;
+    background-color: transparent;
+    text-align: left;
+    width: max-content;
+    img {
+      width: 80px;
+      cursor: pointer;
+    }
+    &:disabled {
+      img {
+        cursor: default;
+      }
+    }
+  }
+  @include for-phone-only {
+    grid-template-columns: 25% 50% 25%;
+    grid-template-rows: 1fr 1fr;
+    img {
+      width: 60px;
+    }
+  }
+  @include for-big-desktop-up {
+    align-items: flex-start;
+    padding-top: calc(var(--padding) * 0.5);
+  }
+
+  &.end-screen {
+    img {
+      cursor: pointer;
+    }
+  }
+}
+
+.links {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  width: fit-content;
+  justify-self: flex-end;
+  .button {
+    text-align: center;
+    margin-left: 0;
+    font-size: 14px;
+    &.disabled {
+      cursor: not-allowed;
+      background-color: gray;
+    }
+  }
+  @include for-phone-only {
+    grid-column: 1 / 4;
+    justify-self: center;
+    width: max-content;
+    .button {
+      font-size: 12px;
+      margin: 3px;
+      padding: 5px 10px;
+    }
+  }
+}
+
+.center {
+  .round-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .title {
+      text-align: center;
+      font-weight: bold;
+      @include for-phone-only {
+        font-size: 26px;
+      }
+      @include for-tablet-portrait-up {
+        font-size: 30px;
+      }
+    }
+
+    .info {
+      font-size: 30px;
+      text-align: right;
+      font-weight: 500;
+      @include for-phone-only {
+        font-size: 14px;
+        text-align: center;
+      }
+      @include for-tablet-portrait-up {
+        font-size: 20px;
+      }
+    }
+    .stake,
+    .info-seperator {
+      color: var(--pink);
+    }
+  }
+}

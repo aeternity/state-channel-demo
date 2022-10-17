@@ -1,0 +1,118 @@
+.header {
+  grid-area: header;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  justify-content: center;
+  padding: var(--padding);
+  padding-bottom: 5px;
+}
+.header #reset {
+  border: none;
+  background-color: transparent;
+  text-align: left;
+  width: -webkit-max-content;
+  width: -moz-max-content;
+  width: max-content;
+}
+.header #reset img {
+  width: 80px;
+  cursor: pointer;
+}
+.header #reset:disabled img {
+  cursor: default;
+}
+@media (max-width: 599px) {
+  .header {
+    grid-template-columns: 25% 50% 25%;
+    grid-template-rows: 1fr 1fr;
+  }
+  .header img {
+    width: 60px;
+  }
+}
+@media (min-width: 1800px) {
+  .header {
+    align-items: flex-start;
+    padding-top: calc(var(--padding) * 0.5);
+  }
+}
+.header.end-screen img {
+  cursor: pointer;
+}
+
+.links {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  justify-self: flex-end;
+}
+.links .button {
+  text-align: center;
+  margin-left: 0;
+  font-size: 14px;
+}
+.links .button.disabled {
+  cursor: not-allowed;
+  background-color: gray;
+}
+@media (max-width: 599px) {
+  .links {
+    grid-column: 1/4;
+    justify-self: center;
+    width: -webkit-max-content;
+    width: -moz-max-content;
+    width: max-content;
+  }
+  .links .button {
+    font-size: 12px;
+    margin: 3px;
+    padding: 5px 10px;
+  }
+}
+
+.center .round-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.center .round-info .title {
+  text-align: center;
+  font-weight: bold;
+}
+@media (max-width: 599px) {
+  .center .round-info .title {
+    font-size: 26px;
+  }
+}
+@media (min-width: 600px) {
+  .center .round-info .title {
+    font-size: 30px;
+  }
+}
+.center .round-info .info {
+  font-size: 30px;
+  text-align: right;
+  font-weight: 500;
+}
+@media (max-width: 599px) {
+  .center .round-info .info {
+    font-size: 14px;
+    text-align: center;
+  }
+}
+@media (min-width: 600px) {
+  .center .round-info .info {
+    font-size: 20px;
+  }
+}
+.center .round-info .stake,
+.center .round-info .info-seperator {
+  color: var(--pink);
+} /*# sourceMappingURL=header.css.map */

@@ -1,0 +1,37 @@
+.notification {
+  display: none;
+  padding: 10px;
+  border-radius: 5px;
+  width: -webkit-max-content;
+  width: -moz-max-content;
+  width: max-content;
+  max-width: 90%;
+  margin-bottom: 5px;
+}
+.notification img {
+  width: 16px;
+  height: 16px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+.notification .notification-text {
+  font-size: 16px;
+}
+@media (max-width: 599px) {
+  .notification {
+    padding: 5px 10px;
+    width: 100%;
+  }
+  .notification .notification-text {
+    font-size: 14px;
+  }
+}
+.notification.success {
+  background-color: var(--green);
+}
+.notification.error {
+  background-color: var(--pink);
+}
+.notification.info {
+  background-color: orange;
+} /*# sourceMappingURL=notification.css.map */

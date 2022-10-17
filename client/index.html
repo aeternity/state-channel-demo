@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="src/assets/images/favicon.ico" />
+    <link rel="stylesheet" href="src/css/styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>State Channel Demo</title>
     <meta property="og:type" content="website" />
@@ -12,8 +13,177 @@
       content="The game of rock-paper-scissors implemented on the æternity blockchain using state channels"
     />
   </head>
+
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="app" class="container">
+      <!-- #region Header -->
+      <div class="header">
+        <button id="reset" disabled>
+          <img src="./src/assets/images/logo.png" alt="Aeternity" />
+        </button>
+        <div class="center">
+          <!-- if channel is open -->
+          <div class="round-info">
+            <span class="title">Game</span>
+            <div class="info" style="opacity: 0">
+              <span class="stake">
+                STAKE: <span class="stake-value"></span> Æ
+              </span>
+              <span class="info-seperator"> / </span>
+              <span class="round-wrapper"
+                >ROUND: <span class="round-index"></span
+              ></span>
+            </div>
+          </div>
+        </div>
+        <div class="links">
+          <a
+            href="https://github.com/aeternity/state-channel-demo"
+            target="_blank"
+            class="button"
+            >Fork repo
+          </a>
+          <a id="check-explorer-btn" class="button disabled" target="_blank"
+            >Check Explorer</a
+          >
+          <button id="end-game" disabled class="button">End Game</button>
+        </div>
+      </div>
+      <!-- #endregion -->
+      <!-- #region Game-screen -->
+      <div class="game-screen">
+        <div class="user">
+          <div class="player-info">
+            <span class="name">You</span>
+          </div>
+          <div class="rock-paper-scissors">
+            <div class="rock-paper-scissors__header">
+              <div class="finalized-selection">
+                <!-- empty -->
+              </div>
+              <h1 class="status title"></h1>
+              <div class="finalized-selection">
+                <div class="selection-icon" style="display: none">
+                  <img
+                    src="./src/assets/images/paper.png"
+                    style="display: none"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="selections">
+              <button class="button">
+                <div class="selection-icon">
+                  <img src="./src/assets/images/rock.png" />
+                </div>
+              </button>
+              <button class="button">
+                <div class="selection-icon">
+                  <img src="./src/assets/images/paper.png" />
+                </div>
+              </button>
+              <button class="button">
+                <div class="selection-icon">
+                  <img src="./src/assets/images/scissors.png" />
+                </div>
+              </button>
+            </div>
+            <!-- #region Autoplay -->
+            <div class="autoplay">
+              <label for="autoplay_button" class="toggle__button">
+                <span class="toggle__label"> Autoplay </span>
+                <input type="checkbox" id="autoplay_button" />
+                <span class="toggle__switch"></span>
+              </label>
+            </div>
+            <!-- #endregion -->
+          </div>
+          <div class="balance" id="user-balance"></div>
+        </div>
+        <div class="bot">
+          <div class="player-info">
+            <span class="name">Bot</span>
+          </div>
+          <div class="rock-paper-scissors">
+            <div class="rock-paper-scissors__header">
+              <div class="finalized-selection">
+                <div class="selection-icon" style="display: none">
+                  <img
+                    src="./src/assets/images/paper.png"
+                    style="display: none"
+                  />
+                </div>
+              </div>
+              <h1 class="status title"></h1>
+              <div class="finalized-selection">
+                <!-- empty -->
+              </div>
+            </div>
+          </div>
+          <div class="balance" id="bot-balance"></div>
+        </div>
+      </div>
+      <!-- #endregion -->
+      <!-- #region Terminal -->
+      <div class="transactions">
+        <div class="terminal">
+          <div class="terminal__header">
+            <div class="title">Terminal</div>
+            <button class="expand" id="expand-terminal">
+              <img
+                id="expand-terminal-icon"
+                src="./src/assets/svg/expand.svg"
+                class="icon"
+              />
+            </button>
+          </div>
+          <div class="ascii-text-banner">
+            <pre>
+  ______                                 _                             _         _                   
+ / _____) _           _                 | |                           | |       | |                   
+( (____ _| |_ _____ _| |_ _____     ____| |__  _____ ____  ____  _____| |     __| |_____ ____   ___  
+ \____ (_   _|____ (_   _) ___ |   / ___)  _ \(____ |  _ \|  _ \| ___ | |    / _  | ___ |    \ / _ \ 
+ _____) )| |_/ ___ | | |_| ____|  ( (___| | | / ___ | | | | | | | ____| |   ( (_| | ____| | | | |_| |
+(______/  \__)_____|  \__)_____)   \____)_| |_\_____|_| |_|_| |_|_____)\_)   \____|_____)_|_|_|\___/ 
+                                                                                          by Æternity
+            </pre>
+          </div>
+          <div class="terminal__info">
+            <p>
+              State channels refer to the process in which users transact with
+              one another directly outside of the blockchain, or ‘off-chain,’
+              and greatly minimize their use of ‘on-chain’ operations.
+            </p>
+            <p>
+              By clicking start game you are initiating state channel with our
+              bot and you make the possibilities of the game practically
+              endless. After the game is over, you can see every action recorded
+              on the blockchain by checking our explorer.
+            </p>
+            <p>
+              When being <strong>idle for 2 minutes</strong>, a timeout is
+              triggered and the state channel closes.
+            </p>
+          </div>
+          <div class="notification info" id="logs-notification">
+            <div class="notification-text">
+              After reconnecting only the last 5 rounds are saved.
+            </div>
+            <img
+              src="./src/assets/svg/close.svg"
+              alt="x"
+              id="logs-notification-close"
+              @click="closeNotification()"
+            />
+          </div>
+          <div class="transactions-list"></div>
+        </div>
+      </div>
+      <!-- #endregion -->
+      <div id="end-screen" class="end-screen">
+        <!-- end-screen -->
+      </div>
+    </div>
+    <script type="module" src="main.js"></script>
   </body>
 </html>

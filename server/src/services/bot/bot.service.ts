@@ -9,6 +9,7 @@ import {
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
+import { Keypair } from '@aeternity/aepp-sdk/es/account/Memory';
 import { ContractEvents } from '../contract/contract.constants';
 import logger from '../../logger';
 import {
@@ -18,7 +19,11 @@ import {
 } from '../contract';
 import { getNextCallData } from '../contract/contract.service';
 import {
-  ENVIRONMENT_CONFIG, FAUCET_PUBLIC_ADDRESS, sdk, Update,
+  ENVIRONMENT_CONFIG,
+  FAUCET_PUBLIC_ADDRESS,
+  IS_USING_LOCAL_NODE,
+  sdk,
+  Update,
 } from '../sdk';
 import { fundAccount, pollForAccount } from '../sdk/sdk.service';
 import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
@@ -132,17 +137,17 @@ export async function sendCallUpdateLog(
   };
   switch (event.name) {
     case ContractEvents.player0ProvidedHash:
-      txLog.description = 'User hashed his selection';
+      txLog.description = 'Bot co-signed a contract call with user’s hashed game move';
       break;
     case ContractEvents.player0Revealed: {
       const selection = event.value;
-      txLog.description = `User revealed his selection: ${selection}`;
+      txLog.description = `Bot co-signed user’s contract call with revealed game move: ${selection}`;
       break;
     }
     case ContractEvents.player1Moved: {
       txLog.signed = SignatureType.proposed;
       const selection = event.value;
-      txLog.description = `Bot selected ${selection}`;
+      txLog.description = `Bot signed a contract call with game move: ${selection}`;
       break;
     }
     default:
@@ -400,6 +405,28 @@ export async function registerEvents(
 }
 
 /**
+ * Genereates a keypair and funds it
+ * @param retries number of retries
+ * @return keypair
+ */
+async function generateFundedKeypair(retries = 20): Promise<Keypair> {
+  const botKeyPair = generateKeyPair();
+  try {
+    await fundAccount(botKeyPair.publicKey);
+    return botKeyPair;
+  } catch (e) {
+    if (retries > 0) {
+      logger.warn(`${botKeyPair.publicKey} - Funding failed, retrying...`);
+      // wait 0.5s before retrying
+      // eslint-disable-next-line no-promise-executor-return
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return generateFundedKeypair(retries - 1);
+    }
+    throw e;
+  }
+}
+
+/**
  * Handles client request to create a new game session.
  * @returns mutual channel configuration
  */
@@ -408,14 +435,17 @@ export async function generateGameSession(
   playerNodeHost: string,
   playerNodePort: number,
 ) {
-  const botKeyPair = generateKeyPair();
+  const botKeyPair = await generateFundedKeypair();
   await sdk.addAccount(new MemoryAccount({ keypair: botKeyPair }));
 
   const initiatorId = botKeyPair.publicKey;
   const responderId = playerAddress;
 
-  await fundAccount(initiatorId);
-  await fundAccount(responderId);
+  /**
+   * in order to not use genesis funding on the client app (duplication)
+   * we fund the responder account here since its for dev purposes only
+   */
+  if (IS_USING_LOCAL_NODE) await fundAccount(responderId);
 
   serviceStatus.channelsInitialized += 1;
 
@@ -443,7 +473,8 @@ export async function generateGameSession(
       if (tag === 'initiator_sign') {
         // we are signing the channel open transaction
         openStateChannelTxLog = {
-          description: 'Open state channel',
+          description:
+            'Bot signed a transaction to initialise state channel connection',
           id: buildTxHash(tx),
           onChain: true,
           signed: SignatureType.proposed,
@@ -457,7 +488,8 @@ export async function generateGameSession(
           {
             type: 'add_bot_transaction_log',
             data: {
-              description: 'Close state channel',
+              description:
+                'Bot co-signed user’s transaction to close state channel connection',
               id: buildTxHash(tx),
               onChain: true,
               signed: SignatureType.confirmed,

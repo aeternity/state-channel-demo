@@ -1,0 +1,21 @@
+.ascii-text-banner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.ascii-text-banner pre {
+  width: -webkit-max-content;
+  width: -moz-max-content;
+  width: max-content;
+  font-size: 7px;
+}
+@media (max-width: 599px) {
+  .ascii-text-banner pre {
+    font-size: 4px;
+  }
+}
+@media (min-width: 900px) {
+  .ascii-text-banner pre {
+    font-size: 9px;
+  }
+} /*# sourceMappingURL=ascii-text-banner.css.map */
