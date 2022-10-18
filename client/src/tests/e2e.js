@@ -152,7 +152,10 @@ describe('e2e', async () => {
           .getElementById('check-explorer-btn')
           .classList.contains('disabled')
       ).toBe(false);
-      expect(document.getElementById('end-game').disabled).toBe(true);
+      expect(document.getElementById('end-game').textContent).toBe(
+        'Start Over'
+      );
+      expect(document.getElementById('end-game').disabled).toBe(false);
       // end of end-game screen
 
       const faucet_balance_after = await ae.getBalance(ae.selectedAddress);

@@ -549,12 +549,15 @@ export function handleAppMount(gameChannel) {
     .querySelector('#expand-terminal')
     .addEventListener('click', handleTerminalExpand);
   document.getElementById('reset').addEventListener('click', resetApp);
-  document.getElementById('end-game').addEventListener('click', () => {
+  document.getElementById('end-game').addEventListener('click', async () => {
     hideSelections();
     setMoveSelectionDisability(true);
     document.querySelector('.autoplay').style.display = 'none';
     setMoveStatus('user', 'Channel is closing...');
-    gameChannel.closeChannel();
+    await gameChannel.closeChannel();
+    document.getElementById('end-game').textContent = 'Start Over';
+    document.getElementById('end-game').onclick = resetApp;
+    enableButton('end-game');
   });
   document.querySelectorAll('.selections button').forEach((button, index) => {
     button.addEventListener('click', async () => {
