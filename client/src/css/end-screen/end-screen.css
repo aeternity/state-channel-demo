@@ -39,7 +39,7 @@
 @media (max-width: 599px) {
   .end-screen .share-buttons {
     flex-wrap: wrap;
-    max-width: 230px;
+    max-width: 250px;
   }
 }
 .end-screen .share-buttons .text {

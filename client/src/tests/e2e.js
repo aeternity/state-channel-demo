@@ -1,6 +1,6 @@
 import { expect, describe, it, beforeEach } from 'vitest';
 import { gameChannel, GameChannel } from '../js/game-channel/game-channel';
-import { sdk, getNewSdk, FAUCET_ACCOUNT } from '../js/sdk-service/sdk-service';
+import { getNewSdk, FAUCET_ACCOUNT } from '../js/sdk-service/sdk-service';
 import { Window } from 'happy-dom';
 import fs from 'fs';
 import path from 'path';
@@ -44,36 +44,6 @@ describe('e2e', async () => {
     await init();
   });
 
-  it('creates game channel instance, initializes Channel and returns coins to faucet on channel closing', async () => {
-    await gameChannel.initializeChannel();
-    await new Promise((resolve) => setTimeout(resolve, 15000));
-    const client = sdk;
-    const ae = await getNewSdk();
-
-    expect(client?.selectedAddress).toBeTruthy();
-    expect(gameChannel.getStatus()).toBe('open');
-
-    if (FAUCET_ACCOUNT) {
-      await ae.addAccount(FAUCET_ACCOUNT, { select: true });
-    }
-    const balance_before = await client.getBalance(client.selectedAddress);
-    expect(BigInt(balance_before)).toBeGreaterThan(0);
-
-    const faucet_balance_before = await ae.getBalance(ae.selectedAddress);
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-
-    await gameChannel.closeChannel();
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    expect(gameChannel.getStatus()).toBe('disconnected');
-
-    const balance_after = await client.getBalance(client.selectedAddress);
-    const faucet_balance_after = await ae.getBalance(ae.selectedAddress);
-    expect(balance_after).toBe('0');
-    expect(BigInt(faucet_balance_after)).toBeGreaterThan(
-      BigInt(faucet_balance_before)
-    );
-  }, 30000);
-
   it(
     'e2e',
     async () => {
@@ -92,6 +62,11 @@ describe('e2e', async () => {
       );
       await pollForOutcome();
       // end of initialization & pick
+
+      const ae = await getNewSdk();
+      await ae.addAccount(FAUCET_ACCOUNT, { select: true });
+
+      const faucet_balance_before = await ae.getBalance(ae.selectedAddress);
 
       expect(document.querySelector('.selections').style.display).toBe('none');
       await awaitDelay(5000);
@@ -169,9 +144,6 @@ describe('e2e', async () => {
       document.getElementById('end-game').click();
       await awaitDelay(5000);
       expect(
-        document.querySelector('#end-screen .title').textContent.includes('Æ')
-      );
-      expect(
         document.querySelector('#end-screen .title').textContent.includes('You')
       );
 
@@ -182,6 +154,11 @@ describe('e2e', async () => {
       ).toBe(false);
       expect(document.getElementById('end-game').disabled).toBe(true);
       // end of end-game screen
+
+      const faucet_balance_after = await ae.getBalance(ae.selectedAddress);
+      expect(BigInt(faucet_balance_after)).toBeGreaterThan(
+        BigInt(faucet_balance_before) + BigInt(6e18)
+      );
     },
     4 * 60000
   );

@@ -8,18 +8,17 @@ import { getSavedState } from './src/js/local-storage/local-storage';
 
 export async function init() {
   handleSharedResults();
-  await initSdk().then(async () => {
-    const savedState = getSavedState();
-    if (!savedState) {
-      refreshSdkAccount();
-    } else if (savedState?.gameRound.userInAction) {
-      localStorage.clear();
-      refreshSdkAccount();
-    } else {
-      await gameChannel.restoreGameState(savedState);
-    }
-    handleAppMount(gameChannel);
-  });
+  await initSdk();
+  const savedState = getSavedState();
+  if (!savedState) {
+    refreshSdkAccount();
+  } else if (savedState?.gameRound.userInAction) {
+    localStorage.clear();
+    refreshSdkAccount();
+  } else {
+    await gameChannel.restoreGameState(savedState);
+  }
+  handleAppMount(gameChannel);
 }
 
 if (!(import.meta.env.MODE === 'test')) {

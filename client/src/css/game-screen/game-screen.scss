@@ -18,18 +18,18 @@
 .bot {
   display: grid;
   grid-template-rows: 30px calc(100% - 60px) 30px;
-  @include for-phone-only {
-    margin-top: 10px;
-    .balance {
-      font-size: 16px;
-    }
-  }
   .balance {
     font-size: 30px;
     text-align: right;
     margin-right: var(--padding);
     font-weight: 500;
     color: var(--pink);
+  }
+  @include for-phone-only {
+    margin-top: 10px;
+    .balance {
+      font-size: 16px;
+    }
   }
 }
 .user {

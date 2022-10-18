@@ -241,7 +241,7 @@
 }
 @media (max-width: 599px) {
   .rock-paper-scissors {
-    margin-top: 20px;
+    margin-top: 10px;
   }
 }
 @media (min-width: 1800px) {
@@ -371,6 +371,14 @@
   display: grid;
   grid-template-rows: 30px calc(100% - 60px) 30px;
 }
+.user .balance,
+.bot .balance {
+  font-size: 30px;
+  text-align: right;
+  margin-right: var(--padding);
+  font-weight: 500;
+  color: var(--pink);
+}
 @media (max-width: 599px) {
   .user,
   .bot {
@@ -380,14 +388,6 @@
   .bot .balance {
     font-size: 16px;
   }
-}
-.user .balance,
-.bot .balance {
-  font-size: 30px;
-  text-align: right;
-  margin-right: var(--padding);
-  font-weight: 500;
-  color: var(--pink);
 }
 
 .user {
@@ -637,6 +637,10 @@
     font-size: 14px;
   }
 }
+.transactions .terminal .transactions-list .transaction-pair .transaction span {
+  word-wrap: break-word;
+  word-break: break-word;
+}
 .transactions
   .terminal
   .transactions-list
@@ -843,7 +847,7 @@
 @media (max-width: 599px) {
   .end-screen .share-buttons {
     flex-wrap: wrap;
-    max-width: 230px;
+    max-width: 250px;
   }
 }
 .end-screen .share-buttons .text {
