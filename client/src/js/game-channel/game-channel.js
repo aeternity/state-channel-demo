@@ -161,6 +161,13 @@ export class GameChannel {
     if (!import.meta.env.VITE_NODE_URL.includes('localhost')) {
       await fundThroughFaucet();
     }
+    const log = {
+      onChain: false,
+      description:
+        'User invited a bot to initialise a state channel connection',
+      timestamp: Date.now(),
+    };
+    addUserTransaction(log, 0);
     const res = await fetch(import.meta.env.VITE_BOT_SERVICE_URL + '/open', {
       method: 'POST',
       headers: {
@@ -183,13 +190,6 @@ export class GameChannel {
    */
   async initializeChannel(config) {
     this.isOpening = true;
-    const log = {
-      onChain: false,
-      description:
-        'User invited a bot to initialise a state channel connection',
-      timestamp: Date.now(),
-    };
-    addUserTransaction(log, 0);
 
     if (!config) config = await this.fetchChannelConfig();
     this.channelConfig = config;
