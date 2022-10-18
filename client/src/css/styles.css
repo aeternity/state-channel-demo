@@ -97,8 +97,8 @@
 }
 
 .links {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   justify-content: space-between;
   align-items: center;
   text-align: center;
@@ -108,6 +108,7 @@
   justify-self: flex-end;
 }
 .links .button {
+  min-width: 70px;
   text-align: center;
   margin-left: 0;
   font-size: 14px;
