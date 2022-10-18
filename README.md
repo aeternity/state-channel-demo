@@ -9,6 +9,8 @@ A demo use case of Aeternity's state channels. Users can play a thousand+ rounds
 
 **[Step by step channel guide](CHANNEL_USAGE.md)**
 
+> 💚 Interested in the vue.js version? You can find it [here](https://github.com/aeternity/state-channel-demo/tree/vuejs)
+
 # Installation 
 
 ```bash
