@@ -6,9 +6,9 @@ import {
 import { gameChannel } from './src/js/game-channel/game-channel';
 import { getSavedState } from './src/js/local-storage/local-storage';
 
-export function init() {
+export async function init() {
   handleSharedResults();
-  initSdk().then(async () => {
+  await initSdk().then(async () => {
     const savedState = getSavedState();
     if (!savedState) {
       refreshSdkAccount();

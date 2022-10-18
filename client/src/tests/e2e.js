@@ -146,6 +146,11 @@ describe('e2e', async () => {
       expect(global.document.querySelector('.selections').style.display).toBe(
         'none'
       );
+      expect(
+        global.document
+          .querySelector('.toggle__button')
+          .classList.contains('active')
+      ).toBeTruthy();
       await awaitDelay(8000);
       global.document.querySelector('#autoplay_button').checked = false;
       autoplayButtonChangeDispatch();
