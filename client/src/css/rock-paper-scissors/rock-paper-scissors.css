@@ -91,6 +91,12 @@
 }
 @media (min-width: 600px) {
   .rock-paper-scissors__header > .title {
+    font-size: 26px;
+    width: 190px;
+  }
+}
+@media (min-width: 900px) {
+  .rock-paper-scissors__header > .title {
     font-size: 30px;
     width: 240px;
   }

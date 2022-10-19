@@ -75,6 +75,10 @@
         font-size: 22px;
       }
       @include for-tablet-portrait-up {
+        font-size: 26px;
+        width: 190px;
+      }
+      @include for-tablet-landscape-up {
         font-size: 30px;
         width: 240px;
       }

@@ -8,8 +8,6 @@ import facebookSVG from '../../assets/svg/facebook.svg';
 import linkedinSVG from '../../assets/svg/linkedin.svg';
 import twitterSVG from '../../assets/svg/twitter.svg';
 import whatsappSVG from '../../assets/svg/whatsapp.svg';
-import minimizeIMG from '../../assets/images/minimize.png';
-import expandSVG from '../../assets/svg/expand.svg';
 import paperIMG from '../../assets/images/paper.png';
 import scissorsIMG from '../../assets/images/scissors.png';
 import rockIMG from '../../assets/images/rock.png';
@@ -403,16 +401,6 @@ export function setLogsNotificationVisible(isVisible) {
   }
 }
 
-function handleTerminalExpand() {
-  const terminal = document.querySelector('.transactions');
-  const expandBtnIcon = document.querySelector('#expand-terminal-icon');
-  terminal.classList.toggle('fullscreen');
-  const icon = terminal.classList.contains('fullscreen')
-    ? minimizeIMG
-    : expandSVG;
-  expandBtnIcon.src = new URL(icon, import.meta.url).href;
-}
-
 export function showEndScreen() {
   renderEndScreen();
 }
@@ -547,9 +535,6 @@ export function handleAppMount(gameChannel) {
   document
     .querySelector('#logs-notification-close')
     .addEventListener('click', () => setLogsNotificationVisible(false));
-  document
-    .querySelector('#expand-terminal')
-    .addEventListener('click', handleTerminalExpand);
   document.getElementById('reset').addEventListener('click', resetApp);
   document.getElementById('end-game').addEventListener('click', async () => {
     hideSelections();
