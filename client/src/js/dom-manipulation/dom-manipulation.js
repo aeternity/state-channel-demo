@@ -7,7 +7,7 @@ import { NODE_URL } from '../sdk-service/sdk-service';
 import facebookSVG from '../../assets/svg/facebook.svg';
 import linkedinSVG from '../../assets/svg/linkedin.svg';
 import twitterSVG from '../../assets/svg/twitter.svg';
-import whatsappSVG from '../../assets/svg/twitter.svg';
+import whatsappSVG from '../../assets/svg/whatsapp.svg';
 import minimizeIMG from '../../assets/images/minimize.png';
 import expandSVG from '../../assets/svg/expand.svg';
 import paperIMG from '../../assets/images/paper.png';
@@ -151,7 +151,7 @@ export function setParticipantBalance(participant, balance) {
     throw new Error('invalid participant selector');
   }
   document.getElementById(`${participant}-balance`).textContent =
-    balance.dividedBy(1e18).toFormat(2) + 'æ';
+    balance.dividedBy(1e18).toFormat(2) + 'Æ';
 }
 
 /**
