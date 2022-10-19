@@ -16,6 +16,9 @@
     img {
       width: 80px;
       cursor: pointer;
+      @include for-phone-only {
+        width: 60px;
+      }
     }
     &:disabled {
       img {
@@ -51,9 +54,11 @@
   width: fit-content;
   justify-self: flex-end;
   .button {
-    min-width: 70px;
+    min-width: 60px;
     text-align: center;
+    margin: 5px;
     margin-left: 0;
+    padding: 10px 5px;
     font-size: 14px;
     &.disabled {
       cursor: not-allowed;
@@ -63,11 +68,19 @@
   @include for-phone-only {
     grid-column: 1 / 4;
     justify-self: center;
-    width: max-content;
+    width: 100%;
     .button {
       font-size: 12px;
       margin: 3px;
       padding: 5px 10px;
+    }
+  }
+  @include for-desktop-up {
+    .button {
+      min-width: 70px;
+      margin: 10px;
+      margin-left: 0;
+      padding: 10px;
     }
   }
 }
@@ -83,10 +96,14 @@
       text-align: center;
       font-weight: bold;
       @include for-phone-only {
-        font-size: 26px;
+        font-size: 15px;
+        font-weight: 500;
       }
       @include for-tablet-portrait-up {
-        font-size: 30px;
+        font-size: 20px;
+      }
+      @include for-desktop-up {
+        font-size: 20px;
       }
     }
 
@@ -95,7 +112,7 @@
       text-align: right;
       font-weight: 500;
       @include for-phone-only {
-        font-size: 14px;
+        font-size: 12px;
         text-align: center;
       }
       @include for-tablet-portrait-up {

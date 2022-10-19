@@ -19,6 +19,11 @@
   width: 80px;
   cursor: pointer;
 }
+@media (max-width: 599px) {
+  .header #reset img {
+    width: 60px;
+  }
+}
 .header #reset:disabled img {
   cursor: default;
 }
@@ -53,9 +58,11 @@
   justify-self: flex-end;
 }
 .links .button {
-  min-width: 70px;
+  min-width: 60px;
   text-align: center;
+  margin: 5px;
   margin-left: 0;
+  padding: 10px 5px;
   font-size: 14px;
 }
 .links .button.disabled {
@@ -66,14 +73,20 @@
   .links {
     grid-column: 1/4;
     justify-self: center;
-    width: -webkit-max-content;
-    width: -moz-max-content;
-    width: max-content;
+    width: 100%;
   }
   .links .button {
     font-size: 12px;
     margin: 3px;
     padding: 5px 10px;
+  }
+}
+@media (min-width: 1200px) {
+  .links .button {
+    min-width: 70px;
+    margin: 10px;
+    margin-left: 0;
+    padding: 10px;
   }
 }
 
@@ -89,12 +102,18 @@
 }
 @media (max-width: 599px) {
   .center .round-info .title {
-    font-size: 26px;
+    font-size: 15px;
+    font-weight: 500;
   }
 }
 @media (min-width: 600px) {
   .center .round-info .title {
-    font-size: 30px;
+    font-size: 20px;
+  }
+}
+@media (min-width: 1200px) {
+  .center .round-info .title {
+    font-size: 20px;
   }
 }
 .center .round-info .info {
@@ -104,7 +123,7 @@
 }
 @media (max-width: 599px) {
   .center .round-info .info {
-    font-size: 14px;
+    font-size: 12px;
     text-align: center;
   }
 }
