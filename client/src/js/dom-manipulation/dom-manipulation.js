@@ -520,6 +520,7 @@ function toggleAutoplayBtn(isChecked) {
 
 function addErrorListener() {
   window.addEventListener('error', function (error) {
+    console.error(error);
     addErrorLog({
       message: error,
       timestamp: Date.now(),
@@ -527,6 +528,7 @@ function addErrorListener() {
   });
 
   window.addEventListener('unhandledrejection', function (error) {
+    console.error(error);
     addErrorLog({
       message:
         error.reason.message ?? 'Unhandled rejection, see browser console',
