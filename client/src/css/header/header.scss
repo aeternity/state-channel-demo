@@ -8,40 +8,23 @@
   justify-content: center;
   padding: var(--padding);
   padding-bottom: 5px;
-  #reset {
-    border: none;
-    background-color: transparent;
+  .logo {
     text-align: left;
     width: max-content;
     img {
       width: 80px;
-      cursor: pointer;
       @include for-phone-only {
         width: 60px;
-      }
-    }
-    &:disabled {
-      img {
-        cursor: default;
       }
     }
   }
   @include for-phone-only {
     grid-template-columns: 25% 50% 25%;
     grid-template-rows: 1fr 1fr;
-    img {
-      width: 60px;
-    }
   }
   @include for-big-desktop-up {
     align-items: flex-start;
     padding-top: calc(var(--padding) * 0.5);
-  }
-
-  &.end-screen {
-    img {
-      cursor: pointer;
-    }
   }
 }
 

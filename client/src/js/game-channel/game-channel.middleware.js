@@ -25,6 +25,8 @@ const resetRound = async () => {
       DOMUpdate.hideSelections();
       return;
     }
+    if (gameChannel.channelIsClosing) return;
+
     DOMUpdate.setMoveStatus('bot', 'Waiting for user...');
     DOMUpdate.resetSelections();
     DOMUpdate.setMoveStatus('user', '');
@@ -36,10 +38,12 @@ const resetRound = async () => {
  */
 export function DomMiddleware(gameChannel) {
   if (gameChannel.shouldShowEndScreen) {
-    DOMUpdate.showEndScreen(gameChannel);
-    DOMUpdate.setResetDisability(false);
+    DOMUpdate.showEndScreen();
   }
-  if (gameChannel.savedResultsOnChainTxHash) {
+  if (
+    gameChannel.savedResultsOnChainTxHash &&
+    gameChannel.shouldShowEndScreen
+  ) {
     DOMUpdate.showShareButtons(gameChannel.savedResultsOnChainTxHash);
   }
   if (gameChannel.isOpen) {
@@ -52,7 +56,6 @@ export function DomMiddleware(gameChannel) {
     DOMUpdate.setStakeAmount(gameChannel.gameRound.stake);
     DOMUpdate.showGameInfo();
 
-    const canReset = !gameChannel.isOpen && gameChannel.shouldShowEndScreen;
     const canClose =
       gameChannel.contractAddress &&
       gameChannel.isOpen &&
@@ -60,9 +63,6 @@ export function DomMiddleware(gameChannel) {
       !gameChannel.gameRound.userInAction &&
       !gameChannel.channelIsClosing;
 
-    if (canReset || canClose) {
-      DOMUpdate.setResetDisability(false);
-    } else DOMUpdate.setResetDisability(true);
     if (canClose) {
       DOMUpdate.setEndGameDisability(false);
     } else DOMUpdate.setEndGameDisability(true);
