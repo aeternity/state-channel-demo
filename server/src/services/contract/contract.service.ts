@@ -102,6 +102,8 @@ export async function getNextCallData(
   events: ReturnType<ContractInstance['decodeEvents']>,
   contract: ContractInstance,
 ) {
+  if (events.length === 0) return null;
+
   const mainEvent = events.at(-1);
   switch (mainEvent.name) {
     case ContractEvents.player0ProvidedHash:

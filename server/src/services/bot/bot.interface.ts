@@ -1,6 +1,9 @@
 import { BigNumber } from 'bignumber.js';
 import { Channel } from '@aeternity/aepp-sdk';
-import { ChannelState } from '@aeternity/aepp-sdk/es/channel/internal';
+import {
+  ChannelState,
+  ChannelOptions,
+} from '@aeternity/aepp-sdk/es/channel/internal';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { Moves } from '../contract/contract.constants';
@@ -9,8 +12,12 @@ import { ENVIRONMENT_CONFIG } from '../sdk';
 export interface GameSession {
   channelWrapper: {
     instance: Channel;
+    fsmId: Encoded.Bytearray;
+    channelId: Encoded.Channel;
+    round: number;
     poi?: Encoded.Poi;
     state?: ChannelState;
+    configuration: ChannelOptions;
     balances?: {
       responderAmount: BigNumber;
       initiatorAmount: BigNumber;

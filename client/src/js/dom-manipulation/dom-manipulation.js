@@ -11,7 +11,7 @@ import whatsappSVG from '../../assets/svg/whatsapp.svg';
 import paperIMG from '../../assets/images/paper.png';
 import scissorsIMG from '../../assets/images/scissors.png';
 import rockIMG from '../../assets/images/rock.png';
-
+import { gameChannel } from '../game-channel/game-channel';
 /**
  * @typedef {import("bignumber.js").BigNumber} BigNumber
  * @typedef {import('@aeternity/aepp-sdk/es/utils/encoder').Encoded} Encoded
@@ -175,7 +175,7 @@ export function setFinalizedSelection(participant, selection) {
       icon = scissorsIMG;
       break;
     default:
-      throw new Error('invalid selection');
+      return;
   }
 
   wrapper.style.display = 'flex';
@@ -342,9 +342,13 @@ function createNewTransaction(transaction, isUser) {
  * @param {string} id
  */
 export function removeTransactionsPair(id) {
-  const transactionsList = document.querySelector('.transactions-list');
-  const transactionPair = document.querySelector(`#tx-pair-${id}`);
-  transactionsList.removeChild(transactionPair);
+  try {
+    const transactionsList = document.querySelector('.transactions-list');
+    const transactionPair = document.querySelector(`#tx-pair-${id}`);
+    transactionsList.removeChild(transactionPair);
+  } catch (e) {
+    return;
+  }
 }
 
 /**
@@ -490,6 +494,8 @@ function addAutoplayListener(gameChannel) {
  * @param {boolean} isChecked
  */
 function toggleAutoplayBtn(isChecked) {
+  if (gameChannel.gameRound.userInAction) setMoveSelectionDisability(true);
+
   const checkbox = document.getElementById('autoplay_button');
   if (isChecked) {
     checkbox.closest('.toggle__button').classList.add('active');
@@ -509,6 +515,8 @@ function addErrorListener() {
   });
 
   window.addEventListener('unhandledrejection', function (error) {
+    if (error.reason.name === 'ChannelCallError')
+      return gameChannel.handleLastContractCall();
     console.error(error);
     addErrorLog({
       message:

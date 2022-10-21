@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+/* eslint-disable no-use-before-define */
 import {
   buildTxHash,
   Channel,
@@ -45,6 +47,15 @@ const serviceStatus: ServiceStatus = {
 };
 
 /**
+ * Throws error after given time
+ */
+function timeout(ms: number) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('timeout succeeded')), ms);
+  });
+}
+
+/**
  * Returns the current status of the game session service
  */
 export function getServiceStatus() {
@@ -81,9 +92,13 @@ export async function addGameSession(
     channelWrapper: {
       instance: channel,
       state: await channel.state(),
+      round: 0,
+      fsmId: channel.fsmId() as Encoded.Bytearray,
+      channelId: channel.id() as Encoded.Channel,
       poi: await channel.poi({
         accounts: [configuration.initiatorId, configuration.responderId],
       }),
+      configuration,
       balances: {
         initiatorAmount: new BigNumber(balances[configuration.initiatorId]),
         responderAmount: new BigNumber(balances[configuration.responderId]),
@@ -195,6 +210,47 @@ export async function handleChannelClose(onAccount: Encoded.AccountAddress) {
   sdk.removeAccount(onAccount);
 }
 
+/**
+ * Reconnects channel on timeout.
+ * SDK disconnects channel if node does not respond in 5 seconds
+ * on ping-pong messages.
+ */
+async function handleChannelPingTimeout(onAccount: Encoded.AccountAddress) {
+  const gameSession = gameSessionPool.get(onAccount);
+  const round = gameSession?.channelWrapper.round;
+  try {
+    gameSession.channelWrapper.instance = await Channel.initialize({
+      ...gameSession.channelWrapper.configuration,
+      existingChannelId: gameSession.channelWrapper.channelId,
+      existingFsmId: gameSession.channelWrapper.fsmId,
+      role: 'initiator',
+    });
+    const state = await gameSession.channelWrapper.instance.state();
+    await registerEvents(
+      gameSession.channelWrapper.instance,
+      gameSession.channelWrapper.configuration,
+    );
+    const didOpponentMovedWhileBotWasDisconnected = await handleCallUpdate(
+      gameSession,
+      state.signedTx as Encoded.Transaction,
+      round + 1,
+    );
+
+    if (!didOpponentMovedWhileBotWasDisconnected) {
+      await handleCallUpdate(
+        gameSession,
+        state.signedTx as Encoded.Transaction,
+        round,
+      );
+    }
+    logger.info(`channel with initiator ${onAccount} reconnected.`);
+  } catch (e) {
+    logger.error(e);
+    logger.error(`channel with initiator ${onAccount} failed to reconnect.`);
+    void handleChannelClose(onAccount);
+  }
+}
+
 async function handleChannelDied(onAccount: Encoded.AccountAddress) {
   const gameSession = gameSessionPool.get(onAccount);
 
@@ -249,58 +305,90 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
  * Calls contract if game session has available data to send
  */
 async function respondToContractCall(gameSession: GameSession) {
-  if (gameSession.contractState.callDataToSend == null) return;
-  if (gameSession.channelWrapper.instance.round() % 150 === 0) {
+  if (gameSession.channelWrapper.round % 50 === 0) {
     await gameSession.channelWrapper.instance.cleanContractCalls();
   }
-
-  const result = await gameSession.channelWrapper.instance.callContract(
-    {
-      amount: GAME_STAKE,
-      contract: gameSession.contractState.address,
-      abiVersion: CONTRACT_CONFIGURATION.abiVersion,
-      callData: gameSession.contractState.callDataToSend,
-    },
-    async (tx: Encoded.Transaction) => sdk.signTransaction(tx, {
-      onAccount: gameSession.participants.initiatorId,
-    }),
-  );
-  if (result.signedTx) {
-    await sendCallUpdateLog(
-      result.signedTx,
+  if (gameSession.contractState.callDataToSend == null) return;
+  try {
+    const result = await gameSession.channelWrapper.instance.callContract(
       {
-        name: ContractEvents.player1Moved,
-        value: gameSession.contractState.botMove,
+        amount: GAME_STAKE,
+        contract: gameSession.contractState.address,
+        abiVersion: CONTRACT_CONFIGURATION.abiVersion,
+        callData: gameSession.contractState.callDataToSend,
       },
-      gameSession,
+      async (tx: Encoded.Transaction) => sdk.signTransaction(tx, {
+        onAccount: gameSession.participants.initiatorId,
+      }),
     );
-  } else {
+
+    if (result.accepted && result.signedTx) {
+      await sendCallUpdateLog(
+        result.signedTx,
+        {
+          name: ContractEvents.player1Moved,
+          value: gameSession.contractState.botMove,
+        },
+        gameSession,
+      );
+      gameSession.contractState.lastCaller = gameSession.participants.initiatorId;
+    } else {
+      logger.warn(
+        `${gameSession.participants.initiatorId} - No signed transaction returned from contract call`,
+        result,
+      );
+    }
+    gameSession.contractState.callDataToSend = null;
+  } catch (e) {
     logger.warn(
-      `${gameSession.participants.initiatorId} - No signed transaction returned from contract call`,
+      `${gameSession.participants.initiatorId} - Failed to respond to contract`,
+      e,
     );
   }
-  gameSession.contractState.callDataToSend = null;
 }
 
 /**
  * Triggered when channel operation is `OffChainCallContract`.
- * Decodes the call data provided by the opponent and generates
- * the next calldata to be sent to the opponent.
+ * Decodes the call data if it was provided by the opponent
+ * and generates the next calldata to be sent to the opponent.
+ * @returns false if no action was needed.
  */
-export async function handleOpponentCallUpdate(
+// @ts-ignore
+export async function handleCallUpdate(
   gameSession: GameSession,
   tx: Encoded.Transaction,
+  round?: number,
 ) {
-  const result = await gameSession.channelWrapper.instance.getContractCall({
-    caller: gameSession.participants.responderId,
-    contract: gameSession.contractState.address,
-    round: gameSession.channelWrapper.instance.round(),
-  });
+  let result;
+  try {
+    const resultPromise = gameSession.channelWrapper.instance.getContractCall({
+      caller: gameSession.participants.responderId,
+      contract: gameSession.contractState.address,
+      round: round ?? gameSession.channelWrapper.instance.round(),
+    });
+    result = (await Promise.race([resultPromise, timeout(1000)])) as Awaited<
+      typeof resultPromise
+    >;
+  } catch (e) {
+    // last caller was not the responder
+    return false;
+  }
 
   const decodedEvents = gameSession.contractState.instance.decodeEvents(
     // @ts-expect-error ts mismatch
     result.log,
   );
+
+  // it was observed that if bot was reconnected and the last contractCall
+  // was a player move, decodedEvents is an empty array.
+  // Therefore, we reconstruct the event from the last move.
+  if (decodedEvents.length === 0) {
+    decodedEvents.push({
+      name: ContractEvents.player0ProvidedHash,
+      value: null,
+    } as unknown as typeof decodedEvents[0]);
+  }
+
   const nextCallData = await getNextCallData(
     decodedEvents,
     gameSession.contractState.instance,
@@ -316,8 +404,8 @@ export async function handleOpponentCallUpdate(
     gameSession,
   );
   gameSession.contractState.callDataToSend = nextCallDataToSend;
-  gameSession.contractState.lastCaller = gameSession.participants.initiatorId;
   await respondToContractCall(gameSession);
+  return true;
 }
 
 /**
@@ -334,10 +422,17 @@ export async function registerEvents(
   configuration: ChannelOptions,
 ) {
   channelInstance.on('error', (error: Error) => {
-    logger.error(
-      `channel with initiator ${configuration.initiatorId} threw error: ${error.name}. Closing channel.`,
-    );
-    void handleChannelDied(configuration.initiatorId);
+    if (error.name === 'ChannelPingTimedOutError') {
+      logger.warn(
+        `channel with initiator ${configuration.initiatorId} ping timed out: ${error.name}`,
+      );
+      void handleChannelPingTimeout(configuration.initiatorId);
+    } else {
+      logger.error(
+        `channel with initiator ${configuration.initiatorId} threw error: ${error.name}. Closing channel.`,
+      );
+      void handleChannelDied(configuration.initiatorId);
+    }
   });
   channelInstance.on('statusChanged', (status) => {
     if (status === 'closed') {
@@ -364,7 +459,9 @@ export async function registerEvents(
 
   channelInstance.on('stateChanged', (tx: Encoded.Transaction) => {
     const gameSession = gameSessionPool.get(configuration.initiatorId);
-
+    if (gameSession?.channelWrapper) {
+      gameSession.channelWrapper.round = gameSession.channelWrapper.instance.round();
+    }
     if (gameSession?.contractState?.address) {
       void channelInstance.state().then(async (state) => {
         gameSession.channelWrapper.state = state;
@@ -391,15 +488,15 @@ export async function registerEvents(
         });
     }
 
-    const unpackedTx = unpackTx(tx);
-    // @ts-expect-error ts mismatch
-    const transaction = unpackedTx?.tx?.encodedTx;
-
-    if (
-      gameSession?.contractState?.lastCaller === configuration.responderId
-      && transaction?.txType === Tag.ChannelOffChainTx
-    ) {
-      void handleOpponentCallUpdate(gameSession, tx);
+    try {
+      const unpackedTx = unpackTx(tx);
+      // @ts-expect-error ts mismatch
+      const transaction = unpackedTx?.tx?.encodedTx;
+      if (transaction?.txType === Tag.ChannelOffChainTx) {
+        void handleCallUpdate(gameSession, tx);
+      }
+    } catch (e) {
+      logger.warn(e);
     }
   });
 }
@@ -424,6 +521,54 @@ async function generateFundedKeypair(retries = 20): Promise<Keypair> {
     }
     throw e;
   }
+}
+
+/**
+ * Sign function which is called with each channel transaction.
+ */
+async function channelSign(
+  initiatorId: Encoded.AccountAddress,
+  tag: string,
+  tx: Encoded.Transaction,
+  options: {
+    updates: Update[];
+  },
+) {
+  if (tag === 'initiator_sign') {
+    // we are signing the channel open transaction
+    openStateChannelTxLog = {
+      description:
+        'Bot signed a transaction to initialise state channel connection',
+      id: buildTxHash(tx),
+      onChain: true,
+      signed: SignatureType.proposed,
+      timestamp: Date.now(),
+    };
+  }
+  const gameSession = gameSessionPool.get(initiatorId);
+  if (tag === 'shutdown_sign_ack') {
+    // we are signing the channel close transaction
+    void gameSession.channelWrapper.instance.sendMessage(
+      {
+        type: 'add_bot_transaction_log',
+        data: {
+          description:
+            'Bot co-signed user’s transaction to close state channel connection',
+          id: buildTxHash(tx),
+          onChain: true,
+          signed: SignatureType.confirmed,
+          timestamp: Date.now(),
+        },
+      },
+      gameSession.channelWrapper.configuration.responderId,
+    );
+  }
+  if (options?.updates[0]?.op === 'OffChainCallContract') {
+    gameSession.contractState.lastCaller = options?.updates[0]?.caller_id;
+  }
+  return sdk.signTransaction(tx, {
+    onAccount: initiatorId,
+  });
 }
 
 /**
@@ -463,49 +608,7 @@ export async function generateGameSession(
     responderId,
     role: 'initiator',
     // @ts-ignore
-    sign: (
-      tag: string,
-      tx: Encoded.Transaction,
-      options: {
-        updates: Update[];
-      },
-    ) => {
-      if (tag === 'initiator_sign') {
-        // we are signing the channel open transaction
-        openStateChannelTxLog = {
-          description:
-            'Bot signed a transaction to initialise state channel connection',
-          id: buildTxHash(tx),
-          onChain: true,
-          signed: SignatureType.proposed,
-          timestamp: Date.now(),
-        };
-      }
-      const gameSession = gameSessionPool.get(initiatorId);
-      if (tag === 'shutdown_sign_ack') {
-        // we are signing the channel close transaction
-        void gameSession.channelWrapper.instance.sendMessage(
-          {
-            type: 'add_bot_transaction_log',
-            data: {
-              description:
-                'Bot co-signed user’s transaction to close state channel connection',
-              id: buildTxHash(tx),
-              onChain: true,
-              signed: SignatureType.confirmed,
-              timestamp: Date.now(),
-            },
-          },
-          responderId,
-        );
-      }
-      if (options?.updates[0]?.op === 'OffChainCallContract') {
-        gameSession.contractState.lastCaller = options?.updates[0]?.caller_id;
-      }
-      return sdk.signTransaction(tx, {
-        onAccount: initiatorId,
-      });
-    },
+    sign: (...args) => channelSign(initiatorId, ...args),
   };
 
   const channel = await Channel.initialize(channelConfig);

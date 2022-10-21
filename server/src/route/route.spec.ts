@@ -68,6 +68,8 @@ describe('/status', () => {
         balances: jest.fn,
         state: jest.fn,
         poi: jest.fn,
+        id: jest.fn,
+        fsmId: jest.fn,
         disconnect: jest.fn,
       } as unknown as Channel,
       {
