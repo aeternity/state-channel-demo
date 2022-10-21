@@ -81,6 +81,7 @@ On the other hand, the **client application** is responsible to do the following
 - Reconnect to channel in cases of window reload
 
 # Helpful Links
+- **[Step by step channel guide](CHANNEL_USAGE.md)**
 - [On-Chain channel transactions](https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md)
 - [Off-Chain channel transactions](https://github.com/aeternity/protocol/blob/master/channels/OFF-CHAIN.md)
 - [Channels API usage](https://github.com/aeternity/protocol/blob/master/node/api/channels_api_usage.md)
@@ -89,3 +90,4 @@ On the other hand, the **client application** is responsible to do the following
 - [Aeternity Node API](https://api-docs.aeternity.io/) 
 - [Aeternity SDK](https://github.com/aeternity/aepp-sdk-js)
 - [Run an Aeternity Node with Docker](https://docs.aeternity.io/en/stable/docker/)
+- **[Back to repo](https://github.com/aeternity/state-channel-demo)**
