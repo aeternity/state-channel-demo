@@ -82,6 +82,7 @@ On the other hand, the **client application** is responsible to do the following
 
 # Helpful Links
 - **[Step by step channel guide](CHANNEL_USAGE.md)**
+- [State Channel Workshop / Tutorial](https://github.com/aeternity/state-channel-workshop)
 - [On-Chain channel transactions](https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md)
 - [Off-Chain channel transactions](https://github.com/aeternity/protocol/blob/master/channels/OFF-CHAIN.md)
 - [Channels API usage](https://github.com/aeternity/protocol/blob/master/node/api/channels_api_usage.md)
