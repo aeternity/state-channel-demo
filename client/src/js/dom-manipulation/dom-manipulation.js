@@ -230,13 +230,6 @@ export function setMoveStatus(participant, status) {
 /**
  * @param {boolean} isDisabled
  */
-export function setResetDisability(isDisabled) {
-  document.querySelector('#reset').disabled = isDisabled;
-}
-
-/**
- * @param {boolean} isDisabled
- */
 export function setEndGameDisability(isDisabled) {
   document.querySelector('#end-game').disabled = isDisabled;
 }
@@ -525,6 +518,14 @@ function addErrorListener() {
   });
 }
 
+function showChannelIsClosing() {
+  hideSelections();
+  setMoveSelectionDisability(true);
+  document.querySelector('.autoplay').style.display = 'none';
+  setMoveStatus('user', 'Channel is closing...');
+  setMoveStatus('bot', '');
+}
+
 /**
  *
  * @param {GameChannel} gameChannel
@@ -535,12 +536,8 @@ export function handleAppMount(gameChannel) {
   document
     .querySelector('#logs-notification-close')
     .addEventListener('click', () => setLogsNotificationVisible(false));
-  document.getElementById('reset').addEventListener('click', resetApp);
   document.getElementById('end-game').addEventListener('click', async () => {
-    hideSelections();
-    setMoveSelectionDisability(true);
-    document.querySelector('.autoplay').style.display = 'none';
-    setMoveStatus('user', 'Channel is closing...');
+    showChannelIsClosing();
     await gameChannel.closeChannel();
     document.getElementById('end-game').textContent = 'Start Over';
     document.getElementById('end-game').onclick = resetApp;
