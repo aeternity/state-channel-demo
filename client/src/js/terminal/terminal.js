@@ -16,11 +16,24 @@ export const transactionLogs = {
  */
 
 /**
+ * @param {TransactionLog[]} logs
+ * @param {TransactionLog} log
+ */
+function checkIfLogExists(logs, log) {
+  return Object.values(logs).find((l) => l.id === log.id);
+}
+
+/**
  * @param {TransactionLog} transaction
  * @param {number} round
  */
 export function addUserTransaction(transaction, round) {
   transactionLogs.userTransactions[round] ??= [];
+  const txExists = checkIfLogExists(
+    transactionLogs.userTransactions[round],
+    transaction
+  );
+  if (txExists) return;
   transactionLogs.userTransactions[round].push(transaction);
   renderTransactionLog(transaction, true);
 }
@@ -31,6 +44,11 @@ export function addUserTransaction(transaction, round) {
  */
 export function addBotTransaction(transaction, round) {
   transactionLogs.botTransactions[round] ??= [];
+  const txExists = checkIfLogExists(
+    transactionLogs.botTransactions[round],
+    transaction
+  );
+  if (txExists) return;
   transactionLogs.botTransactions[round].push(transaction);
   renderTransactionLog(transaction, false);
   pruneTransactions();

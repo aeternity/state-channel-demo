@@ -140,8 +140,15 @@ export class GameChannel {
     ]);
     if (result?.accepted) this.gameRound.userSelection = selection;
     else {
-      console.error(result);
-      throw new Error('Selection was not accepted');
+      switch (result?.errorMessage) {
+        case 'timeout':
+        case 'conflict':
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return this.handleLastContractCall();
+        default:
+          console.error(result);
+          throw new Error('Selection was not accepted');
+      }
     }
   }
 
@@ -195,7 +202,7 @@ export class GameChannel {
     this.channelConfig = config;
     this.isFunded = true;
 
-    const shouldEnableDebug = !import.meta.env.MODE === 'test';
+    const shouldEnableDebug = !(import.meta.env.MODE === 'test');
     channel = await Channel.initialize({
       ...this.channelConfig,
       debug: shouldEnableDebug,
@@ -231,7 +238,7 @@ export class GameChannel {
     channel = await Channel.reconnect(
       {
         ...this.channelConfig,
-        debug: !import.meta.env.MODE === 'test',
+        debug: !(import.meta.env.MODE === 'test'),
         role: 'responder',
         sign: this.signTx.bind(this),
       },
@@ -369,6 +376,13 @@ export class GameChannel {
 
   registerEvents() {
     if (channel) {
+      channel.on('error', (error) => {
+        if (error.message === 'ChannelPingTimedOutError') {
+          // TODO: consider handling pong timeout on client as well
+          console.log('ChannelPingTimedOutError', error);
+        }
+      });
+
       channel.on('statusChanged', (status) => {
         if (status === 'open') {
           this.isOpen = true;
@@ -386,13 +400,13 @@ export class GameChannel {
         }
       });
 
-      channel.on('stateChanged', (tx) => {
+      channel.on('stateChanged', () => {
         this.channelRound = channel.round() ?? undefined;
         if (this.isOpen) this.saveStateToLocalStorage();
 
         if (this.gameRound.shouldHandleBotAction) {
           this.gameRound.shouldHandleBotAction = false;
-          this.handleOpponentCall(tx);
+          this.handleLastContractCall();
         }
       });
       channel.on('message', (message) => {
@@ -497,40 +511,6 @@ export class GameChannel {
     this.checkHasInsuffientBalance();
   }
 
-  async getLastEventsDecoded() {
-    if (!this.contract) throw new Error('Contract is not set');
-    const result = await this.fetchLastContractCall();
-    return this.contract.decodeEvents(result.log);
-  }
-
-  /**
-   * @param {Encoded.Transaction} tx
-   * @returns
-   */
-  async handleOpponentCall(tx) {
-    if (!this.channelConfig?.responderId)
-      throw new Error('Responder id is not defined');
-    if (!this.channelRound) throw new Error('Channel round is undefined');
-    const decodedEvents = await this.getLastEventsDecoded();
-    this.logCallUpdate(tx, {
-      name: decodedEvents[0].name,
-      value: decodedEvents[0].args[0],
-      type: 'event',
-    });
-
-    switch (decodedEvents[0].name) {
-      case ContractEvents.player1Moved:
-        this.setBotSelection(decodedEvents[0].args[0]);
-        this.gameRound.hasRevealed = true;
-        this.saveStateToLocalStorage();
-        await this.revealRoundResult();
-
-        break;
-      default:
-        return;
-    }
-  }
-
   /**
    * @param {Encoded.Transaction} tx
    * @param {Object} information
@@ -539,9 +519,14 @@ export class GameChannel {
    * @param {'method' | 'event'} type
    */
   async logCallUpdate(tx, information) {
-    const th = buildTxHash(tx);
+    let th;
+    try {
+      th = buildTxHash(tx);
+    } catch (e) {
+      console.error('error building txHash', tx, e);
+    }
     const transactionLog = {
-      id: th,
+      id: th ?? tx,
       description: ``,
       signed: SignatureTypes.proposed,
       onChain: false,
@@ -580,11 +565,15 @@ export class GameChannel {
   }
 
   async revealRoundResult() {
-    await this.callContract(
-      Methods.reveal,
-      [this.gameRound.hashKey, this.gameRound.userSelection],
-      0 // reveal method is not payable, so we use 0
-    );
+    try {
+      await this.callContract(
+        Methods.reveal,
+        [this.gameRound.hashKey, this.gameRound.userSelection],
+        0 // reveal method is not payable, so we use 0
+      );
+    } catch (e) {
+      return this.revealRoundResult();
+    }
     return this.handleRoundResult();
   }
 
@@ -695,7 +684,7 @@ export class GameChannel {
           ? 0
           : this.gameRound.index;
 
-      if (round > 1 && transactionLogs.botTransactions[round - 1].length === 2)
+      if (round > 1 && transactionLogs.botTransactions[round - 1]?.length === 2)
         round--;
       addBotTransaction(txLog, round);
       this.saveStateToLocalStorage();
@@ -774,12 +763,47 @@ export class GameChannel {
     if (!this.channelRound) throw new Error('Channel round is undefined');
     if (!caller) caller = this.channelConfig?.responderId;
     try {
-      const promise = this.getRoundContractCall(caller, this.channelRound);
+      const promise = this.getRoundContractCall(
+        caller,
+        // if channel was reconnected, .round() will return null.
+        channel.round() ?? this.channelRound
+      );
       return await Promise.race([promise, timeout(1000)]);
     } catch (e) {
       if (caller === this.channelConfig?.responderId)
         return this.fetchLastContractCall(this.channelConfig?.initiatorId);
-      throw e;
+      this.handleLastContractCall();
+    }
+  }
+
+  /**
+   * Reacts to last contract call.
+   * This is needed on reconnection
+   * and on channel conflicts.
+   */
+  async handleLastContractCall() {
+    try {
+      const lastContractCall = await this.fetchLastContractCall();
+      if (!lastContractCall) return;
+      const decodedCall = this.contract?.decodeEvents(lastContractCall.log);
+
+      if (decodedCall?.[0].name === ContractEvents.player1Moved)
+        return this.revealRoundResult();
+
+      if (
+        decodedCall?.[1].name === ContractEvents.player0Revealed &&
+        !this.gameRound.isCompleted
+      ) {
+        return this.handleRoundResult();
+      } else if (this.gameRound.isCompleted && !this.hasInsuffientBalance) {
+        this.startNewRound();
+      }
+    } catch (e) {
+      console.error(e);
+      alert(
+        'Error while trying to get the last contract call. App will reset.'
+      );
+      resetApp();
     }
   }
 
@@ -808,30 +832,7 @@ export class GameChannel {
     await this.updateBalances();
 
     if (savedState.gameRound.userSelection === Selections.none) return;
-    try {
-      const lastContractCall = await this.fetchLastContractCall();
-      const decodedCall = this.contract?.decodeEvents(lastContractCall.log);
-
-      if (decodedCall?.[0].name === ContractEvents.player1Moved)
-        return this.revealRoundResult();
-
-      if (
-        decodedCall?.[1].name === ContractEvents.player0Revealed &&
-        !savedState.gameRound.isCompleted
-      ) {
-        return this.handleRoundResult();
-      } else if (
-        savedState.gameRound.isCompleted &&
-        !this.hasInsuffientBalance
-      ) {
-        this.startNewRound();
-      }
-    } catch (e) {
-      alert(
-        'Error while trying to get the last contract call. App will reset.'
-      );
-      resetApp();
-    }
+    this.handleLastContractCall();
   }
 
   /**

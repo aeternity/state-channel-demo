@@ -13,6 +13,9 @@ export const mockChannel = () => {
       id() {
         return `ch_${randomUUID()}`;
       },
+      fsmId() {
+        return `ba_${randomUUID()}`;
+      },
       poi() {
         return `pi_${randomUUID()}`;
       },
