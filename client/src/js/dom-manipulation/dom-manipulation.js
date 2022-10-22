@@ -89,7 +89,7 @@ export function showElement(selector) {
   if (!element) {
     throw new Error(`Element with selector ${selector} not found`);
   }
-  element.style.display = 'initial';
+  element.style.display = 'flex';
 }
 
 /**
@@ -515,7 +515,13 @@ function addErrorListener() {
   });
 
   window.addEventListener('unhandledrejection', function (error) {
-    if (error.reason.name === 'ChannelCallError')
+    if (
+      [
+        'UnexpectedChannelMessageError',
+        'ChannelCallError',
+        'UnknownChannelStateError',
+      ].includes(error.reason.name)
+    )
       return gameChannel.handleLastContractCall();
     console.error(error);
     addErrorLog({

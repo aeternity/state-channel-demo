@@ -93,7 +93,7 @@ export class GameChannel {
   autoplay = {
     enabled: false,
     firstRoundIndex: 0,
-    limit: 200,
+    limit: 20,
   };
   gameRound = {
     stake: new BigNumber(0),
@@ -138,8 +138,9 @@ export class GameChannel {
     const result = await this.callContract(Methods.provide_hash, [
       this.getSelectionHash(selection),
     ]);
-    if (result?.accepted) this.gameRound.userSelection = selection;
-    else {
+    if (result?.accepted) {
+      this.gameRound.userSelection = selection;
+    } else {
       switch (result?.errorMessage) {
         case 'timeout':
         case 'conflict':
@@ -492,12 +493,14 @@ export class GameChannel {
 
     const value = typeof params === 'string' ? params : params.at(-1);
 
-    this.logCallUpdate(result.signedTx, {
-      name: method,
-      value,
-      type: 'method',
-    });
-    return result;
+    if (result.accepted) {
+      this.logCallUpdate(result.signedTx, {
+        name: method,
+        value,
+        type: 'method',
+      });
+      return result;
+    } else return this.callContract(method, params, amount);
   }
 
   async updateBalances() {
@@ -787,11 +790,13 @@ export class GameChannel {
       if (!lastContractCall) return;
       const decodedCall = this.contract?.decodeEvents(lastContractCall.log);
 
-      if (decodedCall?.[0].name === ContractEvents.player1Moved)
+      if (decodedCall?.[0]?.name === ContractEvents.player1Moved) {
+        this.setBotSelection(decodedCall[0].args?.[0]);
         return this.revealRoundResult();
+      }
 
       if (
-        decodedCall?.[1].name === ContractEvents.player0Revealed &&
+        decodedCall?.[1]?.name === ContractEvents.player0Revealed &&
         !this.gameRound.isCompleted
       ) {
         return this.handleRoundResult();
