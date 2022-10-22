@@ -93,7 +93,7 @@ export class GameChannel {
   autoplay = {
     enabled: false,
     firstRoundIndex: 0,
-    limit: 20,
+    limit: 10,
   };
   gameRound = {
     stake: new BigNumber(0),
