@@ -2,6 +2,8 @@
  * @typedef { import("../../types").StoredState } StoredState
  */
 
+import { addErrorLog } from '../dom-manipulation/dom-manipulation';
+
 export function resetApp() {
   localStorage.removeItem('gameState');
   window.location.href = window.location.origin;
@@ -20,8 +22,11 @@ export function getSavedState() {
     return state;
   } catch (e) {
     localStorage.removeItem('gameState');
-    alert('Corrupted localStorage. App will reset.');
-    resetApp();
+    addErrorLog({
+      message: 'Corrupted localstorage. Please retry.',
+      timestamp: Date.now(),
+    });
+    throw e;
   }
 }
 

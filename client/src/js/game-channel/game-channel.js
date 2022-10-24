@@ -9,11 +9,7 @@ import {
 import { BigNumber } from 'bignumber.js';
 import SHA from 'sha.js';
 import { contractSource } from '../contract/contract';
-import {
-  getSavedState,
-  storeGameState,
-  resetApp,
-} from '../local-storage/local-storage';
+import { getSavedState, storeGameState } from '../local-storage/local-storage';
 import {
   fundThroughFaucet,
   keypair,
@@ -41,6 +37,7 @@ import {
 } from '../terminal/terminal';
 import { DomMiddleware } from './game-channel.middleware';
 import {
+  addErrorLog,
   disableAutoplayView,
   setLogsNotificationVisible,
 } from '../dom-manipulation/dom-manipulation';
@@ -233,10 +230,11 @@ export class GameChannel {
 
     if (!(await this.checkifChannelIsStillOpen())) {
       localStorage.removeItem('gameState');
-      alert(
-        'Channel was shutdown and can no longer be opened. App will reset.'
-      );
-      return resetApp();
+      addErrorLog({
+        message:
+          'Channel was shutdown and can no longer be opened. Please retry.',
+        timestamp: Date.now(),
+      });
     }
 
     channel = await Channel.reconnect(
@@ -406,10 +404,11 @@ export class GameChannel {
           this.updateBalances();
         }
         if (status === 'closed' || status === 'died') {
-          alert(
-            'Node triggered a timeout and the channel has died. App will reset.'
-          );
-          resetApp();
+          addErrorLog({
+            message:
+              'Node triggered a timeout and the channel has died. Please retry.',
+            timestamp: Date.now(),
+          });
         }
       });
 
@@ -431,7 +430,6 @@ export class GameChannel {
         const polledTx = await poll(onChainTxhash, {
           onNode: node,
         });
-        // @ts-expect-error ts-mismatch
         if (polledTx.tx.type === 'ChannelCreateTx') {
           updateOpenChannelTransactions(onChainTxhash);
         }
@@ -847,10 +845,11 @@ export class GameChannel {
       }
     } catch (e) {
       console.error(e);
-      alert(
-        'Error while trying to get the last contract call. App will reset.'
-      );
-      resetApp();
+      addErrorLog({
+        message:
+          'Error while trying to get the last contract call. Please retry.',
+        timestamp: Date.now(),
+      });
     }
   }
 
