@@ -53,6 +53,10 @@ export function DomMiddleware(gameChannel) {
     }
     DOMUpdate.setGameRoundIndex(gameChannel.gameRound.index);
     DOMUpdate.setCheckExplorerBtnUrl(gameChannel.channelConfig.responderId);
+    DOMUpdate.setExplorerLinks(
+      gameChannel.channelConfig.responderId,
+      gameChannel.channelConfig.initiatorId
+    );
     DOMUpdate.setStakeAmount(gameChannel.gameRound.stake);
     DOMUpdate.showGameInfo();
 

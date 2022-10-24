@@ -383,7 +383,7 @@
 .user,
 .bot {
   display: grid;
-  grid-template-rows: 30px calc(100% - 60px) 30px;
+  grid-template-rows: 50px calc(100% - 80px) 50px;
 }
 .user .balance,
 .bot .balance {
@@ -396,6 +396,7 @@
 @media (max-width: 599px) {
   .user,
   .bot {
+    grid-template-rows: 40px calc(100% - 60px) 40px;
     margin-top: 10px;
   }
   .user .balance,
@@ -440,14 +441,26 @@
   gap: 0px 0px;
 }
 .player-info .name {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
   grid-area: name;
   font-size: 30px;
   font-weight: bold;
-  text-align: center;
+}
+.player-info .name .address {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--pink);
+  white-space: nowrap;
 }
 @media (max-width: 599px) {
   .player-info .name {
     font-size: 26px;
+  }
+  .player-info .name .address {
+    font-size: 16px;
   }
 }
 @media (min-width: 1800px) {
@@ -568,6 +581,9 @@
   text-align: left;
   color: var(--pink);
 }
+.transactions .terminal .transactions-list .transaction-pair .transaction a {
+  color: var(--pink);
+}
 @media (max-width: 599px) {
   .transactions .terminal .transactions-list .transaction-pair .transaction {
     font-size: 11px;
@@ -600,6 +616,14 @@
   .transactions-list
   .transaction-pair
   .transaction.is-user {
+  color: var(--green);
+}
+.transactions
+  .terminal
+  .transactions-list
+  .transaction-pair
+  .transaction.is-user
+  a {
   color: var(--green);
 }
 .transactions
@@ -866,7 +890,7 @@
 #app.container {
   display: grid;
   grid-template-columns: 1fr;
-  --game-screen-height: max(200px, 32%);
+  --game-screen-height: max(240px, 32%);
   --transactions-height: calc(100% - 90px - var(--game-screen-height));
   grid-template-rows: 90px var(--game-screen-height) var(--transactions-height);
   gap: 0px 0px;
@@ -885,7 +909,7 @@
 }
 @media (max-width: 599px) {
   #app.container {
-    --game-screen-height: max(285px, 45%);
+    --game-screen-height: max(325px, 45%);
     --transactions-height: calc(100% - 110px - var(--game-screen-height));
     grid-template-rows: 110px var(--game-screen-height) var(
         --transactions-height

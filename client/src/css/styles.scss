@@ -18,7 +18,7 @@
   &.container {
     display: grid;
     grid-template-columns: 1fr;
-    --game-screen-height: max(200px, 32%);
+    --game-screen-height: max(240px, 32%);
     --transactions-height: calc(100% - 90px - var(--game-screen-height));
     grid-template-rows: 90px var(--game-screen-height) var(
         --transactions-height
@@ -41,7 +41,7 @@
       text-align: center;
     }
     @include for-phone-only {
-      --game-screen-height: max(285px, 45%);
+      --game-screen-height: max(325px, 45%);
       --transactions-height: calc(100% - 110px - var(--game-screen-height));
       grid-template-rows: 110px var(--game-screen-height) var(
           --transactions-height
