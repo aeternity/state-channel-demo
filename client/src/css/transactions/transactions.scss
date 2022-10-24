@@ -110,9 +110,13 @@
           &.is-user {
             color: var(--green);
           }
+          &.is-info {
+            color: #107ab0;
+          }
           &.error {
             color: red;
           }
+          .off-chain-pill,
           .on-chain-pill {
             background-color: var(--green);
             color: white;
@@ -120,6 +124,9 @@
             border-radius: 8px;
             margin-left: 5px;
             white-space: nowrap;
+          }
+          .off-chain-pill {
+            background-color: var(--pink);
           }
         }
       }

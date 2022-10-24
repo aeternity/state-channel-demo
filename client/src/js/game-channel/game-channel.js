@@ -32,9 +32,11 @@ import {
 import {
   transactionLogs,
   addUserTransaction,
+  addInfoLog,
   setUserTransactions,
   addBotTransaction,
   setBotTransactions,
+  setInfoLogs,
   updateOpenChannelTransactions,
 } from '../terminal/terminal';
 import { DomMiddleware } from './game-channel.middleware';
@@ -42,6 +44,8 @@ import {
   disableAutoplayView,
   setLogsNotificationVisible,
 } from '../dom-manipulation/dom-manipulation';
+import { getResultsLog } from '../utils/utils';
+
 /**
  * @typedef {import("../../types").GameRound} GameRound
  * @typedef {import("../../types").Update} Update
@@ -170,7 +174,6 @@ export class GameChannel {
       await fundThroughFaucet();
     }
     const log = {
-      onChain: false,
       description:
         'User invited a bot to initialise a state channel connection',
       timestamp: Date.now(),
@@ -287,10 +290,19 @@ export class GameChannel {
           this.isOpen = false;
           channel.disconnect();
 
+          const resultsLog = getResultsLog();
+          addInfoLog(resultsLog, this.gameRound.index);
+
           const resultsMessage = this.getMessageToSaveOnChain();
           this.savedResultsOnChainTxHash = await returnCoinsToFaucet(
             resultsMessage
           );
+          const log = {
+            onChain: true,
+            description: 'User returned coins to faucet',
+            timestamp: Date.now(),
+          };
+          addUserTransaction(log, this.gameRound.index);
         });
     });
     localStorage.clear();
@@ -342,7 +354,7 @@ export class GameChannel {
         onChain: true,
         timestamp: Date.now(),
       };
-      addUserTransaction(transactionLog, 0);
+      addUserTransaction(transactionLog, this.gameRound.index);
     }
 
     // if we are signing a transaction that updates the contract
@@ -401,13 +413,13 @@ export class GameChannel {
         }
       });
 
-      channel.on('stateChanged', () => {
+      channel.on('stateChanged', (tx) => {
         this.channelRound = channel.round() ?? undefined;
         if (this.isOpen) this.saveStateToLocalStorage();
 
         if (this.gameRound.shouldHandleBotAction) {
           this.gameRound.shouldHandleBotAction = false;
-          this.handleLastContractCall();
+          this.handleLastContractCall(tx);
         }
       });
       channel.on('message', (message) => {
@@ -608,6 +620,27 @@ export class GameChannel {
     this.gameRound.isCompleted = true;
     this.gameRound.userInAction = false;
     this.saveStateToLocalStorage();
+
+    let winnerName = undefined;
+    switch (winner) {
+      case this.channelConfig.initiatorId:
+        winnerName = 'Bot';
+        break;
+      case this.channelConfig.responderId:
+        winnerName = 'User';
+        break;
+    }
+
+    const description = winnerName ? `${winnerName} wins!` : "It's a draw!";
+
+    const transactionLog = {
+      id: `${this.gameRound.index}`,
+      description,
+      signed: SignatureTypes.confirmed,
+      timestamp: Date.now(),
+    };
+    addInfoLog(transactionLog, this.gameRound.index);
+
     await this.updateBalances();
 
     if (this.gameRound.index % 50 === 0) {
@@ -623,7 +656,6 @@ export class GameChannel {
     this.gameRound.botSelection = Selections.none;
     this.gameRound.shouldHandleBotAction = false;
     this.gameRound.isCompleted = false;
-    this.gameRound.hasRevealed = false;
     this.gameRound.winner = undefined;
 
     // if autoplay is enabled, make user selection automatically
@@ -732,6 +764,7 @@ export class GameChannel {
         botTransactions: this.getTrimmedTransactions(
           transactionLogs.botTransactions
         ),
+        infoLogs: this.getTrimmedTransactions(transactionLogs.infoLogs),
       },
       contractCreationChannelRound: this.contractCreationChannelRound,
     };
@@ -783,8 +816,10 @@ export class GameChannel {
    * Reacts to last contract call.
    * This is needed on reconnection
    * and on channel conflicts.
+   *
+   * @param {Encoded.Transaction} [tx]
    */
-  async handleLastContractCall() {
+  async handleLastContractCall(tx) {
     try {
       const lastContractCall = await this.fetchLastContractCall();
       if (!lastContractCall) return;
@@ -792,6 +827,13 @@ export class GameChannel {
 
       if (decodedCall?.[0]?.name === ContractEvents.player1Moved) {
         this.setBotSelection(decodedCall[0].args?.[0]);
+        if (tx) {
+          this.logCallUpdate(tx, {
+            name: decodedCall?.[0]?.name,
+            value: decodedCall?.[0].args?.[0],
+            type: 'event',
+          });
+        }
         return this.revealRoundResult();
       }
 
@@ -827,6 +869,7 @@ export class GameChannel {
     this.gameRound.stake = new BigNumber(savedState.gameRound.stake);
     setUserTransactions(savedState.transactionLogs.userTransactions);
     setBotTransactions(savedState.transactionLogs.botTransactions);
+    setInfoLogs(savedState.transactionLogs.infoLogs);
     this.channelConfig = savedState.channelConfig;
     await this.reconnectChannel();
     await this.buildContract(

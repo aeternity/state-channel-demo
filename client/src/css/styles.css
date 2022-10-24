@@ -606,9 +606,22 @@
   .terminal
   .transactions-list
   .transaction-pair
+  .transaction.is-info {
+  color: #107ab0;
+}
+.transactions
+  .terminal
+  .transactions-list
+  .transaction-pair
   .transaction.error {
   color: red;
 }
+.transactions
+  .terminal
+  .transactions-list
+  .transaction-pair
+  .transaction
+  .off-chain-pill,
 .transactions
   .terminal
   .transactions-list
@@ -621,6 +634,14 @@
   border-radius: 8px;
   margin-left: 5px;
   white-space: nowrap;
+}
+.transactions
+  .terminal
+  .transactions-list
+  .transaction-pair
+  .transaction
+  .off-chain-pill {
+  background-color: var(--pink);
 }
 
 .notification {

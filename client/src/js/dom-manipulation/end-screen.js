@@ -11,7 +11,7 @@ import { resetApp } from '../local-storage/local-storage';
  *
  * @param {SharedResults} sharedResults
  */
-function getRoundsPlayed(sharedResults) {
+export function getRoundsPlayed(sharedResults) {
   let rounds = sharedResults?.rounds ?? gameChannel.gameRound.index;
   rounds = isLastRoundCompleted(sharedResults) ? rounds : rounds - 1;
   return rounds;
@@ -39,7 +39,7 @@ function getOffChainTxNo(sharedResults) {
  *
  * @param {SharedResults} sharedResults
  */
-const getOffChainTxMessage = (sharedResults) => `${getOffChainTxNo(
+export const getOffChainTxMessage = (sharedResults) => `${getOffChainTxNo(
   sharedResults
 )} off-chain 
   transaction${getOffChainTxNo(sharedResults) > 1 ? 's' : ''}`;
@@ -68,6 +68,18 @@ function getEarnings(sharedResults) {
 
 /**
  *
+ * @returns {string} earnings message
+ */
+export function getEarningsMessage() {
+  const earnings = getEarnings();
+  return earnings.isZero()
+    ? `The user didn't win or lose anything`
+    : `The ${earnings.isGreaterThan(0) ? 'user' : 'bot'} won
+    ${earnings.dividedBy(1e18).abs().toFormat(2)}Æ`;
+}
+
+/**
+ *
  * @param {SharedResults} sharedResults
  */
 function getTitle(sharedResults) {
@@ -76,8 +88,8 @@ function getTitle(sharedResults) {
   return earnings.isZero()
     ? `${user} didn't win or lose anything`
     : earnings.isGreaterThan(0)
-    ? `${user} won ${earnings.dividedBy(1e18).toFormat(2)} Æ`
-    : `${user} lost ${earnings.abs().dividedBy(1e18).toFormat(2)} Æ`;
+    ? `${user} won ${earnings.dividedBy(1e18).toFormat(2)}Æ`
+    : `${user} lost ${earnings.abs().dividedBy(1e18).toFormat(2)}Æ`;
 }
 
 /**
