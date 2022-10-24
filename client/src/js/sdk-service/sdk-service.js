@@ -35,7 +35,6 @@ export async function refreshSdkAccount() {
 
   const log = {
     id: await account.address(),
-    onChain: false,
     description: 'User initialized a Memory Account',
     timestamp: Date.now(),
   };
@@ -67,12 +66,6 @@ export async function returnCoinsToFaucet(payload) {
     const result = await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
       payload,
     });
-    const log = {
-      onChain: true,
-      description: 'User returned coins to faucet',
-      timestamp: Date.now(),
-    };
-    addUserTransaction(log, 0);
     return result.hash;
   } catch (e) {
     console.error({ e }, 'failed to return funds to faucet');

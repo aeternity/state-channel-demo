@@ -14,7 +14,6 @@ export interface GameRound {
   botSelection?: Selections;
   winner?: Encoded.AccountAddress;
   isCompleted?: boolean;
-  hasRevealed?: boolean;
   userInAction: boolean;
   shouldHandleBotAction: boolean;
 }
