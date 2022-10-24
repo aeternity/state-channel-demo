@@ -1,9 +1,14 @@
+import {
+  getEarningsMessage,
+  getOffChainTxMessage,
+  getRoundsPlayed,
+} from '../dom-manipulation/end-screen';
+
 /**
  *
  * @param {number} timestamp
  * @returns {string} formattedTime
  */
-
 export function formatDate(timestamp) {
   const date = new Date(timestamp);
   return (
@@ -19,7 +24,7 @@ export function formatDate(timestamp) {
  * @param {string} id
  * @returns string trimmedId
  */
-export function formatTxId(id) {
+export function formatId(id) {
   return id.length > 10 ? id.slice(0, 5) + '…' + id.slice(-5) : id;
 }
 
@@ -42,4 +47,14 @@ function createWindowConfig(width = 500, height = 500) {
   const left = screen.width / 2 - width / 2;
   const top = screen.height / 2 - height / 2;
   return `width=${width},height=${height},left=${left},top=${top}`;
+}
+
+export function getResultsLog() {
+  return {
+    description: `${getEarningsMessage()} in ${getRoundsPlayed()} 
+    round${
+      getRoundsPlayed() > 1 ? 's' : ''
+    }, ${getOffChainTxMessage()} executed.`,
+    timestamp: Date.now(),
+  };
 }

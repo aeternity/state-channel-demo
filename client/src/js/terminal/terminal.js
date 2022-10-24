@@ -1,12 +1,13 @@
 import {
   renderTransactionLog,
   renderTransactionLogs,
-  removeTransactionsPair,
+  removeRoundGroup,
 } from '../dom-manipulation/dom-manipulation.js';
 
 export const transactionLogs = {
   userTransactions: {},
   botTransactions: {},
+  infoLogs: {},
 };
 
 /**
@@ -35,7 +36,7 @@ export function addUserTransaction(transaction, round) {
   );
   if (txExists) return;
   transactionLogs.userTransactions[round].push(transaction);
-  renderTransactionLog(transaction, true);
+  renderTransactionLog(transaction, 'user', round);
 }
 
 /**
@@ -50,7 +51,17 @@ export function addBotTransaction(transaction, round) {
   );
   if (txExists) return;
   transactionLogs.botTransactions[round].push(transaction);
-  renderTransactionLog(transaction, false);
+  renderTransactionLog(transaction, 'bot', round);
+}
+
+/**
+ * @param {TransactionLog} transaction
+ * @param {number} round
+ */
+export function addInfoLog(transaction, round) {
+  transactionLogs.infoLogs[round] ??= [];
+  transactionLogs.infoLogs[round].push(transaction);
+  renderTransactionLog(transaction, 'info', round);
   pruneTransactions();
 }
 
@@ -59,7 +70,7 @@ export function addBotTransaction(transaction, round) {
  */
 export function setUserTransactions(transactionLogGroup) {
   transactionLogs.userTransactions = transactionLogGroup;
-  renderTransactionLogs(transactionLogGroup, true);
+  renderTransactionLogs(transactionLogGroup, 'user');
 }
 
 /**
@@ -67,7 +78,15 @@ export function setUserTransactions(transactionLogGroup) {
  */
 export function setBotTransactions(transactionLogGroup) {
   transactionLogs.botTransactions = transactionLogGroup;
-  renderTransactionLogs(transactionLogGroup, false);
+  renderTransactionLogs(transactionLogGroup, 'bot');
+}
+
+/**
+ * @param {TransactionLogGroup} transactionLogGroup
+ */
+export function setInfoLogs(transactionLogGroup) {
+  transactionLogs.infoLogs = transactionLogGroup;
+  renderTransactionLogs(transactionLogGroup, 'info');
 }
 
 /**
@@ -97,12 +116,9 @@ export function pruneTransactions() {
     // don't delete round 0, because it contains the on-chain transactionLogs
     const firstKey = keys[1];
 
-    for (const transaction of Object.values(
-      transactionLogs.botTransactions[parseInt(firstKey)]
-    )) {
-      removeTransactionsPair(transaction.id);
-    }
+    removeRoundGroup(firstKey);
     delete transactionLogs.botTransactions[parseInt(firstKey)];
     delete transactionLogs.userTransactions[parseInt(firstKey)];
+    delete transactionLogs.infoLogs[parseInt(firstKey)];
   }
 }

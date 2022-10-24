@@ -1,5 +1,5 @@
 import { Selections, SignatureTypes } from '../game-channel/game-channel.enums';
-import { formatDate, formatTxId, openShareWindow } from '../utils/utils';
+import { formatDate, formatId, openShareWindow } from '../utils/utils';
 import { resetApp } from '../local-storage/local-storage';
 import { renderEndScreen } from './end-screen';
 import { decode, Node } from '@aeternity/aepp-sdk';
@@ -141,6 +141,20 @@ export function setCheckExplorerBtnUrl(responderId) {
 }
 
 /**
+ * @param {Encoded.AccountAddress} responderId
+ * @param {Encoded.AccountAddress} initiatorId
+ */
+export function setExplorerLinks(responderId, initiatorId) {
+  const userAddress = document.querySelector('#user-address');
+  const botAddress = document.querySelector('#bot-address');
+
+  userAddress.textContent = formatId(responderId);
+  botAddress.textContent = formatId(initiatorId);
+  userAddress.href = `https://explorer.testnet.aeternity.io/account/${responderId}`;
+  botAddress.href = `https://explorer.testnet.aeternity.io/account/${initiatorId}`;
+}
+
+/**
  * @param {Participant} participant
  * @param {BigNumber} balance
  */
@@ -278,14 +292,17 @@ export function disableAutoplayView(gameChannel) {
 /**
  *
  * @param {TransactionLog} transaction
- * @param {boolean} isUser
+ * @param {'user' | 'bot' | 'info'} type
  */
-export function renderTransactionLog(transaction, isUser) {
+export function renderTransactionLog(transaction, type, round) {
   const transactionsList = document.querySelector('.transactions-list');
+  const roundGroup =
+    document.querySelector(`#round-group-${round}`) ??
+    createNewRoundGroup(round);
   const transactionPair =
     document.querySelector(`#tx-pair-${transaction.id}`) ??
-    createNewTransactionPair(transaction.id);
-  const tx = createNewTransaction(transaction, isUser);
+    createNewTransactionPair(transaction.id, roundGroup);
+  const tx = createNewTransaction(transaction, type);
   if (transaction.signed === SignatureTypes.proposed) {
     transactionPair.prepend(tx);
   } else {
@@ -297,55 +314,77 @@ export function renderTransactionLog(transaction, isUser) {
 /**
  *
  * @param {string} id
+ * @param {HTMLElement} roundGroup
  * @returns {HTMLDivElement} transactionPair
  */
-function createNewTransactionPair(id) {
-  const transactionsList = document.querySelector('.transactions-list');
+function createNewTransactionPair(id, roundGroup) {
   const txPair = document.createElement('div');
-  transactionsList.appendChild(txPair);
+  roundGroup
+    ? roundGroup.appendChild(txPair)
+    : document.querySelector('.transactions-list').appendChild(txPair);
   txPair.classList.add('transaction-pair');
   txPair.id = `tx-pair-${id ?? Math.floor(Math.random() * 1000)}`;
 
   return txPair;
 }
+/**
+ *
+ * @param {number} round
+ * @returns HTMLDivElement
+ */
+function createNewRoundGroup(round) {
+  const transactionsList = document.querySelector('.transactions-list');
+  const roundGroup = document.createElement('div');
+  roundGroup.id = `round-group-${round}`;
+  transactionsList.appendChild(roundGroup);
+
+  return roundGroup;
+}
 
 /**
  *
  * @param {TransactionLog} transaction
- * @param {boolean} isUser
+ * @param {'user' | 'bot' | 'info'} type
  * @returns {HTMLDivElement} transaction
  */
-function createNewTransaction(transaction, isUser) {
+function createNewTransaction(transaction, type) {
   const txEl = document.createElement('div');
   txEl.classList.add('transaction');
+  let id = transaction.id;
   if (transaction.onChain) txEl.classList.add('on-chain');
-  if (isUser) txEl.classList.add('is-user');
-  txEl.id = transaction.id;
+  if (type === 'user') txEl.classList.add('is-user');
+  else if (type === 'info') {
+    txEl.classList.add('is-info');
+    id = transaction.id ? `round-${transaction.id}` : '';
+  }
+  txEl.id = id;
   txEl.innerHTML = `
-    <span>${isUser ? '[USER]' : '[BOT]'}</span>
+    <span>[${type.toUpperCase()}]</span>
     <span> - ${formatDate(transaction.timestamp)} -</span>
-    <span title="${transaction.id ?? ''}">
-      ${transaction.id ? `${formatTxId(transaction.id)} -` : ''}
-    </span>
+    <span title="${id ?? ''}">
+        ${id ? `${formatId(id)} -` : ''}
+      </span>
     <span>
       ${transaction.description} 
     </span>
     ${
-      transaction.onChain ? '<span class="on-chain-pill">on-chain</span>' : ''
+      transaction.onChain != undefined
+        ? transaction.onChain
+          ? '<span class="on-chain-pill">on-chain</span>'
+          : '<span class="off-chain-pill">off-chain</span>'
+        : ''
     }`;
 
   return txEl;
 }
 
 /**
- *
- * @param {string} id
+ * @param {number} round
  */
-export function removeTransactionsPair(id) {
+export function removeRoundGroup(round) {
   try {
-    const transactionsList = document.querySelector('.transactions-list');
-    const transactionPair = document.querySelector(`#tx-pair-${id}`);
-    transactionsList.removeChild(transactionPair);
+    const roundGroup = document.querySelector(`#round-group-${round}`);
+    roundGroup.remove();
   } catch (e) {
     return;
   }
@@ -354,13 +393,15 @@ export function removeTransactionsPair(id) {
 /**
  *
  * @param {TransactionLogGroup} transactionLogGroup
- * @param {boolean} isUser
+ * @param {'user' | 'bot' | 'info'} type
  */
-export function renderTransactionLogs(transactionLogGroup, isUser) {
+export function renderTransactionLogs(transactionLogGroup, type) {
+  const roundIndexes = Object.keys(transactionLogGroup);
   for (const rounds of Object.values(transactionLogGroup)) {
     for (const transaction of rounds) {
-      renderTransactionLog(transaction, isUser);
+      renderTransactionLog(transaction, type, roundIndexes[0]);
     }
+    roundIndexes.shift();
   }
 }
 

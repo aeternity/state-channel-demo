@@ -74,27 +74,35 @@ describe('e2e', async () => {
       expect(document.querySelector('.round-index').textContent).toBe('2');
       // end of single round
 
-      const logs = document.querySelector('.transactions-list').childNodes;
-      expect(logs.length).toBe(7);
-      expect(logs[0].textContent.includes('User initialized a Memory Account'));
-      expect(logs[1].textContent.includes('User invited a bot'));
+      const logGroups = document.querySelector('.transactions-list').childNodes;
+      expect(logGroups.length).toBe(2);
+      const initLogs = logGroups[0].childNodes;
+      const roundOneLogs = logGroups[1].childNodes;
       expect(
-        logs[2].textContent.includes('initialise state channel connection')
+        initLogs[0].textContent.includes('User initialized a Memory Account')
       );
-      expect(logs[2].textContent.includes('User co-signed'));
-      expect(logs[3].textContent.includes('deployed game contract'));
-      expect(logs[3].textContent.includes('verified validity'));
-      expect(logs[4].textContent.includes('hashed game move'));
-      expect(logs[4].textContent.includes('contract call with game move'));
-      expect(logs[5].textContent.includes('contract call with game move'));
+      expect(initLogs[1].textContent.includes('User invited a bot'));
       expect(
-        logs[5].textContent.includes(
+        initLogs[2].textContent.includes('initialise state channel connection')
+      );
+      expect(initLogs[2].textContent.includes('User co-signed'));
+      expect(initLogs[3].textContent.includes('deployed game contract'));
+      expect(initLogs[3].textContent.includes('verified validity'));
+      expect(roundOneLogs[0].textContent.includes('hashed game move'));
+      expect(
+        roundOneLogs[0].textContent.includes('contract call with game move')
+      );
+      expect(
+        roundOneLogs[1].textContent.includes('contract call with game move')
+      );
+      expect(
+        roundOneLogs[1].textContent.includes(
           'User co-signed a contract call with bot’s game move'
         )
       );
-      expect(logs[6].textContent.includes('with revealed game move'));
+      expect(roundOneLogs[2].textContent.includes('with revealed game move'));
       expect(
-        logs[6].textContent.includes(
+        roundOneLogs[2].textContent.includes(
           'Bot co-signed user’s contract call with revealed'
         )
       );
@@ -162,6 +170,7 @@ describe('e2e', async () => {
       expect(BigInt(faucet_balance_after)).toBeGreaterThan(
         BigInt(faucet_balance_before) + BigInt(6e18)
       );
+      // end of return of coins
     },
     4 * 60000
   );
