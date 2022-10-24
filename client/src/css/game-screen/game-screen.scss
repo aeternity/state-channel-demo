@@ -17,7 +17,7 @@
 .user,
 .bot {
   display: grid;
-  grid-template-rows: 30px calc(100% - 60px) 30px;
+  grid-template-rows: 50px calc(100% - 80px) 50px;
   .balance {
     font-size: 30px;
     text-align: right;
@@ -26,6 +26,7 @@
     color: var(--pink);
   }
   @include for-phone-only {
+    grid-template-rows: 40px calc(100% - 60px) 40px;
     margin-top: 10px;
     .balance {
       font-size: 16px;
@@ -63,12 +64,24 @@
   gap: 0px 0px;
 
   .name {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
     grid-area: name;
     font-size: 30px;
     font-weight: bold;
-    text-align: center;
+    .address {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--pink);
+      white-space: nowrap;
+    }
     @include for-phone-only {
       font-size: 26px;
+      .address {
+        font-size: 16px;
+      }
     }
     @include for-big-desktop-up {
       font-size: 40px;

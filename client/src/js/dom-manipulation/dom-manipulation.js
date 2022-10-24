@@ -1,5 +1,5 @@
 import { Selections, SignatureTypes } from '../game-channel/game-channel.enums';
-import { formatDate, formatTxId, openShareWindow } from '../utils/utils';
+import { formatDate, formatId, openShareWindow } from '../utils/utils';
 import { resetApp } from '../local-storage/local-storage';
 import { renderEndScreen } from './end-screen';
 import { decode, Node } from '@aeternity/aepp-sdk';
@@ -138,6 +138,20 @@ export function setCheckExplorerBtnUrl(responderId) {
   const checkExplorerBtn = document.querySelector('#check-explorer-btn');
   checkExplorerBtn.href = `https://testnet.aenalytics.org/accounts/${responderId}`;
   checkExplorerBtn.classList.remove('disabled');
+}
+
+/**
+ * @param {Encoded.AccountAddress} responderId
+ * @param {Encoded.AccountAddress} initiatorId
+ */
+export function setExplorerLinks(responderId, initiatorId) {
+  const userAddress = document.querySelector('#user-address');
+  const botAddress = document.querySelector('#bot-address');
+
+  userAddress.textContent = formatId(responderId);
+  botAddress.textContent = formatId(initiatorId);
+  userAddress.href = `https://explorer.testnet.aeternity.io/account/${responderId}`;
+  botAddress.href = `https://explorer.testnet.aeternity.io/account/${initiatorId}`;
 }
 
 /**
@@ -348,8 +362,8 @@ function createNewTransaction(transaction, type) {
     <span>[${type.toUpperCase()}]</span>
     <span> - ${formatDate(transaction.timestamp)} -</span>
     <span title="${id ?? ''}">
-      ${id ? `${formatTxId(id)} -` : ''}
-    </span>
+        ${id ? `${formatId(id)} -` : ''}
+      </span>
     <span>
       ${transaction.description} 
     </span>

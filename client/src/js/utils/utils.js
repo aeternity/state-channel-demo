@@ -24,7 +24,7 @@ export function formatDate(timestamp) {
  * @param {string} id
  * @returns string trimmedId
  */
-export function formatTxId(id) {
+export function formatId(id) {
   return id.length > 10 ? id.slice(0, 5) + '…' + id.slice(-5) : id;
 }
 

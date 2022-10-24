@@ -90,6 +90,9 @@
 
           text-align: left;
           color: var(--pink);
+          a {
+            color: var(--pink);
+          }
           @include for-phone-only {
             font-size: 11px;
           }
@@ -109,6 +112,9 @@
           }
           &.is-user {
             color: var(--green);
+            a {
+              color: var(--green);
+            }
           }
           &.is-info {
             color: #107ab0;

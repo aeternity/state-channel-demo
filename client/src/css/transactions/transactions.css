@@ -100,6 +100,9 @@
   text-align: left;
   color: var(--pink);
 }
+.transactions .terminal .transactions-list .transaction-pair .transaction a {
+  color: var(--pink);
+}
 @media (max-width: 599px) {
   .transactions .terminal .transactions-list .transaction-pair .transaction {
     font-size: 11px;
@@ -132,6 +135,14 @@
   .transactions-list
   .transaction-pair
   .transaction.is-user {
+  color: var(--green);
+}
+.transactions
+  .terminal
+  .transactions-list
+  .transaction-pair
+  .transaction.is-user
+  a {
   color: var(--green);
 }
 .transactions

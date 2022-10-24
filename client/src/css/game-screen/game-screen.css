@@ -168,7 +168,7 @@
 .user,
 .bot {
   display: grid;
-  grid-template-rows: 30px calc(100% - 60px) 30px;
+  grid-template-rows: 50px calc(100% - 80px) 50px;
 }
 .user .balance,
 .bot .balance {
@@ -181,6 +181,7 @@
 @media (max-width: 599px) {
   .user,
   .bot {
+    grid-template-rows: 40px calc(100% - 60px) 40px;
     margin-top: 10px;
   }
   .user .balance,
@@ -225,14 +226,26 @@
   gap: 0px 0px;
 }
 .player-info .name {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
   grid-area: name;
   font-size: 30px;
   font-weight: bold;
-  text-align: center;
+}
+.player-info .name .address {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--pink);
+  white-space: nowrap;
 }
 @media (max-width: 599px) {
   .player-info .name {
     font-size: 26px;
+  }
+  .player-info .name .address {
+    font-size: 16px;
   }
 }
 @media (min-width: 1800px) {
