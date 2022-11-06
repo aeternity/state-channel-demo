@@ -710,6 +710,7 @@ export class GameChannel {
    * @param {TransactionLog} message.data
    */
   handleMessage(message) {
+    if (message.type === 'Error') throw new Error(message.data.description);
     if (message.type === 'add_bot_transaction_log') {
       const txLog = message.data;
       let round =

@@ -37,7 +37,7 @@ describe('ContractService', () => {
       const pick = Moves.paper;
       const dummyHash = await createHash(pick, hashKey);
 
-      const { calldata: nextCallData } = await ContractService.getNextCallData(
+      const { calldata: nextCallData } = await ContractService.getNextCallDataFromDecodedEvents(
         [
           {
             name: ContractEvents.player0ProvidedHash,
@@ -65,7 +65,7 @@ describe('ContractService', () => {
     });
 
     it('should return null when provided with unhandled method', async () => {
-      const nextCallData = await ContractService.getNextCallData(
+      const nextCallData = await ContractService.getNextCallDataFromDecodedEvents(
         [
           {
             name: 'lala',

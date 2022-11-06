@@ -550,7 +550,7 @@ function addErrorListener() {
   window.addEventListener('error', function (error) {
     console.error(error);
     addErrorLog({
-      message: error,
+      message: error.message,
       timestamp: Date.now(),
     });
   });
