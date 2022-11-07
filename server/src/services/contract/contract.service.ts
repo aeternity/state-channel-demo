@@ -96,9 +96,10 @@ export async function deployContract(
 }
 
 /**
- * extracts latest callData and generates returns next callData to be sent
+ * extracts latest callData from decoded events
+ * and generates returns next callData to be sent
  */
-export async function getNextCallData(
+export async function getNextCallDataFromDecodedEvents(
   events: ReturnType<ContractInstance['decodeEvents']>,
   contract: ContractInstance,
 ) {
@@ -111,4 +112,32 @@ export async function getNextCallData(
     default:
       return null;
   }
+}
+
+/**
+ * extracts latest callData from last called method
+ * and generates returns next callData to be sent
+ */
+export function getNextCallDataFromPreviousMethod(
+  method: Methods,
+  contract: ContractInstance,
+) {
+  switch (method) {
+    case Methods.provide_hash:
+      return getRandomMoveCallData(contract);
+    default:
+      return null;
+  }
+}
+
+/**
+ * Finds called method from given callData
+ */
+export function findMethodFromCallData(
+  callData: Encoded.ContractBytearray,
+  contract: ContractInstance,
+) {
+  return Object.values(Methods).find(
+    (method) => !!contract.calldata.decode(CONTRACT_NAME, method, callData),
+  );
 }

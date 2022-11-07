@@ -378,6 +378,7 @@ export class GameChannel {
       this.lastOffChainTxTime = Date.now();
       // if we are signing a bot transaction that calls the contract
       if (update?.caller_id !== sdk.selectedAddress) {
+        this.validateOpponentCall(update);
         this.gameRound.shouldHandleBotAction = true;
       }
     }
@@ -469,6 +470,23 @@ export class GameChannel {
     // if autoplay is enabled, make user selection automatically
     if (this.autoplay.enabled && !this.gameRound.userInAction) {
       this.setUserSelection(this.getRandomSelection());
+    }
+  }
+
+  /**
+   * @param {Update} [update]
+   */
+  validateOpponentCall(update) {
+    // Demo follows happy path, so we expect only the following method.
+    const move = this.contract.calldata
+      .decode('RockPaperScissors', Methods.player1_move, update.call_data)
+      ?.at(-1)?.[0];
+    if (!Object.values(Selections).includes(move)) {
+      throw new Error(
+        `Invalid method called by initiator. Expected ${Methods.player1_move}`
+      );
+    } else if (this.gameRound.botSelection !== Selections.none) {
+      throw new Error(`Bot has already made a selection.`);
     }
   }
 
@@ -710,6 +728,7 @@ export class GameChannel {
    * @param {TransactionLog} message.data
    */
   handleMessage(message) {
+    if (message.type === 'Error') throw new Error(message.data.description);
     if (message.type === 'add_bot_transaction_log') {
       const txLog = message.data;
       let round =

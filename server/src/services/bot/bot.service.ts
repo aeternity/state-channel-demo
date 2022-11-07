@@ -13,14 +13,17 @@ import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import { Keypair } from '@aeternity/aepp-sdk/es/account/Memory';
-import { ContractEvents } from '../contract/contract.constants';
+import { ContractEvents, Methods } from '../contract/contract.constants';
 import logger from '../../logger';
 import {
   ContractService,
   CONTRACT_CONFIGURATION,
   GAME_STAKE,
 } from '../contract';
-import { getNextCallData } from '../contract/contract.service';
+import {
+  findMethodFromCallData,
+  getNextCallDataFromDecodedEvents,
+} from '../contract/contract.service';
 import {
   ENVIRONMENT_CONFIG,
   FAUCET_PUBLIC_ADDRESS,
@@ -298,10 +301,8 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
 /**
  * Calls contract if game session has available data to send
  */
-async function respondToContractCall(
-  gameSession: GameSession,
-  callData: Encoded.ContractBytearray | null,
-) {
+async function respondToContractCall(gameSession: GameSession) {
+  const callData = gameSession.contractState.callDataToSend;
   if (gameSession.channelWrapper.round % 10 === 0) {
     await gameSession.channelWrapper.instance.cleanContractCalls();
   }
@@ -320,6 +321,7 @@ async function respondToContractCall(
     );
 
     if (result.accepted && result.signedTx) {
+      gameSession.contractState.callDataToSend = null;
       await sendCallUpdateLog(
         result.signedTx,
         {
@@ -400,11 +402,11 @@ async function handleDecodedEvents(
     } as unknown as typeof decodedEvents[0]);
   }
 
-  const nextCallData = await getNextCallData(
+  const nextCallData = await getNextCallDataFromDecodedEvents(
     decodedEvents,
     gameSession.contractState.instance,
   );
-  const nextCallDataToSend = nextCallData?.calldata;
+  gameSession.contractState.callDataToSend = nextCallData?.calldata;
   gameSession.contractState.botMove = nextCallData?.move;
   await sendCallUpdateLog(
     tx,
@@ -414,7 +416,7 @@ async function handleDecodedEvents(
     },
     gameSession,
   );
-  await respondToContractCall(gameSession, nextCallDataToSend);
+  await respondToContractCall(gameSession);
 }
 
 /**
@@ -532,6 +534,46 @@ async function generateFundedKeypair(retries = 20): Promise<Keypair> {
   }
 }
 
+function validateOpponentCall(gameSession: GameSession, update: Update) {
+  try {
+    const method = findMethodFromCallData(
+      update.call_data,
+      gameSession.contractState.instance,
+    );
+    // Demo follows happy path, so we expect only the following methods.
+    if (![Methods.provide_hash, Methods.reveal].includes(method)) {
+      throw new Error(
+        `Invalid method ${method} called by responder. Expected ${Methods.provide_hash} or ${Methods.reveal}`,
+      );
+    } else if (
+      gameSession.contractState.callDataToSend
+      && method !== Methods.reveal
+    ) {
+      throw new Error(
+        `Only reveal can be called after bot's move, got ${method}`,
+      );
+    } else if (
+      !gameSession.contractState.callDataToSend
+      && method !== Methods.provide_hash
+    ) {
+      throw new Error(
+        `Only move hashing can be called before bot's move, got ${method}`,
+      );
+    }
+  } catch (e) {
+    void gameSession.channelWrapper.instance.sendMessage(
+      {
+        type: 'Error',
+        data: {
+          description: (e as Error).message,
+        },
+      },
+      gameSession.participants.responderId,
+    );
+    throw e;
+  }
+}
+
 /**
  * Sign function which is called with each channel transaction.
  */
@@ -576,6 +618,7 @@ async function channelSign(
   }
   if (options?.updates[0]?.op === 'OffChainCallContract') {
     gameSession.contractState.lastCaller = options?.updates[0]?.caller_id;
+    validateOpponentCall(gameSession, options?.updates[0]);
   }
   return sdk.signTransaction(tx, {
     onAccount: initiatorId,
