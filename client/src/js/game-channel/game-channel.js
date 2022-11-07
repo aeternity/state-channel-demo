@@ -477,6 +477,7 @@ export class GameChannel {
    * @param {Update} [update]
    */
   validateOpponentCall(update) {
+    // Demo follows happy path, so we expect only the following method.
     const move = this.contract.calldata
       .decode('RockPaperScissors', Methods.player1_move, update.call_data)
       ?.at(-1)?.[0];

@@ -540,6 +540,7 @@ function validateOpponentCall(gameSession: GameSession, update: Update) {
       update.call_data,
       gameSession.contractState.instance,
     );
+    // Demo follows happy path, so we expect only the following methods.
     if (![Methods.provide_hash, Methods.reveal].includes(method)) {
       throw new Error(
         `Invalid method ${method} called by responder. Expected ${Methods.provide_hash} or ${Methods.reveal}`,
