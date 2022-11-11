@@ -925,6 +925,11 @@
       );
   }
 }
+@media (min-width: 1800px) and (max-height: 1200px) {
+  #app.container {
+    --game-screen-height: max(300px, 25%);
+  }
+}
 
 :root {
   --green: #42bd65;
