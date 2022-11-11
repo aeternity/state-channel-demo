@@ -327,6 +327,7 @@ export class GameChannel {
    * @returns {Promise<Encoded.Transaction>}
    */
   async signTx(tag, tx, options) {
+    let signedTx;
     const update = options?.updates?.[0];
     const txHash = buildTxHash(tx);
 
@@ -341,6 +342,7 @@ export class GameChannel {
         timestamp: Date.now(),
       };
       addUserTransaction(transactionLog, 0);
+      signedTx = await sdk.signTransaction(tx);
     }
 
     // if we are signing the close channel tx
@@ -353,6 +355,12 @@ export class GameChannel {
         timestamp: Date.now(),
       };
       addUserTransaction(transactionLog, this.gameRound.index);
+      signedTx = await sdk.signTransaction(tx);
+    }
+
+    // if we are signing a tx to reconnect to the channel
+    if (tag === 'reconnect') {
+      signedTx = await sdk.signTransaction(tx);
     }
 
     // if we are signing a transaction that updates the contract
@@ -371,6 +379,7 @@ export class GameChannel {
         this.logContractDeployment(txHash);
         this.saveStateToLocalStorage();
       });
+      signedTx = await sdk.signTransaction(tx);
     }
 
     // for both user and bot calls to the contract
@@ -381,9 +390,21 @@ export class GameChannel {
         this.validateOpponentCall(update);
         this.gameRound.shouldHandleBotAction = true;
       }
+      signedTx = await sdk.signTransaction(tx);
     }
 
-    return sdk.signTransaction(tx);
+    // if no tx is signed, throw an error
+    if (!signedTx) {
+      return Promise.reject().finally(this.handleUnknownTransaction);
+    }
+    return signedTx;
+  }
+
+  handleUnknownTransaction() {
+    // we need to throw the error inside a setTimeout because sdk doesn't propagate the error
+    setTimeout(() => {
+      throw new Error('Request to sign unknown transaction');
+    }, 1);
   }
 
   registerEvents() {
@@ -728,7 +749,8 @@ export class GameChannel {
    * @param {TransactionLog} message.data
    */
   handleMessage(message) {
-    if (message.type === 'Error') throw new Error(message.data.description);
+    if (message.type === 'Error')
+      throw new Error('BOT: ' + message.data.description);
     if (message.type === 'add_bot_transaction_log') {
       const txLog = message.data;
       let round =

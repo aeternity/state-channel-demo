@@ -548,6 +548,7 @@ function toggleAutoplayBtn(isChecked) {
 
 function addErrorListener() {
   window.addEventListener('error', function (error) {
+    if (error.error) error = error.error;
     console.error(error);
     addErrorLog({
       message: error.message,

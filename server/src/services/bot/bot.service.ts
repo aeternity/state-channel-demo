@@ -199,6 +199,23 @@ function sendOpenStateChannelTxLog(
 }
 
 /**
+ * Used in case opponent proposes an unknown transaction
+ */
+function handleSignTxError(gameSession: GameSession, error: Error) {
+  logger.error(error);
+  void gameSession.channelWrapper.instance.sendMessage(
+    {
+      type: 'Error',
+      data: {
+        description: error.message,
+      },
+    },
+    gameSession.participants.responderId,
+  );
+  throw error;
+}
+
+/**
  * Returns funds to the faucet and removes the game session from the pool
  */
 export async function handleChannelClose(onAccount: Encoded.AccountAddress) {
@@ -535,42 +552,29 @@ async function generateFundedKeypair(retries = 20): Promise<Keypair> {
 }
 
 function validateOpponentCall(gameSession: GameSession, update: Update) {
-  try {
-    const method = findMethodFromCallData(
-      update.call_data,
-      gameSession.contractState.instance,
+  const method = findMethodFromCallData(
+    update.call_data,
+    gameSession.contractState.instance,
+  );
+  // Demo follows happy path, so we expect only the following methods.
+  if (![Methods.provide_hash, Methods.reveal].includes(method)) {
+    throw new Error(
+      `Invalid method ${method} called by responder. Expected ${Methods.provide_hash} or ${Methods.reveal}`,
     );
-    // Demo follows happy path, so we expect only the following methods.
-    if (![Methods.provide_hash, Methods.reveal].includes(method)) {
-      throw new Error(
-        `Invalid method ${method} called by responder. Expected ${Methods.provide_hash} or ${Methods.reveal}`,
-      );
-    } else if (
-      gameSession.contractState.callDataToSend
-      && method !== Methods.reveal
-    ) {
-      throw new Error(
-        `Only reveal can be called after bot's move, got ${method}`,
-      );
-    } else if (
-      !gameSession.contractState.callDataToSend
-      && method !== Methods.provide_hash
-    ) {
-      throw new Error(
-        `Only move hashing can be called before bot's move, got ${method}`,
-      );
-    }
-  } catch (e) {
-    void gameSession.channelWrapper.instance.sendMessage(
-      {
-        type: 'Error',
-        data: {
-          description: (e as Error).message,
-        },
-      },
-      gameSession.participants.responderId,
+  } else if (
+    gameSession.contractState.callDataToSend
+    && method !== Methods.reveal
+  ) {
+    throw new Error(
+      `Only reveal can be called after bot's move, got ${method}`,
     );
-    throw e;
+  } else if (
+    !gameSession.contractState.callDataToSend
+    && method !== Methods.provide_hash
+  ) {
+    throw new Error(
+      `Only move hashing can be called before bot's move, got ${method}`,
+    );
   }
 }
 
@@ -585,44 +589,54 @@ async function channelSign(
     updates: Update[];
   },
 ) {
-  if (tag === 'initiator_sign') {
-    // we are signing the channel open transaction
-    openStateChannelTxLog = {
-      description:
-        'Bot signed a transaction to initialise state channel connection',
-      id: buildTxHash(tx),
-      onChain: true,
-      signed: SignatureType.proposed,
-      timestamp: Date.now(),
-    };
-  }
   const gameSession = gameSessionPool.get(initiatorId);
-  if (tag === 'shutdown_sign_ack') {
-    // we are signing the channel close transaction
-    void gameSession.channelWrapper.instance
-      .sendMessage(
-        {
-          type: 'add_bot_transaction_log',
-          data: {
-            description:
-              'Bot co-signed user’s transaction to close state channel connection',
-            id: buildTxHash(tx),
-            onChain: true,
-            signed: SignatureType.confirmed,
-            timestamp: Date.now(),
+  try {
+    const signedTx = await sdk.signTransaction(tx, {
+      onAccount: initiatorId,
+    });
+
+    if (tag === 'initiator_sign') {
+      // we are signing the channel open transaction
+      openStateChannelTxLog = {
+        description:
+          'Bot signed a transaction to initialise state channel connection',
+        id: buildTxHash(tx),
+        onChain: true,
+        signed: SignatureType.proposed,
+        timestamp: Date.now(),
+      };
+      return signedTx;
+    }
+    if (tag === 'shutdown_sign_ack') {
+      // we are signing the channel close transaction
+      void gameSession.channelWrapper.instance
+        .sendMessage(
+          {
+            type: 'add_bot_transaction_log',
+            data: {
+              description:
+                'Bot co-signed user’s transaction to close state channel connection',
+              id: buildTxHash(tx),
+              onChain: true,
+              signed: SignatureType.confirmed,
+              timestamp: Date.now(),
+            },
           },
-        },
-        gameSession.channelWrapper.configuration.responderId,
-      )
-      .catch(() => logger.warn(`${initiatorId} - failed to send tx log`));
+          gameSession.channelWrapper.configuration.responderId,
+        )
+        .catch(() => logger.warn(`${initiatorId} - failed to send tx log`));
+      return signedTx;
+    }
+    if (options?.updates[0]?.op === 'OffChainCallContract') {
+      gameSession.contractState.lastCaller = options?.updates[0]?.caller_id;
+      validateOpponentCall(gameSession, options?.updates[0]);
+      return signedTx;
+    }
+
+    throw new Error('Request to sign unknown transaction');
+  } catch (e) {
+    handleSignTxError(gameSession, e as Error);
   }
-  if (options?.updates[0]?.op === 'OffChainCallContract') {
-    gameSession.contractState.lastCaller = options?.updates[0]?.caller_id;
-    validateOpponentCall(gameSession, options?.updates[0]);
-  }
-  return sdk.signTransaction(tx, {
-    onAccount: initiatorId,
-  });
 }
 
 /**
