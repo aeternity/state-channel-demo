@@ -49,6 +49,9 @@
     }
     @include for-big-desktop-up {
       --game-screen-height: max(280px, 25%);
+      @media (max-height: 1200px) {
+        --game-screen-height: max(300px, 25%);
+      }
       --transactions-height: calc(100% - 120px - var(--game-screen-height));
       grid-template-rows: 120px var(--game-screen-height) var(
           --transactions-height
