@@ -82,6 +82,10 @@ On the other hand, the **client application** is responsible to do the following
 
 # FAQ
 
+## How do I build my own state channel demo?
+
+You may take a look at Helpful Links Section, there is a State Channel Demo Tutorial Guide.
+
 ## How State Channel Demo Game transactions take place?
 
 In order to avoid cheating in a turn based implementation (each player move needs to be co-signed in order to be executed), one player hashes his move. The other party receives the off-chain transaction with calldata containing the hash, where he/she can **only** confirm the method opponent called (e.g. opponent picked a move) but not the actual move. 
@@ -90,9 +94,6 @@ After co-signing the opponent's hashed move, the next required step is for the s
 
 Now that both players have picked, the contract requires from the first player to reveal his move. Revealing is required as only the first player has the key to the hash. With the execution of it, the winning participant receives the stake. In the case of Draw, the stake is returned to both players.
 
-## How do I build my own state channel demo?
-
-You may take a look at Helpful Links Section, there is a State Channel Workshop Tutorial Guide.
 
 ## Is State Channel Demo probably fair?
 
