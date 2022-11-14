@@ -86,7 +86,7 @@ On the other hand, the **client application** is responsible to do the following
 
 You may take a look at Helpful Links Section, there is a State Channel Demo Tutorial Guide.
 
-## How State Channel Demo Game transactions take place?
+## How do State Channel Demo Game transactions take place?
 
 In order to avoid cheating in a turn based implementation (each player move needs to be co-signed in order to be executed), one player hashes his move. The other party receives the off-chain transaction with calldata containing the hash, where he/she can **only** confirm the method opponent called (e.g. opponent picked a move) but not the actual move. 
 
@@ -105,7 +105,7 @@ State Channel Transactions are ruled by co-signed smart contracts. Each paritici
 
 For each participant, the provided aeternity node spawns an state channel process which is responsible to validate state channel transactions through root hash. It builds and enriches State Channel Trees, tracks any possible disputes and warns each client so one could take an appropriate action.
 
-State Channel Demo game verifies also counterpart participant transactions. At each transaction callData content is decoded utlizing Aeternity's  [calldata lib](https://github.com/aeternity/aepp-calldata-js) which is integrated in the SDK. Participants can utilize this library in order to verify that the opponent is following the anticipated flow of the game (calling the the right contract methods). If they accept opponent's transaction, then they can co-sign it, otherwise they can raise a dispute (demo game implementation showcases the happy path).
+State Channel Demo game verifies also counterpart participant transactions. At each transaction callData content is decoded utlizing Aeternity's  [calldata lib](https://github.com/aeternity/aepp-calldata-js) which is integrated in the SDK. Participants can utilize this library in order to verify that the opponent is following the anticipated flow of the game (calling the right contract methods). If they accept opponent's transaction, then they can co-sign it, otherwise they can raise a dispute (demo game implementation showcases the happy path).
 
 
 
@@ -116,7 +116,7 @@ At first player's side, he/she can inspect the calldata (second player non-hashe
 
 `RockPaperScissors` Demo smart contract provides dipsuting methods to use on-chain with `forceProgressTx`, such as [`player1_dispute_no_reveal`](https://github.com/aeternity/state-channel-demo/blob/develop/contract/contracts/RockPaperScissors.aes#L96) which can be used in cases where the first player did did not reveal his move.
 
-In that case, second player can raise an on-chain dispute utilizing transaction force progress mechanism [`forceProgressTx`](https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md#forcing-progress), With force progress transaction the contract state is broadcasted on-chain where game move is confirmed with on-chain computation.
+In that case, the second player can raise an on-chain dispute utilizing transaction force progress mechanism [`forceProgressTx`](https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md#forcing-progress). With force progress transaction the contract state is broadcasted on-chain where game move is confirmed with on-chain computation.
 
 
 
