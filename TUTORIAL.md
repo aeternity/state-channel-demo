@@ -3,7 +3,7 @@
 In this document describe the process of building a State Channel application on your own. For each step we will provide references to the code of the demo.
 Our implementation follows a Client-Server architecture but it is not required for all State Channel applications.
 
-## Step 0: Prerequesites
+## Step 0: Prerequisites
 When building a real world State Channel application it is strongly advised to host your own Aeternity [Node](https://docs.aeternity.io/en/stable/docker/).
 Following the Client-Server architecture, you will need two projects, one for each. 
 
@@ -107,8 +107,11 @@ async function responderSignTx(
    */
     void buildContract(unpackTx(tx).tx.round, update.owner)
   }
-
+  // you can add more checks here, for example, if the opponent wants to mutually close the channel
+  // but you disagree with it. In this case, you won't sign the transaction.
   if(options?.updates?.[0]?.op === 'OffChainCallContract') {
+    // will throw Error if it is not valid
+    validateOpponentCall(options?.updates?.[0]);
     lastContractCaller = options.updates.[0].caller_id;
   }
   return aeSdk.signTransaction(tx);
@@ -128,7 +131,11 @@ async function initiatorSignTx(
     }[];
   }
 ): Promise<Encoded.Transaction> {
+  // you can add more checks here, for example, if the opponent wants to mutually close the channel\
+  // but you disagree with it. In this case, you won't sign the transaction.
   if(options?.updates?.[0]?.op === 'OffChainCallContract') {
+    // will throw Error if it is not valid
+    validateOpponentCall(options?.updates?.[0]);
     lastContractCaller = options.updates.[0].caller_id;
   }
   return aeSdk.signTransaction(tx);
@@ -144,7 +151,6 @@ Here we have some options which are mutual and some which are role-dependent. Re
 Since both parties share this mutual configuration, the client recieves this information from the server.
 The server can store this information inside a file called `bot.constants.js`
 The client can fetch this information and initialize the channel inside the `game-channel.service.js` file 
-
 
 ```js
 const MUTUAL_CHANNEL_CONFIGURATION = {
@@ -182,11 +188,9 @@ Throughout the channel lifecycle, we need to register some events. Example of su
 This code can reside insde the `game-channel.service.js` and `bot.services.js` files for the client and server respectively
 
 Utility functions used
-- [handleOpponentCall](#handleOpponentCall)
-- [getRoundContractCall](#getRoundContractCall)
+- [handleLastCallUpdate](#handleLastCallUpdate)
 
 ```js
-
 // used in reconnecting
 let fsmId;
 let channelId;
@@ -207,8 +211,8 @@ export async function registerEvents(
         break;
       case 'open':
         channelId = channel.id();
-        fsmId = channel.fsmId()
-        // do something
+        fsmId = channel.fsmId();
+        // do something more
         break;
       case 'signed':
         // do something
@@ -222,16 +226,11 @@ export async function registerEvents(
    * - update your UI
    * - save the channel state locally in order to reconnect to the channel
    * - make your next move depending on the current contract state
+   * In demo case, we inspect the events triggered from the last contract call
    */
-  channel.on('stateChanged', async () => {
-    if (contract  && lastContractCaller !== <CURRENT_PARTICIPANT_ADDRESS>) {
-      const latestRoundCallByOtherPeer = await getRoundContractCall(
-        channel,
-        contractAddress,
-        lastContractCaller,
-        channel.round(),
-      );
-      await handleOpponentCall(channel, contract, latestRoundCallByOtherPeer)
+  channel.on('stateChanged', async (tx) => {
+    if (lastContractCaller === '<OTHER_PARTICIPANT_ADDRESS>') {
+     handleLastCallUpdate();
     }
   })
 }
@@ -244,7 +243,7 @@ export async function registerEvents(
 Here, the initiator has to deploy the contract on the channel. Then, responder will recieve a
 `OffChainNewContract` operation which will need to be co-signed to be confirmed by them.
 
-This code can reside inside the `game-channel.service.js` for the client, and the `contract.service.js`
+This code can reside inside the `game-channel.service.js` file for the client, and the `contract.service.js` file for the server.
 
 ```js
 const CONTRACT_CONFIGURATION = {
@@ -278,6 +277,7 @@ In cases where we have saved the channel state locally for example via `localSto
 Utility functions used
 - [checkIfChannelIsStillOpen](#checkIfChannelIsStillOpen)
 
+The following code cound reside inside the `game-channel.service.js` file for the client, and the `bot.service.js` file for the server.
 
 ```js
 async function reconnectChannel(channel,savedState) {
@@ -296,6 +296,9 @@ async function reconnectChannel(channel,savedState) {
   registerEvents(channel, savedState.channelConfig);
 }
 ```
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L227)
+
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L235)
 
 ## Step 9: Closing channel
 There are 2 scenarions
@@ -304,17 +307,23 @@ There are 2 scenarions
 For example the responder would like to close the channel.
 In this case, the responder can simply execute `channel.shutdown`. The initiator will co-sign it and the channel will be closed.
 
+The following code can reside inside the `game-channel.service.js` file for the client.
+
 ```js
 responderChannel.shutdown(responderSignTx);
 ``` 
+
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L284)
 
 ### Channel is in a `died` state and can be force-closed (solo-closed)
 In this case, a participant has to execute 2 on-chain transactions in order to close the channel. These are:
 - `channel_close_solo`
 - `channel_settle`
 
+This code can reside inside the `bot.service.js` file for the server 
+
 ```js
-  const channelId = gameSession.channelWrapper.instance.id();
+  const channelId = channel.id();
 
   const poi = channel.poi({
     accounts: [configuration.initiatorId, configuration.responderId],
@@ -348,7 +357,9 @@ In this case, a participant has to execute 2 on-chain transactions in order to c
   });
 ```
 
-# Depost & Withdraw Actions
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L268)
+
+# Deposit & Withdraw Actions
 Throughout the channel lifecycle, participants can deposit 
 and withdraw funds from the channel.
 
@@ -394,28 +405,14 @@ await initiatorChannel.withdraw(1e18,initiatorSign);
 ```
 
 # Utility Functions
-## `verifyContractBytecode`
+## [`verifyContractBytecode`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/sdk-service/sdk-service.js#L112)
 ```js
-async function verifyContractBytecode(
-  bytecode: Encoded.ContractBytearray,
-  source = contractSource
-) {
-  let isEqual = false;
-  try {
-    await aeSdk.compilerApi.validateByteCode({
-      bytecode,
-      source,
-      options: {},
-    });
-    isEqual = true;
-  } catch (e) {
-    isEqual = false;
-  }
-  return isEqual;
+export function verifyContractBytecode(bytecode) {
+  return bytecode === contractBytecode;
 }
 ```
 
-## `buildContract`
+## [`buildContract`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L466)
 ```js
 import { encodeContractAddress } from '@aeternity/aepp-sdk';
 
@@ -438,37 +435,25 @@ async function buildContract(
 }
 ```
 
-## `getRoundContractCall`
+
+## [`handleLastCallUpdate`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L373)
 ```js
-async function getRoundContractCall(
-  channel: Channel,
-  contractAddress: Encoded.Contract,
-  caller: Encoded.AccountAddress,
-  round: number
-) {
+export async function handleLastCallUpdate() {
+  let result;
   try {
-    const contractCall = await channel.getContractCall({
-      caller,
-      contract: contractAddress,
-      round,
+    const resultPromise = channel.getContractCall({
+      caller: '<OTHER_PARTICIPANT_ID>',
+      contract: '<CONTRACT_ADDRESS>',
+      round: channel.round(),
     });
-    return contractCall;
+    result = (await Promise.race([resultPromise, timeout(1000)]))
   } catch (e) {
+    // last caller was not the other participant
     return null;
   }
-}
-```
 
-
-## `handleOpponentCall`
-```js
-export async function handleOpponentCall(
-  channel,
-  contract,
-  contractCall,
-) {
   const decodedEvents = channel.decodeEvents(
-    contractCall.log,
+    result.log,
   );
   /**
    * [{
@@ -484,17 +469,20 @@ export async function handleOpponentCall(
    * }]
    */
 
+  // execute logic based on decodedEvents
+  }
+
 
   // here you can use a switch statement and make your next move based on events
   const callDataToBeSent = contract.calldata.encode(
     CONTRACT_NAME, 
-    <METHOD_NAME>, 
-    [...<METHOD_ARGUMENTS>]
+    '<METHOD_NAME>', 
+    [...'<METHOD_ARGUMENTS>']
   );
 
   await channel.callContract({
     {
-      amount: <AMOUNT_TO_CALL_CONTRACT_WITH>,
+      amount:' <AMOUNT_TO_CALL_CONTRACT_WITH>',
       calldata: callDataToBeSent,
       contract: contractAddress,
       abiVersion: 3
@@ -503,7 +491,7 @@ export async function handleOpponentCall(
 }
 ```
 
-## `checkIfChannelIsStillOpen`
+## [`checkIfChannelIsStillOpen`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L221)
 In order to check  if a channel is still open, we can make a get request to  node.
 ```js
   async function checkifChannelIsStillOpen(channelId) {
@@ -512,3 +500,15 @@ In order to check  if a channel is still open, we can make a get request to  nod
     return !!result.id;
   }
 ```
+
+## [`validateOpponentCall`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L500)
+```js
+  validateOpponentCall(update) {
+    const decodedValue = this.contract.calldata
+      .decode('<CONTRACT_NAME>', '<EXPECTE_CONTRACT_METHOD>', update.call_data);
+    if (decodedValue !== 'EXPECTED_VALUE') {
+      throw new Error(`Invalid method`);
+      // raise a dispute etc.
+    }
+  }
+  ```
