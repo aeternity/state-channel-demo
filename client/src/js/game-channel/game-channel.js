@@ -40,6 +40,7 @@ import {
   addErrorLog,
   disableAutoplayView,
   setLogsNotificationVisible,
+  showStartOverBtn,
 } from '../dom-manipulation/dom-manipulation';
 import { getResultsLog } from '../utils/utils';
 
@@ -232,9 +233,10 @@ export class GameChannel {
       localStorage.removeItem('gameState');
       addErrorLog({
         message:
-          'Channel was shutdown and can no longer be opened. Please retry.',
+          'Channel was shutdown and can no longer be opened. Please start over.',
         timestamp: Date.now(),
       });
+      showStartOverBtn();
     }
 
     channel = await Channel.reconnect(
@@ -428,9 +430,10 @@ export class GameChannel {
         if (status === 'closed' || status === 'died') {
           addErrorLog({
             message:
-              'Node triggered a timeout and the channel has died. Please retry.',
+              'Node triggered a timeout and the channel has died. Please start over.',
             timestamp: Date.now(),
           });
+          showStartOverBtn();
         }
       });
 

@@ -582,6 +582,12 @@ function showChannelIsClosing() {
   setMoveStatus('bot', '');
 }
 
+export function showStartOverBtn() {
+  document.getElementById('end-game').textContent = 'Start Over';
+  document.getElementById('end-game').onclick = resetApp;
+  enableButton('end-game');
+}
+
 /**
  *
  * @param {GameChannel} gameChannel
@@ -595,9 +601,7 @@ export function handleAppMount(gameChannel) {
   document.getElementById('end-game').addEventListener('click', async () => {
     showChannelIsClosing();
     await gameChannel.closeChannel();
-    document.getElementById('end-game').textContent = 'Start Over';
-    document.getElementById('end-game').onclick = resetApp;
-    enableButton('end-game');
+    showStartOverBtn();
   });
   document.querySelectorAll('.selections button').forEach((button, index) => {
     button.addEventListener('click', async () => {
