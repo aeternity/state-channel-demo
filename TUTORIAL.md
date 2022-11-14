@@ -190,7 +190,7 @@ const initiatorChannel = Channel.initialize({
 
 [`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.constants.ts#L17)
 
-## Step 6: Register events
+## Step 6: Handle State Channel events
 Throughout the state channel lifecycle, we need to handle some events inside demo applications. Example of such events may be channel [status change](https://github.com/aeternity/aepp-sdk-js/blob/develop/src/channel/index.ts#L159) or channel state change.
 
 The folllowing can reside insde the `game-channel.service.js` and `bot.services.js` files for the client and server respectively
