@@ -90,13 +90,14 @@ You may take a look at Helpful Links Section, there is a State Channel Workshop 
 
 State Channels offer an innovative solution, where off-chain transactions are executed on top of blockchain technology. 
 
-State Channel Demo Game has been built having security in mind. 
+State channels protocol inherently offers security to the demo.
 
-State Channel Transactions are ruled by co-signed smart contracts. Each participant shall sign counterpart state channel transactions through defined smart contract functions. 
+State Channel Transactions are ruled by co-signed smart contracts. Each pariticipant shall verify the content of a transaction before signing it. Those transactions can be off-chain contract calls, spend transactions or on-chain such as `MutualCloseChannelTx`. All transactions need to be co-signed by both parties.
 
-State Channel Node Backend is responsible to validate state channel transactions through root hash. It builds and enriches State Channel Trees, tracks any possible dispute and and warns each client so one could take an appropriate action.
+For each participant, the provided aeternity node spawns an state channel process which is responsible to validate state channel transactions through root hash. It builds and enriches State Channel Trees, tracks any possible disputes and warns each client so one could take an appropriate action.
 
-State Channel Demo game verifies also counterpart participant transactions. At each transaction callData content is decoded utlizing Aeternity SDK compiler API. Each participant in order to co-sign a transaction, a call compiler loop is executed at callData content with all anticipated and valid method names. If a successful candidate arises then other party transaction is co-signed, a dispute is raised otherwise.
+State Channel Demo game verifies also counterpart participant transactions. At each transaction callData content is decoded utlizing Aeternity's  [calldata lib](https://github.com/aeternity/aepp-calldata-js) which is integrated in the SDK. Participants can utilize this library in order to verify that the opponent is following the anticipated flow of the game (calling the the right contract methods). If they accept opponent's transaction, then they can co-sign it, otherwise they can raise a dispute (demo game implementation showcases the happy path).
+
 
 # Helpful Links
 - **[State Channel Demo Page](https://statechannel.aepps.com)**
