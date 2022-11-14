@@ -1,7 +1,16 @@
 # Channel Lifecycle Example
 
+In this document describe the process of building a State Channel application on your own. For each step we will provide references to the code of the demo.
+Our implementation follows a Client-Server architecture but it is not required for all State Channel applications.
+
+## Step 0: Prerequesites
+When building a real world State Channel application it is strongly advised to host your own Aeternity [Node](https://docs.aeternity.io/en/stable/docker/).
+Following the Client-Server architecture, you will need two projects, one for each. 
+
 ## Step 1: Initialize SDK
 Firstly we need an sdk instance for each participant
+We propose to separate business logic per service to increase readability and modularity of the code
+Therefore the following code is advised to reside in a file named `sdk.service.js`
 
 ### Initiator side (Similar to) Responder side
 ```js
@@ -15,7 +24,18 @@ const aeSdk = new AeSdk({
   ],
 });
 ```
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/sdk-service/sdk-service.js#L44)
+
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/sdk/sdk.service.ts#L14)
+
 ## Step 2: Generate a new account keypair
+Each participant requires a unique keypair. 
+In the case of the client, only one keypair is required per client.
+For the server it is required that a new keypair is generated for each new client.
+
+For the client, the following code is advised to reside inside the `sdk.service.js` file.
+For the server it could reside in a file that handles the generation of bots e.g. `bot.service.js`. 
+
 ### Initiator side (Similar to) Responder side
 ```js
  const keypair = generateKeyPair();
@@ -23,17 +43,27 @@ const aeSdk = new AeSdk({
       select: true,
  }));
 ```
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/sdk-service/sdk-service.js#L32)
+
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L537)
 
 ## Step 3: Request coins from faucet app (Only on testnet network)
+Each participant requires some coins in order to send transactions and place his bets.
+
+For development purposes we use the faucet to fund the particepant's accounts.
+The following code is advised to reside inside the `sdk.service.js` file for both the server and the client.
 ### Initiator side (Similar to) Responder side
 ```js
 axios.post(`https://faucet.aepps.com/account/${aeSdk.selectedAddress}`, {});
 ```
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/sdk-service/sdk-service.js#L75)
 
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/sdk/sdk.service.ts#L57)
 
 ## Step 4: Sign transactions
 These sign functions are part of the channel configuration. They are executed on each channel related transaction, and each one of them needs to **be confirmed by both ends**.
 
+These functions could reside in a file called `game-channel.service.js` for the client, and inside the `bot.service.js` file for the server
 
 Utility functions used
 - [verifyContractBytecode](#verifyContractBytecode)
@@ -104,9 +134,18 @@ async function initiatorSignTx(
   return aeSdk.signTransaction(tx);
 }
 ```
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L329)
+
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L584)
 
 ## Step 5: Initialize Channel
 Here we have some options which are mutual and some which are role-dependent. Read more [here](https://github.com/aeternity/protocol/blob/master/node/api/channels_api_usage.md#channel-establishing-parameters)
+
+Since both parties share this mutual configuration, the client recieves this information from the server.
+The server can store this information inside a file called `bot.constants.js`
+The client can fetch this information and initialize the channel inside the `game-channel.service.js` file 
+
+
 ```js
 const MUTUAL_CHANNEL_CONFIGURATION = {
   url: WEBSOCKET_URL,
@@ -133,15 +172,24 @@ const initiatorChannel = Channel.initialize({
    sign: initiatorSignTx,
 });
 ```
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L199)
+
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.constants.ts#L17)
 
 ## Step 6: Registering events
 Throughout the channel lifecycle, we need to register some events. Example of such events may be channel [status change](https://github.com/aeternity/aepp-sdk-js/blob/develop/src/channel/index.ts#L159) or channel state change.
+
+This code can reside insde the `game-channel.service.js` and `bot.services.js` files for the client and server respectively
 
 Utility functions used
 - [handleOpponentCall](#handleOpponentCall)
 - [getRoundContractCall](#getRoundContractCall)
 
 ```js
+
+// used in reconnecting
+let fsmId;
+let channelId;
 export async function registerEvents(
   channel: Channel,
   configuration: ChannelOptions,
@@ -158,12 +206,15 @@ export async function registerEvents(
         // do something
         break;
       case 'open':
+        channelId = channel.id();
+        fsmId = channel.fsmId()
         // do something
         break;
       case 'signed':
         // do something
         break;
     }
+  })
 
   /**
    * This is the most important event. 
@@ -182,14 +233,18 @@ export async function registerEvents(
       );
       await handleOpponentCall(channel, contract, latestRoundCallByOtherPeer)
     }
-  }
+  })
 }
 ```
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L410)
+
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L448)
 
 ## Step 7: Deploying contract on channel
 Here, the initiator has to deploy the contract on the channel. Then, responder will recieve a
-`OffChainNewContract` operation which will need to be
-co-signed to be confirmed by them.
+`OffChainNewContract` operation which will need to be co-signed to be confirmed by them.
+
+This code can reside inside the `game-channel.service.js` for the client, and the `contract.service.js`
 
 ```js
 const CONTRACT_CONFIGURATION = {
@@ -214,6 +269,9 @@ await initiatorChannel.createContract(
   async (tx) => aeSdk.signTransaction(tx);
 );
 ```
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L466)
+
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/contract/contract.service.ts#L50)
 
 ## Step 8: Reconnecting
 In cases where we have saved the channel state locally for example via `localStorage`, we can reconnect to the channel.
@@ -226,17 +284,13 @@ async function reconnectChannel(channel,savedState) {
   if (!(await this.checkifChannelIsStillOpen())) {
     return;
   }
-  const channel = await Channel.reconnect(
+  const channel = await Channel.initialize(
     {
       ...channelConfig,
+      existingChannelId: channelId,
+      existingFsmId: fsmId,
       role: 'responder',
       sign: responderSignTx,
-    },
-    {
-      channelId: savedState.channelId,
-      role: 'responder',
-      pubkey: savedState.channelConfig.responderId,
-      round: savedState.channelRound,
     }
   );
   registerEvents(channel, savedState.channelConfig);
