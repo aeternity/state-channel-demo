@@ -280,7 +280,39 @@ await initiatorChannel.createContract(
 
 [`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/contract/contract.service.ts#L50)
 
-## Step 8: Reconnect to an existing State Channel
+## Step 8: Call Contract
+This is part is contract specific and can vary depending on the contract.
+
+The following code is advised to reside inside the `game-channel.service.js` file for the client, and inside the `bot.service.js` file for the server.
+
+```js
+async callContract(method, params, amount) {
+  const result = await channel.callContract(
+    {
+      amount: amount ?? '<STAKE_AMOUNT>',
+      callData: this.contract.calldata.encode(
+        '<CONTRACT_NAME>',
+        method,
+        params
+      ),
+      contract: '<CONTRACT_ADDRESS>',
+      abiVersion: 3,
+    },
+    async (tx, options) => {
+      return this.signTx(method, tx, options);
+    }
+  );
+
+  if (result.accepted) {
+    return result;
+  }
+}
+```
+[`State Channel Demo Client Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L523)
+
+[`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L321)
+
+## Step 9: Reconnect to an existing State Channel
 
 In cases where the channel state is saved locally (i.e. via `localStorage`) state channel reconnection is possible.
 
@@ -310,7 +342,7 @@ async function reconnectChannel(channel,savedState) {
 
 [`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L235)
 
-## Step 9: Closing channel
+## Step 10: Closing channel
 There are 2 scenarions
 
 ### Channel is mutually closed
