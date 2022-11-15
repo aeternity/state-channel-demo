@@ -8,8 +8,8 @@ Demo implementation showcase is built on a Client/Server architecture. The follo
 * Server Application: A server application that acts as a bot player for every user that initiate a game from client application.
 * Node:
   * Syncs on-chain state in the æternity network.
-  * Runs complex logic in the Finite State Machine (FSM) process which is required to execute off-chain transactions by communicating to clients and other nodes.
-  * Stores off-chain state trees (encrypted)
+  * Runs complex logic in the Finite State Machine (FSM) process which is used to execute off-chain transactions by communicating to clients and other nodes.
+  * Stores off-chain state trees (encrypted).
 
 Note:
 - While the FSM in the æternity node abstracts a lot of the complexity from you as a developer, it is not required to use it. Depending on the use case, you might want to develop your own implementation to handle off-chain communication & updates (transactions). In any case you should make sure to keep track of on-chain State Channel updates by connecting to an æternity node to react in case the counterparty tries to cheat you.
