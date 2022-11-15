@@ -41,6 +41,7 @@ export interface ServiceStatus {
   channelsInitialized: number;
   channelsOpened: number;
   runningSince: number;
+  lastReset: number;
   env: typeof ENVIRONMENT_CONFIG;
 }
 

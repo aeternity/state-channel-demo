@@ -42,11 +42,13 @@ import {
 
 export const gameSessionPool = new Map<string, GameSession>();
 
+const runningSince = Date.now();
 const serviceStatus: ServiceStatus = {
   channelsOpenCurrently: 0,
   channelsInitialized: 0,
   channelsOpened: 0,
-  runningSince: Date.now(),
+  runningSince,
+  lastReset: runningSince,
   env: ENVIRONMENT_CONFIG,
 };
 
@@ -57,6 +59,16 @@ function timeout(ms: number) {
   return new Promise((_, reject) => {
     setTimeout(() => reject(new Error('timeout succeeded')), ms);
   });
+}
+
+/**
+ * Resets the current status counters of the game session service
+ */
+export function resetServiceStatus() {
+  serviceStatus.channelsOpenCurrently = 0;
+  serviceStatus.channelsInitialized = 0;
+  serviceStatus.channelsOpened = 0;
+  serviceStatus.lastReset = Date.now();
 }
 
 /**
