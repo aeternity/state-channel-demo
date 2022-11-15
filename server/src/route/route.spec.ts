@@ -130,6 +130,8 @@ describe('/status', () => {
     expect(res.body.lastReset).toBeGreaterThan(
       initialStatus.body.lastReset as number,
     );
+    expect(res.body.runningSince).toBe(initialStatus.body.runningSince);
+    expect(res.body.env).toEqual(res.body.env);
     expect(res.body.channelsOpenCurrently).toBe(0);
     expect(res.body.channelsOpened).toBe(0);
     expect(res.body.channelsInitialized).toBe(0);
