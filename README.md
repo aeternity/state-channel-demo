@@ -1,9 +1,9 @@
 # State channels
-State channels allow entities to communicate with each other with the goal of collectively computing some function f. This f can be as simple as "send 0.1 coins every minute" or it could represent a decentralised exchange. These functions are, in our case, represented by smart contracts and just like any legal contract, we need an arbiter in case one party tries to act maliciously. This arbiter is the blockchain. 
+State channels allow entities to communicate with each other with the goal of collectively computing some function `f`. This `f` can be as simple as "send 0.1 coins every minute" or it could represent a decentralised exchange. These functions are, in our case, represented by smart contracts and just like any legal contract, we need an arbiter in case one party tries to act maliciously. This arbiter is the blockchain. 
 For more information visit [here](https://github.com/aeternity/protocol/tree/master/channels)
 
 # State Channel Demo
-A demo use case of æternity's state channels. Users can play a thousand+ rounds of rock-paper-scissors games through æternity blockchain by deploying a game-rules smart contract into state-channels.
+A demo use case of æternity's state channels. Users can play a thousand+ rounds of rock-paper-scissors games through the æternity blockchain by deploying a game-rules smart contract into state channels.
 
 <img width="1411" alt="image" src="https://user-images.githubusercontent.com/10965573/201765249-c71b0d18-4fce-4b03-a65b-5ee1f4ae18d9.png">
 
@@ -66,7 +66,7 @@ cd ../server && npm install
   - Respond to users request with the mutual channel configuration. Read more about the channel configuration [here](https://github.com/aeternity/protocol/blob/master/node/api/channels_api_usage.md#channel-establishing-parameters)
 
 - **Channel Initialization Phase**
-  - When both accounts have enough funds, the server app will run `Channel.Initialize(channelConfig)` which will execute the on-chain transaction `channel_create_tx` and proceed in a listening-for-events state such as channel open confirmation
+  - When both accounts have enough funds, the server app will run `Channel.Initialize(channelConfig)` which will execute the on-chain transaction `channel_create_tx` and proceed in a listening-for-events state such as a 'channel open' confirmation
   - Also, as the initiator, bots are responsible for deploying the contract on channel.
   
 - **Game rounds** 
@@ -74,7 +74,7 @@ cd ../server && npm install
   
 - **Closing Phase**
   - Scenario 1: User wants to close the channel
-    - In this happy path, the user calls an on-chain transaction called `channel_close_mutual`. The bot co-signs it and the final channel is posted on-chain. The corresponding balances are returned to their owners and the channel status is finalized in `closed`.
+    - In this happy path, the user calls an on-chain transaction called `channel_close_mutual`. The bot co-signs it and the final channel state is posted on-chain. The corresponding balances are returned to their owners and the channel status is finalized in `closed`.
   - Scenario 2: User went idle - timeout occured
     - If the channel status changes to `died`, we assume that the user closed their window and a timeout occured (see [`timeout_idle`](channel_close_mutual)). In this case, in order for the channel to close, the bot has to:
       - Execute on-chain [`channel_close_solo`](https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md#channel_close_solo)
@@ -127,11 +127,11 @@ State Channel Demo game verifies also counterpart participant transactions. At e
 
 At first player's side, he/she can inspect the calldata (second player non-hashed move), examine the move the opponent picked and choose to make an inappropriate action (e.g. not revealing his move, because he/she found out that will lose after inspecting opponent's move). 
 
-`RockPaperScissors` Demo smart contract provides disputing methods to use on-chain with `forceProgressTx`, such as [`player1_dispute_no_reveal`](https://github.com/aeternity/state-channel-demo/blob/develop/contract/contracts/RockPaperScissors.aes#L96) which can be used in cases where the first player did did not reveal his move.
+`RockPaperScissors` Demo smart contract provides disputing methods to use on-chain with `forceProgressTx`, such as [`player1_dispute_no_reveal`](https://github.com/aeternity/state-channel-demo/blob/develop/contract/contracts/RockPaperScissors.aes#L96) which can be used in cases where the first player did not reveal his move.
 
 In that case, the second player can raise an on-chain dispute utilizing transaction force progress mechanism [`forceProgressTx`](https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md#forcing-progress). 
 
-With force progress transaction the contract state is broadcasted on-chain where game move is confirmed with on-chain computation.
+With a force progress transaction the contract state is broadcast on-chain where game move is confirmed with on-chain computation.
 
 
 
