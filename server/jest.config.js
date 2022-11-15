@@ -4,6 +4,7 @@ process.env.NETWORK_ID = 'ae_devnet';
 process.env.COMPILER_URL = 'http://localhost:3080';
 process.env.NODE_URL = 'http://localhost:3013';
 process.env.WS_URL = 'ws://localhost:3014/channel';
+process.env.BOT_SERVICE_STAT_RESET_PASSWORD = 'strong-password';
 
 module.exports = {
   preset: 'ts-jest',

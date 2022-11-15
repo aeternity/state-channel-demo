@@ -15,6 +15,18 @@ route.get('/status', (_req, res) => {
   res.json(botService.getServiceStatus());
 });
 
+route.post('/status', (req, res) => {
+  const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
+  const [, password] = Buffer.from(b64auth, 'base64').toString().split(':');
+  if (password === process.env.BOT_SERVICE_STAT_RESET_PASSWORD) {
+    botService.resetServiceStatus();
+    res.json(botService.getServiceStatus());
+  } else {
+    res.status(401);
+    res.send('Access forbidden');
+  }
+});
+
 route.post('/open', (async (req, res) => {
   const reqBody = req.body as Partial<ResponderBaseChannelConfig>;
   const { address, port, host } = reqBody;
