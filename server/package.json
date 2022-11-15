@@ -12,7 +12,8 @@
     "test": "jest --verbose",
     "test:cov": "jest --coverage",
     "test:watch": "jest --watch",
-    "prepare": "cd .. && husky install .husky",
+    "//": "conditionally installing husky, see: https://stackoverflow.com/questions/67063993/sh-husky-command-not-found/71242396#71242396",
+    "prepare": "if test \"$NODE_ENV\" != \"production\" ; then cd .. && husky install .husky; else echo 'in production, no need for husky'; fi",
     "lint-backend": "lint-staged"
   },
   "lint-staged": {
