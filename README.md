@@ -14,9 +14,7 @@ A demo use case of æternity's State Channels. Users can play a thousand+ rounds
 3. [Channel Communication between Apps](#channel-communication-between-apps)
 4. [Helpful links](#helpful-links)
 
-**[Step by step channel guide](TUTORIAL.md)**
-
-> 💚 Interested in the vue.js version? You can find it [here](https://github.com/aeternity/state-channel-demo/tree/vuejs)
+**[Coding Tutorial: Step by step channel guide](TUTORIAL.md)**
 
 # Installation 
 
@@ -26,6 +24,7 @@ cd ../client && npm install
 cd ../server && npm install
 ```
 
+> 💚 Interested in the vue.js version? You can find it [here](https://github.com/aeternity/state-channel-demo/tree/vuejs)
 
 # Running options
 ## Local Node and not on connected with an æternity network
@@ -75,7 +74,7 @@ The æternity node runs 3 processes for each State Channel that a user initializ
 
 
 Note:
-- While these 3 processes in the æternity node abstract a lot of the complexity from the developers and users, it is not required to use it. Depending on the use case, you might want to develop your own implementation to handle off-chain communication & updates (transactions). In any case you should make sure to keep track of on-chain State Channel updates by connecting to an æternity node to react in case the counterpart tries to cheat you.
+- While these 3 processes in the æternity node abstract a lot of the complexity from the developers and users, it is not required to use it. Depending on the use case, you might want to develop your own implementation to handle off-chain communication & updates (transactions). In any case you should make sure to keep track of on-chain State Channel updates by connecting to an æternity node to react in case the counterparty tries to cheat you.
 - The demo currently uses the same æternity node for both, the client application and the server application. The behavior is the same as if client and server application would both use their own node, which is how it is displayed in the communication diagram above.
 
 
