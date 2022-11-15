@@ -9,7 +9,11 @@ import {
 import { BigNumber } from 'bignumber.js';
 import SHA from 'sha.js';
 import { contractSource } from '../contract/contract';
-import { getSavedState, storeGameState } from '../local-storage/local-storage';
+import {
+  getSavedState,
+  resetApp,
+  storeGameState,
+} from '../local-storage/local-storage';
 import {
   fundThroughFaucet,
   keypair,
@@ -40,6 +44,7 @@ import {
   addErrorLog,
   disableAutoplayView,
   setLogsNotificationVisible,
+  handleTimeout,
 } from '../dom-manipulation/dom-manipulation';
 import { getResultsLog } from '../utils/utils';
 
@@ -230,11 +235,7 @@ export class GameChannel {
 
     if (!(await this.checkifChannelIsStillOpen())) {
       localStorage.removeItem('gameState');
-      addErrorLog({
-        message:
-          'Channel was shutdown and can no longer be opened. Please retry.',
-        timestamp: Date.now(),
-      });
+      resetApp();
     }
 
     channel = await Channel.reconnect(
@@ -327,6 +328,7 @@ export class GameChannel {
    * @returns {Promise<Encoded.Transaction>}
    */
   async signTx(tag, tx, options) {
+    let signedTx;
     const update = options?.updates?.[0];
     const txHash = buildTxHash(tx);
 
@@ -341,6 +343,7 @@ export class GameChannel {
         timestamp: Date.now(),
       };
       addUserTransaction(transactionLog, 0);
+      signedTx = await sdk.signTransaction(tx);
     }
 
     // if we are signing the close channel tx
@@ -353,6 +356,12 @@ export class GameChannel {
         timestamp: Date.now(),
       };
       addUserTransaction(transactionLog, this.gameRound.index);
+      signedTx = await sdk.signTransaction(tx);
+    }
+
+    // if we are signing a tx to reconnect to the channel
+    if (tag === 'reconnect') {
+      signedTx = await sdk.signTransaction(tx);
     }
 
     // if we are signing a transaction that updates the contract
@@ -371,6 +380,7 @@ export class GameChannel {
         this.logContractDeployment(txHash);
         this.saveStateToLocalStorage();
       });
+      signedTx = await sdk.signTransaction(tx);
     }
 
     // for both user and bot calls to the contract
@@ -378,11 +388,24 @@ export class GameChannel {
       this.lastOffChainTxTime = Date.now();
       // if we are signing a bot transaction that calls the contract
       if (update?.caller_id !== sdk.selectedAddress) {
+        this.validateOpponentCall(update);
         this.gameRound.shouldHandleBotAction = true;
       }
+      signedTx = await sdk.signTransaction(tx);
     }
 
-    return sdk.signTransaction(tx);
+    // if no tx is signed, throw an error
+    if (!signedTx) {
+      return Promise.reject().finally(this.handleUnknownTransaction);
+    }
+    return signedTx;
+  }
+
+  handleUnknownTransaction() {
+    // we need to throw the error inside a setTimeout because sdk doesn't propagate the error
+    setTimeout(() => {
+      throw new Error('Request to sign unknown transaction');
+    }, 1);
   }
 
   registerEvents() {
@@ -404,11 +427,15 @@ export class GameChannel {
           this.updateBalances();
         }
         if (status === 'closed' || status === 'died') {
-          addErrorLog({
-            message:
-              'Node triggered a timeout and the channel has died. Please retry.',
-            timestamp: Date.now(),
-          });
+          addInfoLog(
+            {
+              description:
+                'Bot solo-closed the channel because of user inactivity. Please start over.',
+              timestamp: Date.now(),
+            },
+            this.gameRound.index
+          );
+          handleTimeout();
         }
       });
 
@@ -469,6 +496,23 @@ export class GameChannel {
     // if autoplay is enabled, make user selection automatically
     if (this.autoplay.enabled && !this.gameRound.userInAction) {
       this.setUserSelection(this.getRandomSelection());
+    }
+  }
+
+  /**
+   * @param {Update} [update]
+   */
+  validateOpponentCall(update) {
+    // Demo follows happy path, so we expect only the following method.
+    const move = this.contract.calldata
+      .decode('RockPaperScissors', Methods.player1_move, update.call_data)
+      ?.at(-1)?.[0];
+    if (!Object.values(Selections).includes(move)) {
+      throw new Error(
+        `Invalid method called by initiator. Expected ${Methods.player1_move}`
+      );
+    } else if (this.gameRound.botSelection !== Selections.none) {
+      throw new Error(`Bot has already made a selection.`);
     }
   }
 
@@ -710,6 +754,8 @@ export class GameChannel {
    * @param {TransactionLog} message.data
    */
   handleMessage(message) {
+    if (message.type === 'Error')
+      throw new Error('BOT: ' + message.data.description);
     if (message.type === 'add_bot_transaction_log') {
       const txLog = message.data;
       let round =
@@ -864,13 +910,13 @@ export class GameChannel {
     this.channelId = savedState.channelId;
     this.channelRound = savedState.channelRound;
     this.fsmId = savedState.fsmId;
+    this.channelConfig = savedState.channelConfig;
+    await this.reconnectChannel();
     this.gameRound = savedState.gameRound;
     this.gameRound.stake = new BigNumber(savedState.gameRound.stake);
     setUserTransactions(savedState.transactionLogs.userTransactions);
     setBotTransactions(savedState.transactionLogs.botTransactions);
     setInfoLogs(savedState.transactionLogs.infoLogs);
-    this.channelConfig = savedState.channelConfig;
-    await this.reconnectChannel();
     await this.buildContract(
       savedState.contractCreationChannelRound,
       savedState.channelConfig?.initiatorId

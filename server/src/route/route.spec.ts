@@ -41,6 +41,7 @@ describe('/status', () => {
       channelsInitialized: 0,
       channelsOpened: 0,
       runningSince: expect.any(Number),
+      lastReset: expect.any(Number),
       env: {
         ...env.development,
       },
@@ -92,6 +93,7 @@ describe('/status', () => {
       channelsInitialized: 1,
       channelsOpened: 1,
       runningSince: expect.any(Number),
+      lastReset: expect.any(Number),
       env: {
         ...env.development,
       },
@@ -108,6 +110,44 @@ describe('/status', () => {
     expect(res.body.channelsOpenCurrently).toBe(0);
     expect(res.body.channelsOpened).toBe(1);
     expect(res.body.channelsInitialized).toBe(1);
+  });
+
+  it('resets stats', async () => {
+    const initialStatus = await supertest(app)
+      .get('/status')
+      .set('Accept', 'application/json');
+
+    const res = await supertest(app)
+      .post('/status')
+      .set('Accept', 'application/json')
+      .set(
+        'Authorization',
+        `Authorization ${Buffer.from(
+          ` :${process.env.BOT_SERVICE_STAT_RESET_PASSWORD}`,
+        ).toString('base64')}`,
+      );
+
+    expect(res.body.lastReset).toBeGreaterThan(
+      initialStatus.body.lastReset as number,
+    );
+    expect(res.body.runningSince).toBe(initialStatus.body.runningSince);
+    expect(res.body.env).toEqual(res.body.env);
+    expect(res.body.channelsOpenCurrently).toBe(0);
+    expect(res.body.channelsOpened).toBe(0);
+    expect(res.body.channelsInitialized).toBe(0);
+  });
+
+  it('fails to restart stats if not authenticated', async () => {
+    const res = await supertest(app)
+      .post('/status')
+      .set('Accept', 'application/json')
+      .set(
+        'Authorization',
+        `Authorization ${Buffer.from(' :test').toString('base64')}`,
+      );
+
+    expect(res.status).toBe(401);
+    expect(res.text).toBe('Access forbidden');
   });
 });
 

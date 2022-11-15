@@ -22,6 +22,16 @@
         background-color: var(--green);
       }
     }
+    &:disabled,
+    &[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+      .selection-icon {
+        &:hover {
+          background-color: unset;
+        }
+      }
+    }
   }
 }
 .rock-paper-scissors {

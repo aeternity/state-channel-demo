@@ -238,6 +238,15 @@
 .selections > .button .selection-icon:hover {
   background-color: var(--green);
 }
+.selections > .button:disabled,
+.selections > .button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.selections > .button:disabled .selection-icon:hover,
+.selections > .button[disabled] .selection-icon:hover {
+  background-color: unset;
+}
 
 .rock-paper-scissors {
   display: flex;
@@ -477,6 +486,11 @@
     margin-top: 5px;
     margin-bottom: 10px;
   }
+}
+.autoplay.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 
 .transactions {
@@ -923,6 +937,11 @@
     grid-template-rows: 120px var(--game-screen-height) var(
         --transactions-height
       );
+  }
+}
+@media (min-width: 1800px) and (max-height: 1200px) {
+  #app.container {
+    --game-screen-height: max(300px, 25%);
   }
 }
 
