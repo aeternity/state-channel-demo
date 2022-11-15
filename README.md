@@ -14,7 +14,7 @@ A demo use case of æternity's state channels. Users can play a thousand+ rounds
 3. [Channel Communication between Apps](#channel-communication-between-apps)
 4. [Helpful links](#helpful-links)
 
-**[Step by step channel guide](CHANNEL_USAGE.md)**
+**[Step by step channel guide](TUTORIAL.md)**
 
 > 💚 Interested in the vue.js version? You can find it [here](https://github.com/aeternity/state-channel-demo/tree/vuejs)
 
