@@ -238,6 +238,15 @@
 .selections > .button .selection-icon:hover {
   background-color: var(--green);
 }
+.selections > .button:disabled,
+.selections > .button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.selections > .button:disabled .selection-icon:hover,
+.selections > .button[disabled] .selection-icon:hover {
+  background-color: unset;
+}
 
 .rock-paper-scissors {
   display: flex;
@@ -477,6 +486,11 @@
     margin-top: 5px;
     margin-bottom: 10px;
   }
+}
+.autoplay.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 
 .transactions {

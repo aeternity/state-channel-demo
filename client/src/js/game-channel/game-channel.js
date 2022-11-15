@@ -9,7 +9,11 @@ import {
 import { BigNumber } from 'bignumber.js';
 import SHA from 'sha.js';
 import { contractSource } from '../contract/contract';
-import { getSavedState, storeGameState } from '../local-storage/local-storage';
+import {
+  getSavedState,
+  resetApp,
+  storeGameState,
+} from '../local-storage/local-storage';
 import {
   fundThroughFaucet,
   keypair,
@@ -40,7 +44,7 @@ import {
   addErrorLog,
   disableAutoplayView,
   setLogsNotificationVisible,
-  showStartOverBtn,
+  handleTimeout,
 } from '../dom-manipulation/dom-manipulation';
 import { getResultsLog } from '../utils/utils';
 
@@ -231,12 +235,7 @@ export class GameChannel {
 
     if (!(await this.checkifChannelIsStillOpen())) {
       localStorage.removeItem('gameState');
-      addErrorLog({
-        message:
-          'Channel was shutdown and can no longer be opened. Please start over.',
-        timestamp: Date.now(),
-      });
-      showStartOverBtn();
+      resetApp();
     }
 
     channel = await Channel.reconnect(
@@ -428,12 +427,15 @@ export class GameChannel {
           this.updateBalances();
         }
         if (status === 'closed' || status === 'died') {
-          addErrorLog({
-            message:
-              'Node triggered a timeout and the channel has died. Please start over.',
-            timestamp: Date.now(),
-          });
-          showStartOverBtn();
+          addInfoLog(
+            {
+              description:
+                'Bot solo-closed the channel because of user inactivity. Please start over.',
+              timestamp: Date.now(),
+            },
+            this.gameRound.index
+          );
+          handleTimeout();
         }
       });
 
@@ -908,13 +910,13 @@ export class GameChannel {
     this.channelId = savedState.channelId;
     this.channelRound = savedState.channelRound;
     this.fsmId = savedState.fsmId;
+    this.channelConfig = savedState.channelConfig;
+    await this.reconnectChannel();
     this.gameRound = savedState.gameRound;
     this.gameRound.stake = new BigNumber(savedState.gameRound.stake);
     setUserTransactions(savedState.transactionLogs.userTransactions);
     setBotTransactions(savedState.transactionLogs.botTransactions);
     setInfoLogs(savedState.transactionLogs.infoLogs);
-    this.channelConfig = savedState.channelConfig;
-    await this.reconnectChannel();
     await this.buildContract(
       savedState.contractCreationChannelRound,
       savedState.channelConfig?.initiatorId
