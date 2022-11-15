@@ -59,6 +59,9 @@ cd ../server && npm install
 
 ![Communication Diagram](./demo-communiation-diagram.jpg)
 
+
+## Introduction
+
 Except the funding & channel initialization phase (further explained below) where the demo accounts are funded and the required information for channel initialization is exchanged, the client application (frontend) and the server application (backend) always communicate via WebSocket to their configured node.
 
 The æternity node runs 3 processes for each State Channel that a user initializes:
@@ -75,7 +78,10 @@ Note:
 - While these 3 processes in the æternity node abstract a lot of the complexity from the developers and users, it is not required to use it. Depending on the use case, you might want to develop your own implementation to handle off-chain communication & updates (transactions). In any case you should make sure to keep track of on-chain State Channel updates by connecting to an æternity node to react in case the counterpart tries to cheat you.
 - The demo currently uses the same æternity node for both, the client application and the server application. The behavior is the same as if client and server application would both use their own node, which is how it is displayed in the communication diagram above.
 
-The **server application** (backend) can be seen as the game session manager. It is responsible for:
+
+## Server application / Backend
+
+The server application (backend) can be seen as the game session manager. It is responsible for:
 
 - **Funding Phase**
   - Accept requests from users (channel `responder`) that provide their:
@@ -101,6 +107,8 @@ The **server application** (backend) can be seen as the game session manager. It
       - Execute on-chain [`ChannelCloseSoloTx`](https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md#channel_close_solo)
       - Execute on-chain [`ChannelSettleTx`](https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md#channel_settle). Keep in mind that there's a window where the user can dispute the channel closure. This window is defined in the channel configuration with the `lockPeriod` option. In this demo, `0` is used as value in order to reduce delays.
 
+
+## Client application / Frontend
 
 On the other hand, the **client application** (frontend) is responsible to do the following:
 - Generate a new local player account
