@@ -62,7 +62,7 @@ function timeout(ms: number) {
 }
 
 /**
- * Returns the current status of the game session service
+ * Resets the current status counters of the game session service
  */
 export function resetServiceStatus() {
   serviceStatus.channelsOpenCurrently = 0;
