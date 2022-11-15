@@ -115,6 +115,20 @@ export function setMoveSelectionDisability(isDisabled) {
     ? 'none'
     : 'flex';
 }
+
+function disableSelectionButtons() {
+  document.querySelector('.selections').childNodes.forEach((child) => {
+    child.disabled = true;
+  });
+}
+
+function disableAutoplayBtn() {
+  document.querySelector(
+    ".toggle__button input[type='checkbox']"
+  ).disabled = true;
+  document.querySelector('.autoplay').classList.add('disabled');
+}
+
 /**
  * @param {BigNumber} amount
  */
@@ -582,10 +596,18 @@ function showChannelIsClosing() {
   setMoveStatus('bot', '');
 }
 
-export function showStartOverBtn() {
+function showStartOverBtn() {
   document.getElementById('end-game').textContent = 'Start Over';
   document.getElementById('end-game').onclick = resetApp;
   enableButton('end-game');
+}
+
+export function handleTimeout() {
+  showStartOverBtn();
+  setMoveStatus('bot', '');
+  hideSelections(); // hide any results that may be shown
+  disableSelectionButtons(); // disable selection buttons
+  disableAutoplayBtn(); // disable autoplay button
 }
 
 /**

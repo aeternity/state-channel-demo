@@ -17,9 +17,11 @@ const html = fs.readFileSync(
 const awaitDelay = (delay) =>
   new Promise((resolve) => setTimeout(resolve, delay));
 const pollForOutcome = async () => {
-  const statusText = document.querySelector('.status.title').textContent;
-  const outcomes = ['Bot wins!', 'You win!', "It's a draw!"];
-  const outcomeIsCorrect = outcomes.includes(statusText);
+  const statusText = document.querySelector('.game-screen').textContent;
+  const outcomes = ['win', 'draw'];
+  const outcomeIsCorrect = outcomes.some((outcome) =>
+    statusText.includes(outcome)
+  );
   if (!outcomeIsCorrect) {
     await awaitDelay(1000);
     return pollForOutcome();
