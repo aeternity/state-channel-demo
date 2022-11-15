@@ -70,11 +70,11 @@ axios.post(`https://faucet.aepps.com/account/${aeSdk.selectedAddress}`, {});
 [`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/sdk/sdk.service.ts#L57)
 
 ## Step 4: Sign transactions
-SDK sign functions are wrapped in demo code functions. These function names shall be declared as part of the channel configuration (see below). Sign functions are executed at each channel related transaction.
+SDK sign functions are wrapped in demo code functions. These function names shall be declared as part of the channel configuration (see below). Sign functions are executed at each channel-related transaction.
 
 These functions are proposed to reside in a file called `game-channel.service.js` for the client application and inside the `bot.service.js` file for the server application.
 
-The following utility functions implemented in demo shall be considered, since they are used in demo sign functions.
+The following utility functions implemented in the demo shall be considered, since they are used in demo sign functions.
 - [verifyContractBytecode](#verifyContractBytecode)
 - [buildContract](#buildContract)
 ```js
@@ -155,10 +155,10 @@ async function initiatorSignTx(
 [`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L584)
 
 ## Step 5: Initialize State Channel
-Regarding Channel Configuration options can be distinguished among mutual and role-dependent. Read more [here](https://github.com/aeternity/protocol/blob/master/node/api/channels_api_usage.md#channel-establishing-parameters)
+Channel Configuration options can be divided into mutual and role-dependent. Read more [here](https://github.com/aeternity/protocol/blob/master/node/api/channels_api_usage.md#channel-establishing-parameters)
 
-Since both parties share mutual configuration, it is advised client application to receive configuration information from server application.
-Moreover the server could store this information inside a file called `bot.constants.js`, while the client application can fetch this information and initialize the channel inside the `game-channel.service.js` file. Demo State Channel Configuration is presented below.
+Since both parties share a mutual configuration, it is advised that the client application receives configuration information from the server application.
+Moreover the server could store this information inside a file called `bot.constants.js`, while the client application can fetch this information and initialize the channel inside the `game-channel.service.js` file. The demo State Channel Configuration is presented below.
 
 ```js
 const MUTUAL_CHANNEL_CONFIGURATION = {
@@ -191,11 +191,11 @@ const initiatorChannel = Channel.initialize({
 [`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.constants.ts#L17)
 
 ## Step 6: Handle State Channel events
-Throughout the state channel lifecycle, we need to handle some events inside demo applications. Example of such events may be channel [status change](https://github.com/aeternity/aepp-sdk-js/blob/develop/src/channel/index.ts#L159) or channel state change.
+Throughout the state channel lifecycle, we need to handle some events inside demo applications. Examples of such events may be channel [status change](https://github.com/aeternity/aepp-sdk-js/blob/develop/src/channel/index.ts#L159) or channel state change.
 
-The folllowing can reside insde the `game-channel.service.js` and `bot.services.js` files for the client and server respectively
+The folllowing can reside insde the `game-channel.service.js` and `bot.services.js` files for the client and server respectively.
 
-The following utility functions implemented in demo shall be considered.
+The following utility functions implemented in the demo shall be considered.
 - [handleLastCallUpdate](#handleLastCallUpdate)
 
 ```js
@@ -248,10 +248,10 @@ export async function registerEvents(
 [`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L448)
 
 ## Step 7: Deploy contract on state channel
-In our demo, upon channel initialization the server application deploys the contract on the channel. Then, client application will receive an
+In our demo, upon channel initialization the server application deploys the contract on the channel. Then, the client application will receive an
 `OffChainNewContract` operation which will need to be co-signed.
 
-Demo code resides inside the `game-channel.service.js` file for the client, and inside the `contract.service.js` file for the server.
+The demo code resides inside the `game-channel.service.js` file for the client, and inside the `contract.service.js` file for the server.
 
 ```js
 const CONTRACT_CONFIGURATION = {
@@ -319,7 +319,7 @@ In cases where the channel state is saved locally (i.e. via `localStorage`) stat
 The following utility functions implemented in demo shall be considered.
 - [checkIfChannelIsStillOpen](#checkIfChannelIsStillOpen)
 
-Demo code resides inside the `game-channel.service.js` file for the client, and the `bot.service.js` file for the server.
+The demo code resides inside the `game-channel.service.js` file for the client, and the `bot.service.js` file for the server.
 
 ```js
 async function reconnectChannel(channel,savedState) {
@@ -343,10 +343,10 @@ async function reconnectChannel(channel,savedState) {
 [`State Channel Demo Server Code Reference`](https://github.com/aeternity/state-channel-demo/blob/develop/server/src/services/bot/bot.service.ts#L235)
 
 ## Step 10: Closing channel
-There are 2 scenarions
+There are 2 scenarios
 
 ### Channel is mutually closed
-For example the responder would like to close the channel.
+For example the responder would like to close the channel, and the channel is open with the initiator cooperating.
 
 In this case, the responder can simply execute `channel.shutdown`. The initiator will co-sign it and the channel will be closed.
 
@@ -361,7 +361,7 @@ responderChannel.shutdown(responderSignTx);
 ### Channel is in a `died` state and can be force-closed (solo-closed)
 In this case, a participant has to execute 2 on-chain transactions in order to close the channel. These are:
 - `channel_close_solo`
-- `channel_settle`
+- `channel_settle` (after the end of the `lock_period`, which is `0` in the demo configuration)
 
 This code can reside inside the `bot.service.js` file for the server 
 
@@ -517,15 +517,15 @@ In order to check  if a channel is still open, we can make a get request to  nod
   ## Deposit & Withdraw Actions
 Throughout the channel lifecycle, participants can deposit and withdraw funds from the channel.
 
-After the channel had been opened any of the participants can initiate a deposit/withdraw.
+After the channel had been opened either of the participants can initiate a deposit/withdraw.
 The process closely resembles the update. The most notable difference is that the
 transaction has been co-signed: it is `channel_deposit_tx` / `channel_withdraw_tx` 
-and after the procedure is finished - it is being posted on-chain.
-Any of the participants can initiate a deposit/withdraw. The only requirements are:
+and after the procedure is finished, it is posted on-chain.
+Either of the participants can initiate a deposit/withdraw. The only requirements are:
 - Channel is already opened
 - No off-chain update/deposit/withdrawal is currently being performed
 - Channel is not being closed or in a solo closing state
-- The deposit amount must be equal to or greater than zero, and cannot exceed
+- A withdrawal amount must be equal to or greater than zero, and cannot exceed
 the available balance on the channel (minus the `channel_reserve`)
 
 `deposit` and `withdraw` can accept 3 callbacks as the 3rd argument, for example:
@@ -537,13 +537,13 @@ await initiatorChannel.deposit(
 );
 ```
 Where 
-- After the other party had signed the deposit/withdraw transaction, the transaction is posted
-on-chain and `onOnChainTx` callback is called with on-chain transaction as first argument.
-- After computing transaction hash it can be tracked on the chain: entering the mempool,
+- After the other party has signed the deposit/withdraw transaction, the transaction is posted
+on-chain and the `onOnChainTx` callback is called with the on-chain transaction as first argument.
+- After computing the transaction hash it can be tracked on the chain: entering the mempool,
 block inclusion and a number of confirmations.
-- After the `minimum_depth` block confirmations `onOwnDepositLocked` callback is called
+- After the `minimum_depth` block confirmations, the `onOwnDepositLocked` callback is called
 (without any arguments).
-- When the other party had confirmed that the block height needed is reached
+- When the other party had confirmed that the block height needed is reached, its
 `onDepositLocked` callback is called (without any arguments).
 ### Deposit
 
