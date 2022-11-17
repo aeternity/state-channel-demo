@@ -23,6 +23,11 @@
 .selections > .button .selection-icon:hover {
   background-color: var(--green);
 }
+@media (max-width: 599px) {
+  .selections > .button .selection-icon:hover {
+    background-color: var(--gray);
+  }
+}
 .selections > .button:disabled,
 .selections > .button[disabled] {
   opacity: 0.5;
