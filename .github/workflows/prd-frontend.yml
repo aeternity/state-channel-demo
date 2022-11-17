@@ -59,7 +59,7 @@ jobs:
         with:
           images: aeternitybot/state-channel-demo-frontend
           tags: |
-            type=raw,value=main,enable=${{ endsWith(GitHub.ref, 'main') }}
+            type=raw,value=latest,enable=${{ endsWith(GitHub.ref, 'main') }}
             
       - name: Build and push docker image
         if: github.event_name == 'push'
@@ -105,7 +105,7 @@ jobs:
         uses: aeternity/ae-github-actions/argocd-pr-sync@v4
         with:
           git-sha: ${{ steps.git-sha.outputs.git-sha }}
-          url-prefix: main
+          url-prefix: latest
           env: ${{ env.ENV }}
           app: ${{ env.APP }}
     
