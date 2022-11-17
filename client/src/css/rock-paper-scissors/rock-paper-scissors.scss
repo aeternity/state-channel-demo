@@ -21,6 +21,11 @@
       &:hover {
         background-color: var(--green);
       }
+      @include for-phone-only {
+        &:hover {
+          background-color: var(--gray);
+        }
+      }
     }
     &:disabled,
     &[disabled] {

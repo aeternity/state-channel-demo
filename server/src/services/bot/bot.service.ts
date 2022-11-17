@@ -332,7 +332,8 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
  */
 async function respondToContractCall(gameSession: GameSession) {
   const callData = gameSession.contractState.callDataToSend;
-  if (gameSession.channelWrapper.round % 10 === 0) {
+  // clean after 20 game rounds
+  if (gameSession.channelWrapper.round % (20 * 3) === 0) {
     gameSession.channelWrapper.instance.cleanContractCalls().catch(() => {
       logger.warn(
         `${gameSession.participants.initiatorId} - failed to prune contract calls`,
@@ -372,8 +373,7 @@ async function respondToContractCall(gameSession: GameSession) {
     }
   } catch (e) {
     logger.warn(
-      `${
-        gameSession.participants.initiatorId
+      `${gameSession.participants.initiatorId
       } - Failed to respond to contract - ${e.toString()}`,
     );
   }
