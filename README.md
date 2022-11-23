@@ -1,5 +1,5 @@
 # State Channels
-State Channels allow entities to communicate with each other with the goal of collectively computing some function `f`. This `f` can be as simple as "send 0.1 coins every minute" or it could represent a decentralised exchange. These functions are, in our case, represented by Smart Contracts and just like any legal contract, we need an arbiter in case one party tries to act maliciously. This arbiter is the blockchain. 
+State Channels allow entities to communicate with each other with the goal of collectively computing some function `f`. This `f` can be any agreement expressed in Smart Contract logic and just like any legal contract, we need an arbiter in case one party tries to act maliciously. This arbiter is the blockchain. 
 For more information visit [here](https://github.com/aeternity/protocol/tree/master/channels)
 
 # State Channel Demo
@@ -134,17 +134,27 @@ You can find the steps at the complete [State Channel Tutorial Guide](TUTORIAL.m
 
 ## Is State Channel Demo provably fair?
 
-State Channels offer an innovative solution, where off-chain transactions are executed on top of blockchain technology. 
+Short answer: yes!
 
-The State Channel protocol inherently offers security to the demo!
+State Channels offer an innovative solution, where off-chain transactions are executed on top of blockchain technology. The State Channel protocol inherently offers security to the demo!
 
-State Channel transactions are ruled by co-signed Smart Contracts. Each party shall verify the content of a transaction before signing it. Those transactions can be off-chain such as `ContractCallTx`, `SpendTx` or on-chain such as `MutualCloseChannelTx`. All transactions need to be co-signed by both parties.
+State Channel transactions are ruled by co-signed Smart Contracts. Each party shall verify the content of a transaction before signing it. Off-chain transactions are performed by applying a list of operations on the off-chain state trees, then generating a new `ChannelOffchainTx` with an incremented round and updated state tree root hash. The updates themselves are not included in the `ChannelOffchainTx` for privacy reasons. The updates supported are:
 
-State Channel Demo Game verifies also counterparty transactions. At each transaction, calldata content is decoded utilizing æternity's [calldata lib](https://github.com/aeternity/aepp-calldata-js) which is integrated in the SDK. Each party can utilize this library in order to verify that the opponent is following the anticipated flow of the game (calling the right contract methods). If they accept opponent's transaction, then they can co-sign it, otherwise they will refuse to co-sign.
+- `update_transfer` (move amount from one channel participant to the other)
+- `update_deposit` (the offchain part of a ChannelDepositTx)
+- `update_withdrawal` (the offchain part of a ChannelWithdrawalTx)
+- `update_create_contract`
+  - showcased in demo
+- `update_call_contract`
+  - showcased in demo
+
+Note: Serializations described [here](https://github.com/aeternity/protocol/blob/master/serializations.md#table-of-object-tags) and [here](https://github.com/aeternity/protocol/blob/master/serializations.md#channel-off-chain-update)
+
+State Channel Demo Game verifies counterparty transactions. At each transaction, calldata content is decoded utilizing æternity's [calldata lib](https://github.com/aeternity/aepp-calldata-js) which is integrated in the SDK. Each party can utilize this library in order to verify that the opponent is following the anticipated flow of the game (calling the right contract methods). If they accept opponent's transaction, then they can co-sign it, otherwise they will refuse to co-sign.
 
 ## How do State Channel Demo Game transactions take place?
 
-As rock, paper, scissors is a turn based game and the move of each player needs to be co-signed by the opponent in order to be executed, the move of the initial player is hashed. The other party receives the off-chain transaction with calldata containing the hash, where he/she can **only** confirm the method the opponent called (e.g. opponent picked a move) but not see the actual move.
+Rock, paper, scissors expects the players to make their moves simultaneously, but in the State Channels implementation, it needs to be implemented as a turn based game, where the move of each player needs to be co-signed by the opponent in order to be executed. In order to prevent cheating, the move of the initial player is hashed. The other party receives the off-chain transaction with calldata containing the hash, where he/she can **only confirm** the function the opponent called (e.g. opponent picked a move) but not see the actual move.
 
 After co-signing the opponent's hashed move, the next required step is for the second player to make his/her move. This is achieved by calling the corresponding contract method which does not hash the pick (the opponent's move is already sealed in the channel's state tree).
 
@@ -155,7 +165,7 @@ Now that both players have picked, the contract requires from the first player t
 
 At first player's side, he/she can inspect the calldata (second player non-hashed move), examine the move the opponent picked and choose to make an inappropriate action (e.g. not revealing his move, because he/she found out that will lose after inspecting opponent's move). 
 
-`RockPaperScissors` Demo Smart Contract provides disputing methods to use on-chain with `ForceProgressTx`, such as [`player1_dispute_no_reveal`](https://github.com/aeternity/state-channel-demo/blob/develop/contract/contracts/RockPaperScissors.aes#L96) which can be used in cases where the first player did not reveal his move.
+The `RockPaperScissors` Demo Smart Contract provides disputing methods to use on-chain with `ForceProgressTx`, such as [`player1_dispute_no_reveal`](https://github.com/aeternity/state-channel-demo/blob/develop/contract/contracts/RockPaperScissors.aes#L96) which can be used in cases where the first player did not reveal his move.
 
 In that case, the second player can raise an on-chain dispute utilizing transaction force progress mechanism [ForceProgressTx`](https://github.com/aeternity/protocol/blob/master/channels/ON-CHAIN.md#forcing-progress). 
 
