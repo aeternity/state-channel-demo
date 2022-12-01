@@ -1,7 +1,7 @@
 import { buildTxHash, Channel } from '@aeternity/aepp-sdk';
 import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
-import contractSource from '@aeternity/rock-paper-scissors';
+import contractAci from './contract-aci.json';
 import logger from '../../logger';
 import { SignatureType, TransactionLog } from '../bot/bot.interface';
 import { sdk } from '../sdk';
@@ -19,10 +19,11 @@ import {
  */
 export async function getCompiledContract(onAccount: Encoded.AccountAddress) {
   const contract = await sdk.getContractInstance({
-    source: contractSource,
+    aci: contractAci,
+    bytecode: contractBytecode,
     onAccount,
   });
-  contract.bytecode = contractBytecode;
+  contract.bytecode ??= contractBytecode;
   return contract;
 }
 

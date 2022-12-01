@@ -265,7 +265,8 @@ const CONTRACT_CONFIGURATION = {
   abiVersion: 3,
 };
 const contract = await sdk.getContractInstance({
-    source: contractSource,
+    aci: contractAci,
+    bytecode: contractBytecode,
     onAccount,
 });
 await contract.compile();
@@ -424,9 +425,9 @@ async function buildContract(
   owner: Encoded.AccountAddress
 ) {
   const contract = await aeSdk.getContractInstance({
-    source: contractSource,
+    aci: contractAci,
+    bytecode: contractBytecode,
   });
-  await contract.compile();
   const contractAddress = encodeContractAddress(
     owner,
     contractCreationChannelRound

@@ -18,6 +18,7 @@ export async function init() {
   } else {
     await gameChannel.restoreGameState(savedState);
   }
+  await gameChannel.buildContract();
   handleAppMount(gameChannel);
 }
 

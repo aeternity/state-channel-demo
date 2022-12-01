@@ -8,7 +8,7 @@ import {
 } from '@aeternity/aepp-sdk';
 import { BigNumber } from 'bignumber.js';
 import SHA from 'sha.js';
-import { contractSource } from '../contract/contract';
+import { contractAci, contractBytecode } from '../contract/contract';
 import {
   getSavedState,
   resetApp,
@@ -86,8 +86,6 @@ export class GameChannel {
   isOpening = false;
   isFunded = false;
   shouldShowEndScreen = false;
-  timerStartTime = -1;
-  lastOffChainTxTime = -1;
   channelIsClosing = false;
   savedResultsOnChainTxHash = null;
   hasInsuffientBalance = false;
@@ -219,7 +217,6 @@ export class GameChannel {
           ? import.meta.env.VITE_WS_URL
           : this.channelConfig.url,
     });
-    this.timerStartTime = Date.now();
     this.registerEvents();
   }
 
@@ -313,10 +310,10 @@ export class GameChannel {
    * @param {Function} callback
    */
   async pollForContract(callback) {
-    if (this.contractAddress) {
+    if (this.contractAddress && this.contract && this.contract.bytecode) {
       callback();
     } else {
-      setTimeout(() => this.pollForContract(callback), 100);
+      setTimeout(() => this.pollForContract(callback), 1000);
     }
   }
 
@@ -328,7 +325,6 @@ export class GameChannel {
    * @returns {Promise<Encoded.Transaction>}
    */
   async signTx(tag, tx, options) {
-    let signedTx;
     const update = options?.updates?.[0];
     const txHash = buildTxHash(tx);
 
@@ -343,11 +339,11 @@ export class GameChannel {
         timestamp: Date.now(),
       };
       addUserTransaction(transactionLog, 0);
-      signedTx = await sdk.signTransaction(tx);
+      return await sdk.signTransaction(tx);
     }
 
     // if we are signing the close channel tx
-    if (tag === 'channel_close') {
+    else if (tag === 'channel_close') {
       const transactionLog = {
         id: txHash,
         description: 'User closed state channel connection',
@@ -356,49 +352,53 @@ export class GameChannel {
         timestamp: Date.now(),
       };
       addUserTransaction(transactionLog, this.gameRound.index);
-      signedTx = await sdk.signTransaction(tx);
+      return await sdk.signTransaction(tx);
     }
 
     // if we are signing a tx to reconnect to the channel
-    if (tag === 'reconnect') {
-      signedTx = await sdk.signTransaction(tx);
+    else if (tag === 'reconnect') {
+      return await sdk.signTransaction(tx);
     }
 
     // if we are signing a transaction that updates the contract
-    if (update?.op === 'OffChainNewContract' && update?.code && update?.owner) {
+    else if (
+      update?.op === 'OffChainNewContract' &&
+      update?.code &&
+      update?.owner
+    ) {
       const proposedBytecode = update.code;
       let isContractValid = false;
       try {
-        isContractValid = await verifyContractBytecode(proposedBytecode);
+        isContractValid = verifyContractBytecode(proposedBytecode);
       } catch (e) {
         console.warn('Compiler threw an error on verification', e);
       }
       if (!update.owner) throw new Error('Owner is not set');
       if (!isContractValid) throw new Error('Contract is not valid');
 
-      void this.buildContract(unpackTx(tx).tx.round, update.owner).then(() => {
-        this.logContractDeployment(txHash);
-        this.saveStateToLocalStorage();
-      });
-      signedTx = await sdk.signTransaction(tx);
+      this.logContractDeployment(txHash);
+      this.contractCreationChannelRound = unpackTx(tx).tx.round;
+      this.contractAddress = encodeContractAddress(
+        update.owner,
+        this.contractCreationChannelRound
+      );
+      this.saveStateToLocalStorage();
+
+      return await sdk.signTransaction(tx);
     }
 
     // for both user and bot calls to the contract
-    if (update?.op === 'OffChainCallContract') {
-      this.lastOffChainTxTime = Date.now();
+    else if (update?.op === 'OffChainCallContract') {
       // if we are signing a bot transaction that calls the contract
       if (update?.caller_id !== sdk.selectedAddress) {
         this.validateOpponentCall(update);
         this.gameRound.shouldHandleBotAction = true;
       }
-      signedTx = await sdk.signTransaction(tx);
-    }
-
-    // if no tx is signed, throw an error
-    if (!signedTx) {
+      return await sdk.signTransaction(tx);
+    } else {
+      // if no tx is signed, throw an error
       return Promise.reject().finally(this.handleUnknownTransaction);
     }
-    return signedTx;
   }
 
   handleUnknownTransaction() {
@@ -464,19 +464,11 @@ export class GameChannel {
     }
   }
 
-  /**
-   * @param {number} contractCreationChannelRound
-   * @param {Encoded.AccountAddress} owner
-   */
-  async buildContract(contractCreationChannelRound, owner) {
-    this.contractCreationChannelRound = contractCreationChannelRound;
+  async buildContract() {
     this.contract = await sdk.getContractInstance({
-      source: contractSource,
+      aci: contractAci,
+      bytecode: contractBytecode,
     });
-    this.contractAddress = encodeContractAddress(
-      owner,
-      contractCreationChannelRound
-    );
   }
 
   /**
@@ -495,7 +487,9 @@ export class GameChannel {
 
     // if autoplay is enabled, make user selection automatically
     if (this.autoplay.enabled && !this.gameRound.userInAction) {
-      this.setUserSelection(this.getRandomSelection());
+      void this.pollForContract(() =>
+        this.setUserSelection(this.getRandomSelection())
+      );
     }
   }
 
@@ -526,7 +520,7 @@ export class GameChannel {
     if (!channel) {
       throw new Error('Channel is not open');
     }
-    if (!this.contract || !this.contractAddress) {
+    if (!this.contract || !this.contractAddress || !this.contract.bytecode) {
       throw new Error('Contract is not set');
     }
     const result = await channel.callContract(
@@ -917,9 +911,10 @@ export class GameChannel {
     setUserTransactions(savedState.transactionLogs.userTransactions);
     setBotTransactions(savedState.transactionLogs.botTransactions);
     setInfoLogs(savedState.transactionLogs.infoLogs);
-    await this.buildContract(
-      savedState.contractCreationChannelRound,
-      savedState.channelConfig?.initiatorId
+    this.contractCreationChannelRound = savedState.contractCreationChannelRound;
+    this.contractAddress = encodeContractAddress(
+      savedState.channelConfig?.initiatorId,
+      savedState.contractCreationChannelRound
     );
     this.shouldHandleReconnection = true;
     await this.updateBalances();
