@@ -1,6 +1,5 @@
 FROM node:16.15.1 as builder 
 
-ARG NODE_ENV
 
 RUN mkdir -p /home/node/app/server
 WORKDIR /home/node/app/server
@@ -15,4 +14,6 @@ RUN cd ../contract && npm install
 RUN cd ../server && npm ci
 
 RUN npm run build
+
+ARG NODE_ENV
 CMD [ "node", "dist/src/index.js" ]
