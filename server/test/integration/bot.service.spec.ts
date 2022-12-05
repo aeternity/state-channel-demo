@@ -1,7 +1,8 @@
 import { buildContractId, Channel, unpackTx } from '@aeternity/aepp-sdk';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
-import contractSource from '@aeternity/rock-paper-scissors';
 import BigNumber from 'bignumber.js';
+import contractAci from '../../src/services/contract/contract-aci.json';
+import contractBytecode from '../../src/services/contract/contract.bytecode';
 import botService from '../../src/services/bot';
 import {
   CONTRACT_CONFIGURATION,
@@ -110,9 +111,9 @@ describe('botService', () => {
 
     // The responder needs a contract instance in order to call contract
     const contract = (await playerSdk.getContractInstance({
-      source: contractSource,
+      aci: contractAci,
+      bytecode: contractBytecode,
     })) as RockPaperScissorsContract;
-    await contract.compile();
 
     const responderId = await playerSdk.address();
     const responderConfig = await botService.generateGameSession(
@@ -149,7 +150,6 @@ describe('botService', () => {
     await waitForChannelReady(playerChannel);
     expect(playerChannel.status()).toBe('open');
 
-    // wait for contract to be deployed
     await timeout(4000);
 
     // build contract address
@@ -233,12 +233,6 @@ describe('botService', () => {
   it('bot solo closes channel when player leaves channel', async () => {
     const playerSdk = await getSdk();
 
-    // The responder needs a contract instance in order to call contract
-    const contract = (await playerSdk.getContractInstance({
-      source: contractSource,
-    })) as RockPaperScissorsContract;
-    await contract.compile();
-
     const responderId = await playerSdk.address();
     const responderConfig = await botService.generateGameSession(
       responderId,
@@ -256,8 +250,7 @@ describe('botService', () => {
     await waitForChannelReady(playerChannel);
     expect(playerChannel.status()).toBe('open');
 
-    // wait for contract to be deployed
-    await timeout(4000);
+    await timeout(2000);
 
     await playerChannel.leave();
 

@@ -122,11 +122,24 @@ function disableSelectionButtons() {
   });
 }
 
+function enableSelectionButtons() {
+  document.querySelector('.selections').childNodes.forEach((child) => {
+    child.disabled = false;
+  });
+}
+
 function disableAutoplayBtn() {
   document.querySelector(
     ".toggle__button input[type='checkbox']"
   ).disabled = true;
   document.querySelector('.autoplay').classList.add('disabled');
+}
+
+function enableAutoplayBtn() {
+  document.querySelector(
+    ".toggle__button input[type='checkbox']"
+  ).disabled = false;
+  document.querySelector('.autoplay').classList.remove('disabled');
 }
 
 /**
@@ -634,13 +647,14 @@ export function handleAppMount(gameChannel) {
       }
       gameChannel.gameRound.userInAction = true;
       const selection = Object.values(Selections)[index];
-      if (gameChannel.contractAddress)
-        await gameChannel.setUserSelection(selection);
-      else
-        await gameChannel.pollForContract(() =>
-          gameChannel.setUserSelection(selection)
-        );
+      gameChannel.pollForContract(() =>
+        gameChannel.setUserSelection(selection)
+      );
     });
+    // allow interactions
+    showElement('.selections');
+    enableSelectionButtons();
+    enableAutoplayBtn();
   });
 }
 
