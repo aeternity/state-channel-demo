@@ -116,22 +116,6 @@ export async function getNextCallDataFromDecodedEvents(
 }
 
 /**
- * extracts latest callData from last called method
- * and generates returns next callData to be sent
- */
-export function getNextCallDataFromPreviousMethod(
-  method: Methods,
-  contract: ContractInstance,
-) {
-  switch (method) {
-    case Methods.provide_hash:
-      return getRandomMoveCallData(contract);
-    default:
-      return null;
-  }
-}
-
-/**
  * Finds called method from given callData
  */
 export function findMethodFromCallData(
