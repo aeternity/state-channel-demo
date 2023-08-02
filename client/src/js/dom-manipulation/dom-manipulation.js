@@ -159,11 +159,11 @@ export function setGameRoundIndex(index) {
 }
 
 /**
- * @param {Encoded.AccountAddress} responderId
+ * @param {Encoded.Channel} channelId
  */
-export function setCheckExplorerBtnUrl(responderId) {
+export function setCheckExplorerBtnUrl(channelId) {
   const checkExplorerBtn = document.querySelector('#check-explorer-btn');
-  checkExplorerBtn.href = `https://testnet.aenalytics.org/accounts/${responderId}`;
+  checkExplorerBtn.href = `https://testnet.aescan.io/state-channels/${channelId}`;
   checkExplorerBtn.classList.remove('disabled');
 }
 
@@ -177,8 +177,8 @@ export function setExplorerLinks(responderId, initiatorId) {
 
   userAddress.textContent = formatId(responderId);
   botAddress.textContent = formatId(initiatorId);
-  userAddress.href = `https://explorer.testnet.aeternity.io/account/${responderId}`;
-  botAddress.href = `https://explorer.testnet.aeternity.io/account/${initiatorId}`;
+  userAddress.href = `https://testnet.aescan.io/accounts/${responderId}`;
+  botAddress.href = `https://testnet.aescan.io/accounts/${initiatorId}`;
 }
 
 /**
@@ -670,7 +670,7 @@ export function handleSharedResults() {
       .then((tx) => {
         resultsFromSharedLink = JSON.parse(decode(tx.tx.payload).toString());
         renderEndScreen(resultsFromSharedLink);
-        setCheckExplorerBtnUrl(resultsFromSharedLink.responderId);
+        setCheckExplorerBtnUrl(resultsFromSharedLink.channelId);
         hideElement('#end-game');
       })
       .catch((e) => {
