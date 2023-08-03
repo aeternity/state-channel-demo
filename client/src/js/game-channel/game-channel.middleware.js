@@ -52,7 +52,7 @@ export function DomMiddleware(gameChannel) {
       DOMUpdate.setParticipantBalance('bot', gameChannel.balances.bot);
     }
     DOMUpdate.setGameRoundIndex(gameChannel.gameRound.index);
-    DOMUpdate.setCheckExplorerBtnUrl(gameChannel.channelConfig.responderId);
+    DOMUpdate.setCheckExplorerBtnUrl(gameChannel.channelId);
     DOMUpdate.setExplorerLinks(
       gameChannel.channelConfig.responderId,
       gameChannel.channelConfig.initiatorId

@@ -23,7 +23,7 @@ cd contract && npm install
 cd ../client && npm install
 cd ../server && npm install
 ```
-
+The subsequent steps require [docker compose](https://docs.docker.com/compose/install) and [NodeJS >= 16](https://nodejs.org/en/download)
 > 💚 Interested in the vue.js version? You can find it [here](https://github.com/aeternity/state-channel-demo/tree/vuejs)
 
 # Running options

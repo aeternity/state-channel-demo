@@ -775,6 +775,8 @@ export class GameChannel {
       rounds: this.gameRound.index,
       isLastRoundCompleted: this.gameRound.isCompleted,
       earnings: earnings,
+      channelId: this.channelId,
+      initiatorId: this.channelConfig.initiatorId,
       responderId: this.channelConfig.responderId,
     };
 

@@ -62,7 +62,7 @@ jobs:
         id: git-sha
         shell: bash
         run: |
-          echo "::set-output name=git-sha::$(git rev-parse --short HEAD)"
+          echo GIT_SHA=$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
       
       - name: Build and push docker image
         if: github.event_name == 'pull_request' && github.event.action == 'opened' || github.event.action == 'synchronize'
@@ -107,11 +107,17 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
         uses: aeternity/ae-github-actions/argocd-pr-sync@v4
         with:
-          git-sha: ${{ steps.git-sha.outputs.git-sha }}
+          git-sha: ${{ steps.git-sha.outputs.GIT_SHA }}
           url-prefix: pr-${{ env.PR_NUMBER }}
           env: ${{ env.ENV }}
           app: ${{ env.APP }}
 
+      - name: Check the initial PR deployment status before make a PR Sync.
+        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+        uses: aeternity/ae-github-actions/deploy-status@v7
+        with:
+          url: https://pr-${{ env.PR_NUMBER }}-${{ env.APP }}.${{ env.ENV }}.aepps.com
+          
       - name: Staging deploy
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
         uses: aeternity/ae-github-actions/argocd-deploy@v4
