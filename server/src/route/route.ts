@@ -42,7 +42,7 @@ route.post('/open', (async (req, res) => {
     }
 
     const config = await botService.generateGameSession(address, host, port);
-    logger.info({ config, reqBody }, 'channel initializated');
+    logger.info({ config, reqBody }, 'channel initialized');
     return res.send(config);
   } catch (e) {
     logger.error({ e, reqBody }, 'failed to open channel');

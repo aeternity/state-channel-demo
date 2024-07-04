@@ -1,6 +1,5 @@
 import { Channel } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
-import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import supertest from 'supertest';
 import { mockChannel } from '../../test';
@@ -8,7 +7,7 @@ import { app } from '../app';
 import env from '../env';
 import { MUTUAL_CHANNEL_CONFIGURATION } from '../services/bot';
 import { addGameSession, removeGameSession } from '../services/bot/bot.service';
-import { ContractService } from '../services/contract';
+import { ContractService, RockPaperScissorsContract } from '../services/contract';
 
 const config: {
   address: Encoded.AccountAddress;
@@ -61,7 +60,7 @@ describe('/status', () => {
     expect(initialRes.body.channelsOpenCurrently).toBe(0);
 
     deployContractSpy.mockResolvedValue({
-      instance: {} as ContractInstance,
+      instance: {} as RockPaperScissorsContract,
       address: 'ct_2fnsAzkXfvWKZJXx2bkPSWMtpBpfEXFhJpL9ThFLWMxQ7G9wag',
     });
     await addGameSession(

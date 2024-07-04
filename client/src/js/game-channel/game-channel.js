@@ -88,7 +88,7 @@ export class GameChannel {
   shouldShowEndScreen = false;
   channelIsClosing = false;
   savedResultsOnChainTxHash = null;
-  hasInsuffientBalance = false;
+  hasInsufficientBalance = false;
   shouldHandleReconnection = false;
   balances = {
     user: undefined,
@@ -207,48 +207,57 @@ export class GameChannel {
     this.isFunded = true;
 
     const shouldEnableDebug = !(import.meta.env.MODE === 'test');
+    const url =
+      import.meta.env.VITE_NODE_ENV == 'development'
+        ? import.meta.env.VITE_WS_URL
+        : this.channelConfig.url;
+
     channel = await Channel.initialize({
       ...this.channelConfig,
       debug: shouldEnableDebug,
       role: 'responder',
       sign: this.signTx.bind(this),
-      url:
-        import.meta.env.VITE_NODE_ENV == 'development'
-          ? import.meta.env.VITE_WS_URL
-          : this.channelConfig.url,
+      url,
     });
     this.registerEvents();
   }
 
-  async checkifChannelIsStillOpen() {
+  async checkIfChannelIsStillOpen() {
     const response = await fetch(`${NODE_URL}/v3/channels/${this.channelId}`);
     const result = await response.json();
     return !!result.id;
   }
 
+  // TODO - fix reconnecting channel
+  // After reconnecting channel closes almost immediately
   async reconnectChannel() {
     if (!this.channelConfig) throw new Error('Channel config is not set');
     this.isOpening = true;
 
-    if (!(await this.checkifChannelIsStillOpen())) {
+    if (!(await this.checkIfChannelIsStillOpen())) {
       localStorage.removeItem('gameState');
       resetApp();
     }
 
-    channel = await Channel.reconnect(
-      {
+    const shouldEnableDebug = !(import.meta.env.MODE === 'test');
+    const url =
+      import.meta.env.VITE_NODE_ENV == 'development'
+        ? import.meta.env.VITE_WS_URL
+        : this.channelConfig.url;
+
+    try {
+      channel = await Channel.initialize({
         ...this.channelConfig,
-        debug: !(import.meta.env.MODE === 'test'),
+        debug: shouldEnableDebug,
         role: 'responder',
         sign: this.signTx.bind(this),
-      },
-      {
-        channelId: this.channelConfig.existingChannelId,
-        role: 'responder',
-        pubkey: this.channelConfig?.responderId,
-        round: this.channelRound,
-      }
-    );
+        existingChannelId: this.channelConfig.existingChannelId,
+        existingFsmId: this.channelConfig.existingChannelId,
+        url,
+      });
+    } catch (e) {
+      console.error('Error reconnecting channel', e);
+    }
 
     setLogsNotificationVisible(true);
 
@@ -310,7 +319,11 @@ export class GameChannel {
    * @param {Function} callback
    */
   async pollForContract(callback) {
-    if (this.contractAddress && this.contract && this.contract.bytecode) {
+    if (
+      this.contractAddress &&
+      this.contract &&
+      this.contract.$options.bytecode
+    ) {
       callback();
     } else {
       setTimeout(() => this.pollForContract(callback), 1000);
@@ -333,7 +346,7 @@ export class GameChannel {
       const transactionLog = {
         id: txHash,
         description:
-          'User co-signed bot’s transaction to initialise a state channel connection',
+          'User co-signed bot’s transaction to initialize a state channel connection',
         signed: SignatureTypes.confirmed,
         onChain: true,
         timestamp: Date.now(),
@@ -377,7 +390,10 @@ export class GameChannel {
       if (!isContractValid) throw new Error('Contract is not valid');
 
       this.logContractDeployment(txHash);
-      this.contractCreationChannelRound = unpackTx(tx).tx.round;
+
+      const unpackedTx = unpackTx(tx);
+      const innerTx = unpackedTx?.tx ? unpackedTx.tx : unpackedTx;
+      this.contractCreationChannelRound = innerTx.round;
       this.contractAddress = encodeContractAddress(
         update.owner,
         this.contractCreationChannelRound
@@ -426,6 +442,10 @@ export class GameChannel {
           if (!this.fsmId) this.fsmId = channel.fsmId();
           this.updateBalances();
         }
+        if (status === 'disconnected') {
+          localStorage.removeItem('gameState');
+          resetApp();
+        }
         if (status === 'closed' || status === 'died') {
           addInfoLog(
             {
@@ -465,10 +485,14 @@ export class GameChannel {
   }
 
   async buildContract() {
-    this.contract = await sdk.getContractInstance({
-      aci: contractAci,
-      bytecode: contractBytecode,
-    });
+    try {
+      this.contract = await sdk.initializeContract({
+        aci: contractAci,
+        bytecode: contractBytecode,
+      });
+    } catch (e) {
+      console.warn(e);
+    }
   }
 
   /**
@@ -498,7 +522,7 @@ export class GameChannel {
    */
   validateOpponentCall(update) {
     // Demo follows happy path, so we expect only the following method.
-    const move = this.contract.calldata
+    const move = this.contract._calldata
       .decode('RockPaperScissors', Methods.player1_move, update.call_data)
       ?.at(-1)?.[0];
     if (!Object.values(Selections).includes(move)) {
@@ -520,13 +544,17 @@ export class GameChannel {
     if (!channel) {
       throw new Error('Channel is not open');
     }
-    if (!this.contract || !this.contractAddress || !this.contract.bytecode) {
+    if (
+      !this.contract ||
+      !this.contractAddress ||
+      !this.contract.$options.bytecode
+    ) {
       throw new Error('Contract is not set');
     }
     const result = await channel.callContract(
       {
         amount: amount ?? this.gameRound.stake,
-        callData: this.contract.calldata.encode(
+        callData: this.contract._calldata.encode(
           'RockPaperScissors',
           method,
           params
@@ -559,7 +587,7 @@ export class GameChannel {
     const balances = await channel.balances([initiatorId, responderId]);
     this.balances.user = new BigNumber(balances[responderId]);
     this.balances.bot = new BigNumber(balances[initiatorId]);
-    this.checkHasInsuffientBalance();
+    this.checkHasInsufficientBalance();
   }
 
   /**
@@ -639,7 +667,7 @@ export class GameChannel {
       this.channelRound
     );
 
-    const winner = this.contract.calldata.decode(
+    const winner = this.contract._calldata.decode(
       'RockPaperScissors',
       Methods.reveal,
       result.returnValue
@@ -683,7 +711,7 @@ export class GameChannel {
       await channel.cleanContractCalls();
     }
 
-    if (!this.hasInsuffientBalance) this.startNewRound();
+    if (!this.hasInsufficientBalance) this.startNewRound();
   }
 
   startNewRound() {
@@ -727,7 +755,7 @@ export class GameChannel {
     }
   }
 
-  checkHasInsuffientBalance() {
+  checkHasInsufficientBalance() {
     if (!this.channelConfig) throw new Error('Channel config is not set');
     if (!this.balances.user) throw new Error('User balance is not set');
     if (!this.balances.bot) throw new Error('Bot balance is not set');
@@ -736,14 +764,14 @@ export class GameChannel {
     const channelReserve = new BigNumber(
       this.channelConfig.channelReserve ?? 0
     );
-    this.hasInsuffientBalance =
+    this.hasInsufficientBalance =
       userBalance.minus(this.gameRound.stake).isLessThan(channelReserve) ||
       botBalance.minus(this.gameRound.stake).isLessThan(channelReserve);
-    return this.hasInsuffientBalance;
+    return this.hasInsufficientBalance;
   }
 
   /**
-   * @param {Obect} message
+   * @param {Object} message
    * @param {string} message.type
    * @param {TransactionLog} message.data
    */
@@ -863,7 +891,7 @@ export class GameChannel {
     try {
       const lastContractCall = await this.fetchLastContractCall();
       if (!lastContractCall) return;
-      const decodedCall = this.contract?.decodeEvents(lastContractCall.log);
+      const decodedCall = this.contract?.$decodeEvents(lastContractCall.log);
 
       if (decodedCall?.[0]?.name === ContractEvents.player1Moved) {
         this.setBotSelection(decodedCall[0].args?.[0]);
@@ -882,7 +910,7 @@ export class GameChannel {
         !this.gameRound.isCompleted
       ) {
         return this.handleRoundResult();
-      } else if (this.gameRound.isCompleted && !this.hasInsuffientBalance) {
+      } else if (this.gameRound.isCompleted && !this.hasInsufficientBalance) {
         this.startNewRound();
       }
     } catch (e) {
@@ -900,7 +928,7 @@ export class GameChannel {
    * @param {StoredState} savedState
    */
   async restoreGameState(savedState) {
-    await sdk.addAccount(new MemoryAccount({ keypair: savedState.keypair }), {
+    sdk.addAccount(new MemoryAccount(savedState.keypair.secretKey), {
       select: true,
     });
     this.channelId = savedState.channelId;

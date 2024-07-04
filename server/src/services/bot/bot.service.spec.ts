@@ -40,7 +40,7 @@ describe('botService', () => {
 
   beforeAll(async () => {
     const keypair = generateKeyPair();
-    await sdk.addAccount(new MemoryAccount({ keypair }), { select: true });
+    sdk.addAccount(new MemoryAccount(keypair.secretKey), { select: true });
     channelConfig.initiatorId = keypair.publicKey;
   });
 

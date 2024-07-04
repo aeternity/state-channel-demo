@@ -27,7 +27,7 @@ At each application we need at first to initialize an sdk instance. It is advise
 ### Client side (Similar to Server side)
 ```js
 const aeSdk = new AeSdk({
-  compilerUrl: <COMPILER_URL>,
+  onCompiler: new CompilerHttp(<COMPILER_URL>),
   nodes: [
     {
       name: 'aeNode',
@@ -50,7 +50,7 @@ In the server application it is proposed to reside in a file that handles the ge
 ### Client side (Similar to Server side)
 ```js
  const keypair = generateKeyPair();
- await aeSdk.addAccount(new MemoryAccount({ keypair }, {
+ await aeSdk.addAccount(new MemoryAccount(secretKey, {
       select: true,
  }));
 ```
@@ -264,7 +264,7 @@ const CONTRACT_CONFIGURATION = {
   vmVersion: 5,
   abiVersion: 3,
 };
-const contract = await sdk.getContractInstance({
+const contract = await sdk.initializeContract({
     aci: contractAci,
     bytecode: contractBytecode,
     onAccount,
@@ -273,8 +273,8 @@ await contract.compile();
 await initiatorChannel.createContract(
   {
     ...CONTRACT_CONFIGURATION,
-    code: contract.bytecode,
-    callData: contract.calldata.encode(CONTRACT_NAME, Methods.init, [
+    code: contract.$options.bytecode,
+    callData: contract._calldata.encode(CONTRACT_NAME, Methods.init, [
       ...Object.values(config),
     ]) as Encoded.ContractBytearray,
   },
@@ -295,7 +295,7 @@ async callContract(method, params, amount) {
   const result = await channel.callContract(
     {
       amount: amount ?? '<STAKE_AMOUNT>',
-      callData: this.contract.calldata.encode(
+      callData: this.contract._calldata.encode(
         '<CONTRACT_NAME>',
         method,
         params
@@ -378,7 +378,7 @@ This code can reside inside the `bot.service.js` file for the server
   })
   
   const channelState = await channel.state();
-  const lastSignedTx = channelState.signedTx;
+  const lastSignedTx = buildTx(channelState.signedTx);
 
   const closeSoloTx = await aeSdk.buildTx(Tag.ChannelCloseSoloTx, {
     channelId,
@@ -424,7 +424,7 @@ async function buildContract(
   contractCreationChannelRound: number,
   owner: Encoded.AccountAddress
 ) {
-  const contract = await aeSdk.getContractInstance({
+  const contract = await aeSdk.initializeContract({
     aci: contractAci,
     bytecode: contractBytecode,
   });
@@ -456,7 +456,7 @@ export async function handleLastCallUpdate() {
     return null;
   }
 
-  const decodedEvents = channel.decodeEvents(
+  const decodedEvents = channel.$decodeEvents(
     result.log,
   );
   /**
@@ -478,7 +478,7 @@ export async function handleLastCallUpdate() {
 
 
   // here you can use a switch statement and make your next move based on events
-  const callDataToBeSent = contract.calldata.encode(
+  const callDataToBeSent = contract._calldata.encode(
     CONTRACT_NAME, 
     '<METHOD_NAME>', 
     [...'<METHOD_ARGUMENTS>']
@@ -508,7 +508,7 @@ In order to check  if a channel is still open, we can make a get request to  nod
 ## [`validateOpponentCall`](https://github.com/aeternity/state-channel-demo/blob/develop/client/src/js/game-channel/game-channel.js#L500)
 ```js
   validateOpponentCall(update) {
-    const decodedValue = this.contract.calldata
+    const decodedValue = this.contract._calldata
       .decode('<CONTRACT_NAME>', '<EXPECTE_CONTRACT_METHOD>', update.call_data);
     if (decodedValue !== 'EXPECTED_VALUE') {
       throw new Error(`Invalid method`);

@@ -22,8 +22,9 @@
     ]
   },
   "dependencies": {
-    "@aeternity/aepp-sdk": "^12.1.1",
+    "@aeternity/aepp-sdk": "^13.3.2",
     "@aeternity/rock-paper-scissors": "../contract",
+    "buffer": "^6.0.3",
     "sha.js": "^2.4.11",
     "vite": "^3.1.6"
   },
@@ -41,6 +42,6 @@
     "lint-staged": "^13.0.2",
     "node-fetch": "^3.2.10",
     "prettier": "2.7.1",
-    "vitest": "^0.24.1"
+    "vitest": "^2.0.0"
   }
 }
