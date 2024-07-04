@@ -1,35 +1,21 @@
-{
-  "encodedAci": {
+[
+  { "namespace": { "name": "ListInternal", "typedefs": [] } },
+  { "namespace": { "name": "List", "typedefs": [] } },
+  { "namespace": { "name": "String", "typedefs": [] } },
+  { "namespace": { "name": "Option", "typedefs": [] } },
+  {
     "contract": {
       "event": {
         "variant": [
-          {
-            "Init": ["address", "address", "int"]
-          },
-          {
-            "Player0Won": ["address", "int"]
-          },
-          {
-            "Player1Won": ["address", "int"]
-          },
-          {
-            "Draw": ["int", "int", "string"]
-          },
-          {
-            "Player0ProvidedHash": ["hash", "int"]
-          },
-          {
-            "Player0Revealed": ["string"]
-          },
-          {
-            "Player1Moved": ["string", "int"]
-          },
-          {
-            "Player0WonDispute": ["address", "int"]
-          },
-          {
-            "Player1WonDispute": ["address", "int"]
-          }
+          { "Init": ["address", "address", "int"] },
+          { "Player0Won": ["address", "int"] },
+          { "Player1Won": ["address", "int"] },
+          { "Draw": ["int", "int", "string"] },
+          { "Player0ProvidedHash": ["hash", "int"] },
+          { "Player0Revealed": ["string"] },
+          { "Player1Moved": ["string", "int"] },
+          { "Player0WonDispute": ["address", "int"] },
+          { "Player1WonDispute": ["address", "int"] }
         ]
       },
       "functions": [
@@ -42,24 +28,10 @@
         },
         {
           "arguments": [
-            {
-              "name": "player0",
-              "type": "address"
-            },
-            {
-              "name": "player1",
-              "type": "address"
-            },
-            {
-              "name": "reaction_time",
-              "type": "int"
-            },
-            {
-              "name": "debug_timestamp",
-              "type": {
-                "option": ["int"]
-              }
-            }
+            { "name": "player0", "type": "address" },
+            { "name": "player1", "type": "address" },
+            { "name": "reaction_time", "type": "int" },
+            { "name": "debug_timestamp", "type": { "option": ["int"] } }
           ],
           "name": "init",
           "payable": false,
@@ -67,24 +39,14 @@
           "stateful": false
         },
         {
-          "arguments": [
-            {
-              "name": "hash",
-              "type": "hash"
-            }
-          ],
+          "arguments": [{ "name": "hash", "type": "hash" }],
           "name": "provide_hash",
           "payable": true,
           "returns": "unit",
           "stateful": true
         },
         {
-          "arguments": [
-            {
-              "name": "move_str",
-              "type": "string"
-            }
-          ],
+          "arguments": [{ "name": "move_str", "type": "string" }],
           "name": "player1_move",
           "payable": true,
           "returns": "unit",
@@ -92,20 +54,12 @@
         },
         {
           "arguments": [
-            {
-              "name": "key",
-              "type": "string"
-            },
-            {
-              "name": "move_str",
-              "type": "string"
-            }
+            { "name": "key", "type": "string" },
+            { "name": "move_str", "type": "string" }
           ],
           "name": "reveal",
           "payable": false,
-          "returns": {
-            "option": ["address"]
-          },
+          "returns": { "option": ["address"] },
           "stateful": true
         },
         {
@@ -124,14 +78,8 @@
         },
         {
           "arguments": [
-            {
-              "name": "key",
-              "type": "string"
-            },
-            {
-              "name": "move",
-              "type": "string"
-            }
+            { "name": "key", "type": "string" },
+            { "name": "move", "type": "string" }
           ],
           "name": "compute_hash",
           "payable": false,
@@ -139,12 +87,7 @@
           "stateful": false
         },
         {
-          "arguments": [
-            {
-              "name": "timestamp",
-              "type": "int"
-            }
-          ],
+          "arguments": [{ "name": "timestamp", "type": "int" }],
           "name": "set_timestamp",
           "payable": false,
           "returns": "unit",
@@ -156,92 +99,28 @@
       "payable": true,
       "state": {
         "record": [
-          {
-            "name": "player0",
-            "type": "address"
-          },
-          {
-            "name": "player1",
-            "type": "address"
-          },
-          {
-            "name": "hash",
-            "type": {
-              "option": ["hash"]
-            }
-          },
-          {
-            "name": "last_move_timestamp",
-            "type": "int"
-          },
+          { "name": "player0", "type": "address" },
+          { "name": "player1", "type": "address" },
+          { "name": "hash", "type": { "option": ["hash"] } },
+          { "name": "last_move_timestamp", "type": "int" },
           {
             "name": "player1_move",
-            "type": {
-              "option": ["RockPaperScissors.move"]
-            }
+            "type": { "option": ["RockPaperScissors.move"] }
           },
-          {
-            "name": "stake",
-            "type": "int"
-          },
-          {
-            "name": "reaction_time",
-            "type": "int"
-          },
-          {
-            "name": "debug_timestamp",
-            "type": {
-              "option": ["int"]
-            }
-          }
+          { "name": "stake", "type": "int" },
+          { "name": "reaction_time", "type": "int" },
+          { "name": "debug_timestamp", "type": { "option": ["int"] } }
         ]
       },
-      "type_defs": [
+      "typedefs": [
         {
           "name": "move",
           "typedef": {
-            "variant": [
-              {
-                "Paper": []
-              },
-              {
-                "Rock": []
-              },
-              {
-                "Scissors": []
-              }
-            ]
+            "variant": [{ "Paper": [] }, { "Rock": [] }, { "Scissors": [] }]
           },
           "vars": []
         }
       ]
     }
-  },
-  "externalEncodedAci": [
-    {
-      "namespace": {
-        "name": "ListInternal",
-        "type_defs": []
-      }
-    },
-    {
-      "namespace": {
-        "name": "List",
-        "type_defs": []
-      }
-    },
-    {
-      "namespace": {
-        "name": "String",
-        "type_defs": []
-      }
-    },
-    {
-      "namespace": {
-        "name": "Option",
-        "type_defs": []
-      }
-    }
-  ],
-  "interface": "\n\n\n\npayable main contract RockPaperScissors =\n  record state = {player0 : address,player1 : address,hash : option(hash),last_move_timestamp : int,player1_move : option(RockPaperScissors.move),stake : int,reaction_time : int,debug_timestamp : option(int)}\n  datatype event = Init(address, address, int) | Player0Won(address, int) | Player1Won(address, int) | Draw(int, int, string) | Player0ProvidedHash(hash, int) | Player0Revealed(string) | Player1Moved(string, int) | Player0WonDispute(address, int) | Player1WonDispute(address, int)\n  datatype move = Paper | Rock | Scissors\n  entrypoint get_state : () => RockPaperScissors.state\n  entrypoint init : (address, address, int, option(int)) => RockPaperScissors.state\n  payable stateful entrypoint provide_hash : (hash) => unit\n  payable stateful entrypoint player1_move : (string) => unit\n  stateful entrypoint reveal : (string, string) => option(address)\n  stateful entrypoint player1_dispute_no_reveal : () => unit\n  stateful entrypoint player0_dispute_no_move : () => unit\n  entrypoint compute_hash : (string, string) => hash\n  stateful entrypoint set_timestamp : (int) => unit\n"
-}
+  }
+]

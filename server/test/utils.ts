@@ -4,17 +4,19 @@ import {
   MemoryAccount,
   generateKeyPair,
   Channel,
+  CompilerHttp,
 } from '@aeternity/aepp-sdk';
+import { AciContractCallEncoder } from '@aeternity/aepp-calldata';
 import { setTimeout as awaitSetTimeout } from 'timers/promises';
 import Crypto from 'crypto';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { Moves } from '../src/services/contract';
+import { CONTRACT_NAME, Moves } from '../src/services/contract';
+import contractAci from '../src/services/contract/contract-aci.json';
 import {
   NETWORK_ID,
   COMPILER_URL,
   IGNORE_NODE_VERSION,
   NODE_URL,
-  sdk,
 } from '../src/services/sdk';
 
 export function timeout(ms: number) {
@@ -25,8 +27,7 @@ export function timeout(ms: number) {
 export const getSdk = async () => {
   const sdk = new AeSdk({
     networkId: NETWORK_ID,
-    compilerUrl: COMPILER_URL,
-    ignoreVersion: IGNORE_NODE_VERSION,
+    onCompiler: new CompilerHttp(COMPILER_URL),
     nodes: [
       {
         name: 'test',
@@ -35,7 +36,7 @@ export const getSdk = async () => {
     ],
   });
 
-  await sdk.addAccount(new MemoryAccount({ keypair: generateKeyPair() }), {
+  sdk.addAccount(new MemoryAccount(generateKeyPair().secretKey), {
     select: true,
   });
   return sdk;
@@ -68,10 +69,10 @@ export const createHash = async (move: Moves, key: string) => Crypto.createHash(
 
 export async function decodeCallData(
   calldata: Encoded.ContractBytearray,
-  bytecode: string,
+  fnName: string,
 ) {
-  return sdk.compilerApi.decodeCalldataBytecode({
-    calldata,
-    bytecode,
-  });
+  const decoder = new AciContractCallEncoder(contractAci);
+  const decodedData = decoder.decodeCall(CONTRACT_NAME, fnName, calldata);
+
+  return decodedData;
 }

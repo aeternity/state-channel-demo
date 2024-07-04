@@ -3,7 +3,7 @@ import env from '../../env';
 
 const ENVIRONMENT = process.env.NODE_ENV === 'test'
   ? 'development'
-  : (process.env.NODE_ENV as keyof typeof env);
+  : (process.env.NODE_ENV.trim() as keyof typeof env);
 
 if (!Object.keys(env).includes(ENVIRONMENT)) {
   throw new Error(`Environment ${ENVIRONMENT} is not defined in env/index.ts`);
@@ -21,10 +21,5 @@ export const IS_USING_LOCAL_NODE = !NODE_URL?.includes('testnet');
 const FAUCET_SECRET_KEY = ENVIRONMENT === 'development'
   && (ENVIRONMENT_CONFIG as typeof env['development'])?.FAUCET_SECRET_KEY;
 export const FAUCET_ACCOUNT = IS_USING_LOCAL_NODE
-  ? new MemoryAccount({
-    keypair: {
-      publicKey: FAUCET_PUBLIC_ADDRESS,
-      secretKey: FAUCET_SECRET_KEY,
-    },
-  })
+  ? new MemoryAccount(FAUCET_SECRET_KEY)
   : null;

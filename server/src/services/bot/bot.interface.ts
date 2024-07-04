@@ -1,11 +1,9 @@
 import { BigNumber } from 'bignumber.js';
 import { Channel } from '@aeternity/aepp-sdk';
-import {
-  ChannelState,
-  ChannelOptions,
-} from '@aeternity/aepp-sdk/es/channel/internal';
-import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
+import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
+import ChannelSpend from '@aeternity/aepp-sdk/es/channel/Spend';
+import { type RockPaperScissorsContract } from '../contract';
 import { Moves } from '../contract/contract.constants';
 import { ENVIRONMENT_CONFIG } from '../sdk';
 
@@ -15,8 +13,8 @@ export interface GameSession {
     fsmId: Encoded.Bytearray;
     channelId: Encoded.Channel;
     round: number;
-    poi?: Encoded.Poi;
-    state?: ChannelState;
+    poi?: Awaited<ReturnType<ChannelSpend['poi']>>;
+    state?: Awaited<ReturnType<Channel['state']>>;
     configuration: ChannelOptions;
     balances?: {
       responderAmount: BigNumber;
@@ -24,7 +22,7 @@ export interface GameSession {
     };
   };
   contractState?: {
-    instance?: ContractInstance;
+    instance?: RockPaperScissorsContract;
     callDataToSend?: Encoded.ContractBytearray;
     address?: Encoded.ContractAddress;
     lastCaller?: Encoded.AccountAddress;

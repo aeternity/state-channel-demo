@@ -96,7 +96,7 @@ export function updateOpenChannelTransactions(newId) {
   const userTxIdx = transactionLogs.userTransactions[0].findIndex(
     (transaction) =>
       transaction.description ===
-      'User co-signed bot’s transaction to initialise a state channel connection'
+      'User co-signed bot’s transaction to initialize a state channel connection'
   );
   if (userTxIdx !== -1)
     transactionLogs.userTransactions[0][userTxIdx].id = newId;
@@ -104,7 +104,7 @@ export function updateOpenChannelTransactions(newId) {
   const botTxIdx = transactionLogs.botTransactions[0].findIndex(
     (transaction) =>
       transaction.description ===
-      'Bot signed a transaction to initialise state channel connection'
+      'Bot signed a transaction to initialize state channel connection'
   );
   if (botTxIdx !== -1) transactionLogs.botTransactions[0][botTxIdx].id = newId;
 }
