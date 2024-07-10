@@ -1,27 +1,29 @@
-name: Frontend Staging Pipeline
+name: Pull Request Preview pipelines
 
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches:
+      - develop
+      - release/*
     types: [ opened, synchronize, closed ]
 
 env:
   PR_NUMBER: ${{ github.event.pull_request.number }}
   ENV: "stg"
-  APP: "state-channel-demo-frontend"
+  APP: "aescan"
 
-concurrency: state_channel_demo_staging_environment
+concurrency: aescan_staging_environment-${{ github.ref }}
 
 jobs:
   main:
-    runs-on: ubuntu-latest    
-    name: State Channel Demo Frontend build docker
+    runs-on: ubuntu-latest
+    name: Staging Pipeline Aescan Frontend
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-      
+
       - name: Set up Docker Buildx
         id: buildx
         # Use the action from the master, as we've seen some inconsistencies with @v1
@@ -51,37 +53,31 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: aeternitybot/state-channel-demo-frontend
+          images: aeternity/aescan
           tags: |
             type=ref,event=pr
-      
+
       - name: Get commit sha on PR Sync
-        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'  
+        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
         id: git-sha
         shell: bash
         run: |
           echo GIT_SHA=$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
-      
+
+      - name: Create dotenv
+        run: |
+          echo APP_VERSION=$(git describe --tags)-preview >> .env
+
       - name: Build and push docker image
         if: github.event_name == 'pull_request' && github.event.action == 'opened' || github.event.action == 'synchronize'
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./client/Dockerfile
+          file: Dockerfile
           push: true
+          build-args: BUILD_MODE=development
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VITE_NODE_ENV=staging
-            VITE_BOT_SERVICE_URL=https://pr-${{ env.PR_NUMBER }}-state-channel-demo-backend.stg.aepps.com
-            VITE_CLIENT_PORT=8000 
-            VITE_NODE_URL=https://testnet.aeternity.io
-            VITE_COMPILER_URL=https://compiler.aepps.com
-            VITE_WS_URL=wss://testnet.aeternity.io/channel 
-            VITE_FAUCET_PUBLIC_ADDRESS=ak_2iBPH7HUz3cSDVEUWiHg76MZJ6tZooVNBmmxcgVK6VV8KAE688
-            VITE_NETWORK_ID=ae_uat
-            VITE_RESPONDER_HOST=localhost
-            VITE_RESPONDER_PORT=3333
           cache-from: type=local,src=/tmp/.buildx-cache
           # Note the mode=max here
           # More: https://github.com/moby/buildkit#--export-cache-options
@@ -97,26 +93,26 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: aeternity/gitops-apps-aelabs.git
-          token: ${{ secrets.BOT_GITHUB_TOKEN }}
           ref: stg
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
           persist-credentials: false
           fetch-depth: 0
-      
+
+      - name: Chekc the initial PR deployment status before make a PR Sync.
+        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+        uses: aeternity/ae-github-actions/deploy-status@v7
+        with:
+          url: https://pr-${{ env.PR_NUMBER }}-${{ env.APP }}.${{ env.ENV }}.service.aepps.com
+
       - name: Staging PR Sync
         if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
-        uses: aeternity/ae-github-actions/argocd-pr-sync@v4
+        uses: aeternity/ae-github-actions/argocd-pr-sync@v5
         with:
           git-sha: ${{ steps.git-sha.outputs.GIT_SHA }}
           url-prefix: pr-${{ env.PR_NUMBER }}
           env: ${{ env.ENV }}
           app: ${{ env.APP }}
 
-      - name: Check the initial PR deployment status before make a PR Sync.
-        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
-        uses: aeternity/ae-github-actions/deploy-status@v7
-        with:
-          url: https://pr-${{ env.PR_NUMBER }}-${{ env.APP }}.${{ env.ENV }}.service.aepps.com
-          
       - name: Staging deploy
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
         uses: aeternity/ae-github-actions/argocd-deploy@v5
@@ -139,7 +135,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          msg: Deployed to https://pr-${{ env.PR_NUMBER }}-${{ env.APP }}.${{ env.ENV }}.service.aepps.com
+          msg: Deployed to https://pr-${{ env.PR_NUMBER }}-aescan.${{ env.ENV }}.service.aepps.com and https://pr-${{ env.PR_NUMBER }}-aescan-testnet.${{ env.ENV }}.service.aepps.com
           check_for_duplicate_msg: true
 
       - name: Push changes
