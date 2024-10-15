@@ -1,5 +1,5 @@
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
-import { AeSdk, Node } from '@aeternity/aepp-sdk';
+import { AeSdk, CompilerHttp, Node } from '@aeternity/aepp-sdk';
 import axios from 'axios';
 import BigNumber from 'bignumber.js';
 import { setTimeout as awaitSetTimeout } from 'timers/promises';
@@ -12,7 +12,7 @@ import {
 import logger from '../../logger';
 
 export const sdk = new AeSdk({
-  compilerUrl: COMPILER_URL,
+  onCompiler: new CompilerHttp(COMPILER_URL),
   nodes: [
     {
       name: 'testnet',
@@ -41,9 +41,7 @@ export const genesisFund = async (
   }
   isGenesisFunding = true;
   if (!IS_USING_LOCAL_NODE) throw new Error('genesis fund is only for local node usage');
-  await sdk.awaitHeight(2, {
-    onAccount: FAUCET_ACCOUNT,
-  });
+  await sdk.awaitHeight(2);
   await sdk.spend(10e18, address, {
     onAccount: FAUCET_ACCOUNT,
   });

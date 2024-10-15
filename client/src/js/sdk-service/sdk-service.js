@@ -2,8 +2,12 @@ import {
   AeSdk,
   Node,
   generateKeyPair,
+  encode,
   MemoryAccount,
+  CompilerHttp,
+  Encoding,
 } from '@aeternity/aepp-sdk';
+import { Buffer } from 'buffer';
 import { contractBytecode } from '../contract/contract';
 import { addUserTransaction } from '../terminal/terminal';
 
@@ -30,11 +34,11 @@ const FAUCET_PUBLIC_ADDRESS = import.meta.env.VITE_FAUCET_PUBLIC_ADDRESS;
 export async function refreshSdkAccount() {
   if (sdk.selectedAddress) sdk.removeAccount(sdk.selectedAddress);
   keypair = generateKeyPair();
-  const account = new MemoryAccount({ keypair });
-  await sdk.addAccount(account, { select: true });
+  const account = new MemoryAccount(keypair.secretKey);
+  sdk.addAccount(account, { select: true });
 
   const log = {
-    id: await account.address(),
+    id: account.address,
     description: 'User initialized a Memory Account',
     timestamp: Date.now(),
   };
@@ -44,8 +48,8 @@ export async function refreshSdkAccount() {
 export async function getNewSdk() {
   node = new Node(NODE_URL);
   const newSdk = new AeSdk({
+    onCompiler: new CompilerHttp(COMPILER_URL),
     nodes: [{ name: 'testnet', instance: node }],
-    compilerUrl: COMPILER_URL,
   });
   return newSdk;
 }
@@ -63,8 +67,9 @@ export async function returnCoinsToFaucet(payload) {
   const userBalance = await sdk.getBalance(sdk.selectedAddress);
   if (BigInt(userBalance) <= 0) return;
   try {
+    const encodedPayload = encode(Buffer.from(payload), Encoding.Bytearray);
     const result = await sdk.transferFunds(1, FAUCET_PUBLIC_ADDRESS, {
-      payload,
+      payload: encodedPayload,
     });
     return result.hash;
   } catch (e) {
@@ -98,12 +103,7 @@ export async function fundThroughFaucet(retries = 10) {
 
 // ! LOCAL NODE USAGE ONLY
 export const FAUCET_ACCOUNT = import.meta.env.VITE_FAUCET_SECRET_KEY
-  ? new MemoryAccount({
-      keypair: {
-        publicKey: FAUCET_PUBLIC_ADDRESS,
-        secretKey: import.meta.env.VITE_FAUCET_SECRET_KEY,
-      },
-    })
+  ? new MemoryAccount(import.meta.env.VITE_FAUCET_SECRET_KEY)
   : null;
 
 /**

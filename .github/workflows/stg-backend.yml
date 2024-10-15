@@ -32,7 +32,7 @@ jobs:
           install: true
 
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v4.0.2
         with:
           path: /tmp/.buildx-cache
           # Key is named differently to avoid collision
@@ -41,7 +41,7 @@ jobs:
             ${{ runner.os }}-${{ env.ENV }}-buildx
 
       - name: Log in to dockerhub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3.3.0
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
@@ -49,12 +49,10 @@ jobs:
       - name: Extract metadata for docker
         if: github.event_name == 'pull_request' && github.event.action == 'opened' || github.event.action == 'synchronize'
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5.5.1
         with:
           images: aeternitybot/state-channel-demo-backend
           tags: |
-            type=raw,value=latest,enable=${{ endsWith(GitHub.ref, 'main') }}
-            type=ref,event=tag
             type=ref,event=pr
       
       - name: Get commit sha on PR Sync
@@ -66,7 +64,7 @@ jobs:
       
       - name: Build and push docker image
         if: github.event_name == 'pull_request' && github.event.action == 'opened' || github.event.action == 'synchronize'
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6.7.0
         with:
           context: .
           file: ./server/Dockerfile
@@ -87,7 +85,7 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: aeternity/gitops-apps-aelabs.git
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
@@ -99,7 +97,7 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
         uses: aeternity/ae-github-actions/deploy-status@v7
         with:
-          url: https://pr-${{ env.PR_NUMBER }}-${{ env.APP }}.${{ env.ENV }}.aepps.com
+          url: https://pr-${{ env.PR_NUMBER }}-${{ env.APP }}.${{ env.ENV }}.service.aepps.com
           
       - name: Staging PR Sync
         if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
@@ -112,7 +110,7 @@ jobs:
 
       - name: Staging deploy
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
-        uses: aeternity/ae-github-actions/argocd-deploy@v4
+        uses: aeternity/ae-github-actions/argocd-deploy@v5
         with:
           url-prefix: pr-${{ env.PR_NUMBER }}
           env: ${{ env.ENV }}
@@ -120,7 +118,7 @@ jobs:
 
       - name: Staging undeploy
         if: github.event_name == 'pull_request' && github.event.action == 'closed' && startsWith(github.head_ref, 'release') != true
-        uses: aeternity/ae-github-actions/argocd-undeploy@v4
+        uses: aeternity/ae-github-actions/argocd-undeploy@v5
         with:
           url-prefix: pr-${{ env.PR_NUMBER }}
           env: ${{ env.ENV }}
@@ -132,7 +130,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          msg: Deployed to https://pr-${{ env.PR_NUMBER }}-${{ env.APP }}.${{ env.ENV }}.aepps.com
+          msg: Deployed to https://pr-${{ env.PR_NUMBER }}-${{ env.APP }}.${{ env.ENV }}.service.aepps.com
           check_for_duplicate_msg: true
       
       - name: Push changes

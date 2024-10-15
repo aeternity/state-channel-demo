@@ -1,6 +1,7 @@
+/* eslint-disable no-underscore-dangle */
 import { buildTxHash, Channel } from '@aeternity/aepp-sdk';
-import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
+import { type RockPaperScissors } from '@aeternity/rock-paper-scissors';
 import contractAci from './contract-aci.json';
 import logger from '../../logger';
 import { SignatureType, TransactionLog } from '../bot/bot.interface';
@@ -13,24 +14,26 @@ import {
   Methods,
   Moves,
 } from './contract.constants';
+import { RockPaperScissorsContract } from './contract.interface';
 
 /**
  * @category sdk-wrapper
  */
 export async function getCompiledContract(onAccount: Encoded.AccountAddress) {
-  const contract = await sdk.getContractInstance({
+  const account = sdk._resolveAccount(onAccount);
+  const contract = await sdk.initializeContract<RockPaperScissors>({
     aci: contractAci,
     bytecode: contractBytecode,
-    onAccount,
+    onAccount: account,
   });
-  contract.bytecode ??= contractBytecode;
+  contract.$options.bytecode ??= contractBytecode;
   return contract;
 }
 
 /**
  * Makes a random pick and returns calldata for `player1_move` method
  */
-export function getRandomMoveCallData(contract: ContractInstance): {
+export function getRandomMoveCallData(contract: RockPaperScissorsContract): {
   move: Moves;
   calldata: Encoded.ContractBytearray;
 } {
@@ -38,7 +41,7 @@ export function getRandomMoveCallData(contract: ContractInstance): {
   const move = Object.values(Moves)[randomMove];
   return {
     move,
-    calldata: contract.calldata.encode(CONTRACT_NAME, Methods.player1_move, [
+    calldata: contract._calldata.encode(CONTRACT_NAME, Methods.player1_move, [
       move,
     ]),
   };
@@ -63,10 +66,10 @@ export async function deployContract(
   const res = await channel.createContract(
     {
       ...CONTRACT_CONFIGURATION,
-      code: contract.bytecode,
-      callData: contract.calldata.encode(CONTRACT_NAME, Methods.init, [
+      code: contract.$options.bytecode,
+      callData: contract._calldata.encode(CONTRACT_NAME, Methods.init, [
         ...Object.values(config),
-      ]) as Encoded.ContractBytearray,
+      ]),
     },
     async (tx) => {
       const log: TransactionLog = {
@@ -101,8 +104,8 @@ export async function deployContract(
  * and generates returns next callData to be sent
  */
 export async function getNextCallDataFromDecodedEvents(
-  events: ReturnType<ContractInstance['decodeEvents']>,
-  contract: ContractInstance,
+  events: any,
+  contract: RockPaperScissorsContract,
 ) {
   if (events.length === 0) return null;
 
@@ -116,13 +119,29 @@ export async function getNextCallDataFromDecodedEvents(
 }
 
 /**
+ * extracts latest callData from last called method
+ * and generates returns next callData to be sent
+ */
+export function getNextCallDataFromPreviousMethod(
+  method: Methods,
+  contract: RockPaperScissorsContract,
+) {
+  switch (method) {
+    case Methods.provide_hash:
+      return getRandomMoveCallData(contract);
+    default:
+      return null;
+  }
+}
+
+/**
  * Finds called method from given callData
  */
 export function findMethodFromCallData(
   callData: Encoded.ContractBytearray,
-  contract: ContractInstance,
+  contract: RockPaperScissorsContract,
 ) {
   return Object.values(Methods).find(
-    (method) => !!contract.calldata.decode(CONTRACT_NAME, method, callData),
+    (method) => !!contract._calldata.decode(CONTRACT_NAME, method, callData),
   );
 }

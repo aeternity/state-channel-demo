@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-use-before-define */
-import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
 import {
+  buildTx,
   buildTxHash,
   Channel,
   generateKeyPair,
@@ -12,7 +12,6 @@ import {
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
-import { Keypair } from '@aeternity/aepp-sdk/es/account/Memory';
 import { ContractEvents, Methods } from '../contract/contract.constants';
 import logger from '../../logger';
 import {
@@ -30,6 +29,7 @@ import {
   IS_USING_LOCAL_NODE,
   sdk,
   Update,
+  Keypair,
 } from '../sdk';
 import { fundAccount, pollForAccount } from '../sdk/sdk.service';
 import { MUTUAL_CHANNEL_CONFIGURATION } from './bot.constants';
@@ -104,16 +104,19 @@ export async function addGameSession(
       reactionTime: 60000,
     },
   );
+
+  const poi = await channel.poi({
+    accounts: [configuration.initiatorId, configuration.responderId],
+  });
+
   gameSessionPool.set(configuration.initiatorId, {
     channelWrapper: {
       instance: channel,
       state: await channel.state(),
       round: 0,
-      fsmId: channel.fsmId() as Encoded.Bytearray,
-      channelId: channel.id() as Encoded.Channel,
-      poi: await channel.poi({
-        accounts: [configuration.initiatorId, configuration.responderId],
-      }),
+      fsmId: channel.fsmId(),
+      channelId: channel.id(),
+      poi,
       configuration,
       balances: {
         initiatorAmount: new BigNumber(balances[configuration.initiatorId]),
@@ -257,16 +260,16 @@ async function handleChannelPingTimeout(onAccount: Encoded.AccountAddress) {
       existingFsmId: gameSession.channelWrapper.fsmId,
       role: 'initiator',
     });
-    const state = await gameSession.channelWrapper.instance.state();
+    const signedTx = buildTx((await gameSession.channelWrapper.instance.state()).signedTx);
     await registerEvents(
       gameSession.channelWrapper.instance,
       gameSession.channelWrapper.configuration,
     );
-    const isLastContractCallhandled = await handleLastCallUpdate(
+    const isLastContractCallHandled = await handleLastCallUpdate(
       gameSession,
-      state.signedTx as Encoded.Transaction,
+      signedTx,
     );
-    if (!isLastContractCallhandled) {
+    if (!isLastContractCallHandled) {
       await handleDecodedEvents(gameSession);
     }
     logger.info(`channel with initiator ${onAccount} reconnected.`);
@@ -282,17 +285,18 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
 
   let channelId;
   try {
-    channelId = gameSession.channelWrapper.instance.id() as Encoded.Channel;
+    channelId = gameSession.channelWrapper.instance.id();
   } catch (e) {
     return handleChannelClose(onAccount);
   }
   try {
-    const closeSoloTx = await sdk.buildTx(Tag.ChannelCloseSoloTx, {
+    const signedTxHash = buildTx(gameSession.channelWrapper.state.signedTx);
+    const closeSoloTx = await sdk.buildTx({
+      tag: Tag.ChannelCloseSoloTx,
       channelId,
       fromId: onAccount,
-      // @ts-ignore
       poi: gameSession.channelWrapper.poi,
-      payload: gameSession.channelWrapper.state.signedTx,
+      payload: signedTxHash,
     });
 
     let signedTx = await sdk.signTransaction(closeSoloTx, {
@@ -303,8 +307,9 @@ async function handleChannelDied(onAccount: Encoded.AccountAddress) {
       onAccount,
     });
 
-    const settleTx = await sdk.buildTx(Tag.ChannelSettleTx, {
-      channelId: gameSession.channelWrapper.instance.id() as Encoded.Channel,
+    const settleTx = await sdk.buildTx({
+      tag: Tag.ChannelSettleTx,
+      channelId: gameSession.channelWrapper.instance.id(),
       fromId: onAccount,
       initiatorAmountFinal: gameSession.channelWrapper.balances.initiatorAmount,
       responderAmountFinal: gameSession.channelWrapper.balances.responderAmount,
@@ -406,8 +411,7 @@ export async function handleLastCallUpdate(
     return false;
   }
 
-  const decodedEvents = gameSession.contractState.instance.decodeEvents(
-    // @ts-expect-error ts mismatch
+  const decodedEvents = gameSession.contractState.instance.$decodeEvents(
     result.log,
   );
   await handleDecodedEvents(gameSession, decodedEvents);
@@ -422,10 +426,9 @@ export async function handleLastCallUpdate(
  */
 async function handleDecodedEvents(
   gameSession: GameSession,
-  decodedEvents: Awaited<ReturnType<ContractInstance['decodeEvents']>> = [],
+  decodedEvents: any = [],
 ) {
-  const tx = (await gameSession.channelWrapper.instance.state())
-    .signedTx as Encoded.Transaction;
+  const tx = buildTx((await gameSession.channelWrapper.instance.state()).signedTx);
 
   if (decodedEvents.length === 0) {
     decodedEvents.push({
@@ -501,7 +504,7 @@ export async function registerEvents(
     }
   });
 
-  channelInstance.on('stateChanged', (tx: Encoded.Transaction) => {
+  channelInstance.on('stateChanged', (tx: Encoded.Transaction | '') => {
     const gameSession = gameSessionPool.get(configuration.initiatorId);
     if (gameSession?.channelWrapper) {
       gameSession.channelWrapper.round = gameSession.channelWrapper.instance.round();
@@ -533,11 +536,13 @@ export async function registerEvents(
     }
 
     try {
-      const unpackedTx = unpackTx(tx);
-      // @ts-expect-error ts mismatch
-      const transaction = unpackedTx?.tx?.encodedTx;
-      if (transaction?.txType === Tag.ChannelOffChainTx) {
-        void handleLastCallUpdate(gameSession, tx);
+      if (tx) {
+        const unpackedTx = unpackTx(tx);
+        // @ts-expect-error - unpackTx returns a different type than expected
+        const transaction = unpackedTx?.tx ? unpackedTx?.tx?.encodedTx : unpackedTx.encodedTx;
+        if (transaction?.tag === Tag.ChannelOffChainTx) {
+          void handleLastCallUpdate(gameSession, tx);
+        }
       }
     } catch (e) {
       logger.warn(e);
@@ -546,7 +551,7 @@ export async function registerEvents(
 }
 
 /**
- * Genereates a keypair and funds it
+ * Generates a keypair and funds it
  * @param retries number of retries
  * @return keypair
  */
@@ -615,7 +620,7 @@ async function channelSign(
       // we are signing the channel open transaction
       openStateChannelTxLog = {
         description:
-          'Bot signed a transaction to initialise state channel connection',
+          'Bot signed a transaction to initialize state channel connection',
         id: buildTxHash(tx),
         onChain: true,
         signed: SignatureType.proposed,
@@ -665,7 +670,7 @@ export async function generateGameSession(
   playerNodePort: number,
 ) {
   const botKeyPair = await generateFundedKeypair();
-  await sdk.addAccount(new MemoryAccount({ keypair: botKeyPair }));
+  sdk.addAccount(new MemoryAccount(botKeyPair.secretKey));
 
   const initiatorId = botKeyPair.publicKey;
   const responderId = playerAddress;

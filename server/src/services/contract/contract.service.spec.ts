@@ -1,5 +1,5 @@
-import { ContractInstance } from '@aeternity/aepp-sdk/es/contract/aci';
-import { ContractService } from '.';
+import { MemoryAccount, generateKeyPair } from '@aeternity/aepp-sdk';
+import { ContractService, RockPaperScissorsContract } from '.';
 import { createHash, decodeCallData } from '../../../test';
 import { sdk } from '../sdk';
 import { ContractEvents, CONTRACT_NAME, Moves } from './contract.constants';
@@ -10,23 +10,26 @@ describe('ContractService', () => {
     expect(ContractService).toBeDefined();
   });
 
-  let contract: ContractInstance;
+  let contract: RockPaperScissorsContract;
 
   beforeAll(async () => {
+    if (!sdk.selectedAddress) {
+      const keypair = generateKeyPair();
+      sdk.addAccount(new MemoryAccount(keypair.secretKey), { select: true });
+    }
     contract = await getCompiledContract(sdk.selectedAddress);
   });
 
   describe('getRandomMoveCallData()', () => {
     it('should generate callData with either rock, paper, or scissors', async () => {
       const callData = ContractService.getRandomMoveCallData(contract).calldata;
-      const decodedCallData = await decodeCallData(callData, contract.bytecode);
+      const decodedCallData = await decodeCallData(callData, 'player1_move');
 
-      const { arguments: usedArguments } = decodedCallData;
+      const { args: usedArguments } = decodedCallData;
 
       expect(usedArguments.length).toBe(1);
-      expect(decodedCallData.function).toBe('player1_move');
       expect(
-        Object.values(Moves).includes(usedArguments[0].value as Moves),
+        Object.values(Moves).includes(usedArguments[0] as Moves),
       ).toBeTruthy();
     });
   });
@@ -51,16 +54,12 @@ describe('ContractService', () => {
         contract,
       );
 
-      const decodedCallData = await decodeCallData(
-        nextCallData,
-        contract.bytecode,
-      );
-      const { arguments: usedArguments } = decodedCallData;
+      const decodedCallData = await decodeCallData(nextCallData, 'player1_move');
+      const { args: usedArguments } = decodedCallData;
 
       expect(usedArguments.length).toBe(1);
-      expect(decodedCallData.function).toBe('player1_move');
       expect(
-        Object.values(Moves).includes(usedArguments[0].value as Moves),
+        Object.values(Moves).includes(usedArguments[0] as Moves),
       ).toBeTruthy();
     });
 

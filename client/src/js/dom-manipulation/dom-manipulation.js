@@ -482,7 +482,7 @@ export function showShareButtons(hash) {
   );
   const message =
     'I just played a game of rock-paper-scissors on the æternity blockchain.\n';
-  const twitterΜessage =
+  const twitterMessage =
     message.replace('æternity', '@aeternity') +
     '#Æ #æternity #AE #aeternityblockchain #web3 #blockchaintechnology\n';
 
@@ -495,7 +495,7 @@ export function showShareButtons(hash) {
   )}`;
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    twitterΜessage
+    twitterMessage
   )}&url=${encodeURIComponent(linkToShare)}`;
 
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(

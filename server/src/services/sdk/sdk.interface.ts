@@ -8,3 +8,8 @@ export interface Update {
   owner?: Encoded.AccountAddress;
   caller_id?: Encoded.AccountAddress;
 }
+
+export interface Keypair {
+  publicKey: `ak_${string}`;
+  secretKey: string;
+}

@@ -31,7 +31,7 @@ jobs:
           install: true
 
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
           # Key is named differently to avoid collision
@@ -47,21 +47,21 @@ jobs:
           echo GIT_SHA=$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
 
       - name: Log in to dockerhub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3.3.0
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
 
       - name: Extract metadata for docker
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5.5.1
         with:
           images: aeternitybot/state-channel-demo-frontend
           tags: |
             type=raw,value=develop,enable=${{ endsWith(GitHub.ref, 'develop') }}
 
       - name: Build and push docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6.7.0
         with:
           context: .
           file: ./client/Dockerfile
@@ -73,7 +73,7 @@ jobs:
             VITE_BOT_SERVICE_URL=https://develop-state-channel-demo-backend.dev.service.aepps.com
             VITE_CLIENT_PORT=8000 
             VITE_NODE_URL=https://testnet.aeternity.io
-            VITE_COMPILER_URL=https://compiler.aepps.com
+            VITE_COMPILER_URL=https://v7.compiler.aepps.com/
             VITE_WS_URL=wss://testnet.aeternity.io/channel 
             VITE_FAUCET_PUBLIC_ADDRESS=ak_2iBPH7HUz3cSDVEUWiHg76MZJ6tZooVNBmmxcgVK6VV8KAE688
             VITE_NETWORK_ID=ae_uat
