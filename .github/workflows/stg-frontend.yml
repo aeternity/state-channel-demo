@@ -111,7 +111,7 @@ jobs:
           env: ${{ env.ENV }}
           app: ${{ env.APP }}
 
-      - name: Chekc the initial PR deployment status before make a PR Sync.
+      - name: Check the initial PR deployment status before make a PR Sync.
         continue-on-error: true
         if: github.event_name == 'pull_request' || github.event.action != 'synchronize' || github.event.action == 'opened' || github.event.action == 'reopened'
         uses: aeternity/ae-github-actions/deploy-status@v7.4.0
