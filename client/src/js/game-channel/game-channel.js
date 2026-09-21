@@ -1,6 +1,7 @@
 import {
   buildTxHash,
   Channel,
+  Contract,
   encodeContractAddress,
   MemoryAccount,
   poll,
@@ -486,7 +487,8 @@ export class GameChannel {
 
   async buildContract() {
     try {
-      this.contract = await sdk.initializeContract({
+      this.contract = await Contract.initialize({
+        ...sdk.getContext(),
         aci: contractAci,
         bytecode: contractBytecode,
       });

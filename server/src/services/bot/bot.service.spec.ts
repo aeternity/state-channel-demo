@@ -1,4 +1,4 @@
-import { Channel, generateKeyPair, MemoryAccount } from '@aeternity/aepp-sdk';
+import { Channel, MemoryAccount } from '@aeternity/aepp-sdk';
 import { ChannelOptions } from '@aeternity/aepp-sdk/es/channel/internal';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
@@ -39,9 +39,9 @@ describe('botService', () => {
   };
 
   beforeAll(async () => {
-    const keypair = generateKeyPair();
-    sdk.addAccount(new MemoryAccount(keypair.secretKey), { select: true });
-    channelConfig.initiatorId = keypair.publicKey;
+    const account = MemoryAccount.generate();
+    sdk.addAccount(account, { select: true });
+    channelConfig.initiatorId = account.address;
   });
 
   mockChannel();

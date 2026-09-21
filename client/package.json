@@ -22,7 +22,7 @@
     ]
   },
   "dependencies": {
-    "@aeternity/aepp-sdk": "^13.3.2",
+    "@aeternity/aepp-sdk": "^15.0.0",
     "@aeternity/rock-paper-scissors": "../contract",
     "buffer": "^6.0.3",
     "sha.js": "^2.4.11",

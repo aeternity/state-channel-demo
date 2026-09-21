@@ -2,7 +2,6 @@ import {
   AeSdk,
   Node,
   MemoryAccount,
-  generateKeyPair,
   Channel,
   CompilerHttp,
 } from '@aeternity/aepp-sdk';
@@ -36,7 +35,7 @@ export const getSdk = async () => {
     ],
   });
 
-  sdk.addAccount(new MemoryAccount(generateKeyPair().secretKey), {
+  sdk.addAccount(MemoryAccount.generate(), {
     select: true,
   });
   return sdk;
