@@ -542,10 +542,8 @@ export async function registerEvents(
     try {
       if (tx) {
         const unpackedTx = unpackTx(tx);
-        // @ts-expect-error - unpackTx returns a different type than expected
-        const transaction = unpackedTx?.tx
-          ? unpackedTx?.tx?.encodedTx
-          : unpackedTx.encodedTx;
+        // @ts-expect-error - unpackTx's types omit variant-specific fields like `tx`/`encodedTx`
+        const transaction = unpackedTx.tx?.encodedTx ?? unpackedTx.encodedTx;
         if (transaction?.tag === Tag.ChannelOffChainTx) {
           void handleLastCallUpdate(gameSession, tx);
         }
