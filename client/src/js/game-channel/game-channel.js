@@ -673,6 +673,9 @@ export class GameChannel {
       channel.round() ?? this.channelRound
     );
 
+    // a stray/duplicate reaction can land on a round with no actual reveal call
+    if (result.returnType !== 'ok') return;
+
     const winner = this.contract._calldata.decode(
       'RockPaperScissors',
       Methods.reveal,
@@ -931,7 +934,11 @@ export class GameChannel {
         !this.gameRound.isCompleted
       ) {
         return this.handleRoundResult();
-      } else if (this.gameRound.isCompleted && !this.hasInsufficientBalance) {
+      } else if (
+        decodedCall?.length &&
+        this.gameRound.isCompleted &&
+        !this.hasInsufficientBalance
+      ) {
         this.startNewRound();
       }
     } catch (e) {
