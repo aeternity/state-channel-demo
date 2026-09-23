@@ -415,6 +415,7 @@ export async function handleLastCallUpdate(
 
   const decodedEvents = gameSession.contractState.instance.$decodeEvents(
     result.log,
+    { omitUnknown: true },
   );
   await handleDecodedEvents(gameSession, decodedEvents);
   return true;
