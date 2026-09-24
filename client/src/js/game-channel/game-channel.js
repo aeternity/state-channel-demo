@@ -657,6 +657,9 @@ export class GameChannel {
         0 // reveal method is not payable, so we use 0
       );
     } catch (e) {
+      // don't retry a reveal that actually went through and already
+      // completed the round via a concurrent stateChanged reaction
+      if (this.gameRound.isCompleted) return;
       return this.revealRoundResult();
     }
     return this.handleRoundResult();
