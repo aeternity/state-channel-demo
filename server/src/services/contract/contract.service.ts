@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { buildTxHash, Channel } from '@aeternity/aepp-sdk';
+import { buildTxHash, Channel, Contract } from '@aeternity/aepp-sdk';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import { type RockPaperScissors } from '@aeternity/rock-paper-scissors';
 import contractAci from './contract-aci.json';
@@ -21,7 +21,8 @@ import { RockPaperScissorsContract } from './contract.interface';
  */
 export async function getCompiledContract(onAccount: Encoded.AccountAddress) {
   const account = sdk._resolveAccount(onAccount);
-  const contract = await sdk.initializeContract<RockPaperScissors>({
+  const contract = await Contract.initialize<RockPaperScissors>({
+    ...sdk.getContext(),
     aci: contractAci,
     bytecode: contractBytecode,
     onAccount: account,

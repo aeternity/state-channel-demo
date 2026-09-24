@@ -11,5 +11,5 @@ export interface Update {
 
 export interface Keypair {
   publicKey: `ak_${string}`;
-  secretKey: string;
+  secretKey: `sk_${string}`;
 }

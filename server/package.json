@@ -29,7 +29,7 @@
   "license": "ISC",
   "dependencies": {
     "@aeternity/aepp-calldata": "^1.7.0",
-    "@aeternity/aepp-sdk": "^13.3.2",
+    "@aeternity/aepp-sdk": "^15.0.0",
     "@aeternity/rock-paper-scissors": "../contract",
     "axios": "^0.27.2",
     "bignumber.js": "^9.0.2",

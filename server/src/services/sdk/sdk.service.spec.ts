@@ -1,4 +1,4 @@
-import { generateKeyPair } from '@aeternity/aepp-sdk';
+import { MemoryAccount } from '@aeternity/aepp-sdk';
 import axios, { AxiosError } from 'axios';
 import { FAUCET_PUBLIC_ADDRESS } from './sdk.constants';
 import { fundAccount, fundThroughFaucet } from './sdk.service';
@@ -12,7 +12,7 @@ jest.mock('./sdk.constants', () => ({
 
 describe('fundThroughFaucet()', () => {
   const mockedAxios = axios as jest.Mocked<typeof axios>;
-  const accountMock = generateKeyPair().publicKey;
+  const accountMock = MemoryAccount.generate().address;
 
   afterEach(() => {
     mockedAxios.post.mockClear();

@@ -1,4 +1,4 @@
-import { MemoryAccount, generateKeyPair } from '@aeternity/aepp-sdk';
+import { MemoryAccount } from '@aeternity/aepp-sdk';
 import { ContractService, RockPaperScissorsContract } from '.';
 import { createHash, decodeCallData } from '../../../test';
 import { sdk } from '../sdk';
@@ -14,8 +14,7 @@ describe('ContractService', () => {
 
   beforeAll(async () => {
     if (!sdk.selectedAddress) {
-      const keypair = generateKeyPair();
-      sdk.addAccount(new MemoryAccount(keypair.secretKey), { select: true });
+      sdk.addAccount(MemoryAccount.generate(), { select: true });
     }
     contract = await getCompiledContract(sdk.selectedAddress);
   });
@@ -54,7 +53,10 @@ describe('ContractService', () => {
         contract,
       );
 
-      const decodedCallData = await decodeCallData(nextCallData, 'player1_move');
+      const decodedCallData = await decodeCallData(
+        nextCallData,
+        'player1_move',
+      );
       const { args: usedArguments } = decodedCallData;
 
       expect(usedArguments.length).toBe(1);

@@ -4,7 +4,6 @@ import {
   buildTx,
   buildTxHash,
   Channel,
-  generateKeyPair,
   MemoryAccount,
   Tag,
   unpackTx,
@@ -259,8 +258,10 @@ async function handleChannelPingTimeout(onAccount: Encoded.AccountAddress) {
       existingChannelId: gameSession.channelWrapper.channelId,
       existingFsmId: gameSession.channelWrapper.fsmId,
       role: 'initiator',
-    });
-    const signedTx = buildTx((await gameSession.channelWrapper.instance.state()).signedTx);
+    } as ChannelOptions);
+    const signedTx = buildTx(
+      (await gameSession.channelWrapper.instance.state()).signedTx,
+    );
     await registerEvents(
       gameSession.channelWrapper.instance,
       gameSession.channelWrapper.configuration,
@@ -378,7 +379,8 @@ async function respondToContractCall(gameSession: GameSession) {
     }
   } catch (e) {
     logger.warn(
-      `${gameSession.participants.initiatorId
+      `${
+        gameSession.participants.initiatorId
       } - Failed to respond to contract - ${e.toString()}`,
     );
   }
@@ -413,6 +415,7 @@ export async function handleLastCallUpdate(
 
   const decodedEvents = gameSession.contractState.instance.$decodeEvents(
     result.log,
+    { omitUnknown: true },
   );
   await handleDecodedEvents(gameSession, decodedEvents);
   return true;
@@ -428,7 +431,9 @@ async function handleDecodedEvents(
   gameSession: GameSession,
   decodedEvents: any = [],
 ) {
-  const tx = buildTx((await gameSession.channelWrapper.instance.state()).signedTx);
+  const tx = buildTx(
+    (await gameSession.channelWrapper.instance.state()).signedTx,
+  );
 
   if (decodedEvents.length === 0) {
     decodedEvents.push({
@@ -538,8 +543,8 @@ export async function registerEvents(
     try {
       if (tx) {
         const unpackedTx = unpackTx(tx);
-        // @ts-expect-error - unpackTx returns a different type than expected
-        const transaction = unpackedTx?.tx ? unpackedTx?.tx?.encodedTx : unpackedTx.encodedTx;
+        // @ts-expect-error - unpackTx's types omit variant-specific fields like `tx`/`encodedTx`
+        const transaction = unpackedTx.tx?.encodedTx ?? unpackedTx.encodedTx;
         if (transaction?.tag === Tag.ChannelOffChainTx) {
           void handleLastCallUpdate(gameSession, tx);
         }
@@ -556,7 +561,11 @@ export async function registerEvents(
  * @return keypair
  */
 async function generateFundedKeypair(retries = 20): Promise<Keypair> {
-  const botKeyPair = generateKeyPair();
+  const account = MemoryAccount.generate();
+  const botKeyPair: Keypair = {
+    publicKey: account.address,
+    secretKey: account.secretKey,
+  };
   try {
     await fundAccount(botKeyPair.publicKey);
     return botKeyPair;

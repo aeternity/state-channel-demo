@@ -1,6 +1,7 @@
 import {
   buildTxHash,
   Channel,
+  Contract,
   encodeContractAddress,
   MemoryAccount,
   poll,
@@ -112,6 +113,9 @@ export class GameChannel {
   contract = null;
   contractAddress = null;
   contractCreationChannelRound = -1;
+  // fallback for a known SDK/protocol quirk where $decodeEvents returns an empty
+  // array for the last contract call right after receiving it
+  lastBotMove = null;
 
   getStatus() {
     return channel.status();
@@ -407,7 +411,7 @@ export class GameChannel {
     else if (update?.op === 'OffChainCallContract') {
       // if we are signing a bot transaction that calls the contract
       if (update?.caller_id !== sdk.selectedAddress) {
-        this.validateOpponentCall(update);
+        this.lastBotMove = this.validateOpponentCall(update);
         this.gameRound.shouldHandleBotAction = true;
       }
       return await sdk.signTransaction(tx);
@@ -486,7 +490,8 @@ export class GameChannel {
 
   async buildContract() {
     try {
-      this.contract = await sdk.initializeContract({
+      this.contract = await Contract.initialize({
+        ...sdk.getContext(),
         aci: contractAci,
         bytecode: contractBytecode,
       });
@@ -532,6 +537,7 @@ export class GameChannel {
     } else if (this.gameRound.botSelection !== Selections.none) {
       throw new Error(`Bot has already made a selection.`);
     }
+    return move;
   }
 
   /**
@@ -651,6 +657,9 @@ export class GameChannel {
         0 // reveal method is not payable, so we use 0
       );
     } catch (e) {
+      // don't retry a reveal that actually went through and already
+      // completed the round via a concurrent stateChanged reaction
+      if (this.gameRound.isCompleted) return;
       return this.revealRoundResult();
     }
     return this.handleRoundResult();
@@ -664,8 +673,11 @@ export class GameChannel {
 
     const result = await this.getRoundContractCall(
       this.channelConfig.responderId,
-      this.channelRound
+      channel.round() ?? this.channelRound
     );
+
+    // a stray/duplicate reaction can land on a round with no actual reveal call
+    if (result.returnType !== 'ok') return;
 
     const winner = this.contract._calldata.decode(
       'RockPaperScissors',
@@ -891,7 +903,22 @@ export class GameChannel {
     try {
       const lastContractCall = await this.fetchLastContractCall();
       if (!lastContractCall) return;
-      const decodedCall = this.contract?.$decodeEvents(lastContractCall.log);
+      let decodedCall = this.contract?.$decodeEvents(lastContractCall.log, {
+        omitUnknown: true,
+      });
+
+      // known SDK/protocol quirk: decoding the just-received call's events can
+      // come back empty; fall back to the move already validated from calldata
+      if (
+        !decodedCall?.length &&
+        this.lastBotMove &&
+        this.gameRound.botSelection === Selections.none
+      ) {
+        decodedCall = [
+          { name: ContractEvents.player1Moved, args: [this.lastBotMove] },
+        ];
+      }
+      this.lastBotMove = null;
 
       if (decodedCall?.[0]?.name === ContractEvents.player1Moved) {
         this.setBotSelection(decodedCall[0].args?.[0]);
@@ -910,7 +937,11 @@ export class GameChannel {
         !this.gameRound.isCompleted
       ) {
         return this.handleRoundResult();
-      } else if (this.gameRound.isCompleted && !this.hasInsufficientBalance) {
+      } else if (
+        decodedCall?.length &&
+        this.gameRound.isCompleted &&
+        !this.hasInsufficientBalance
+      ) {
         this.startNewRound();
       }
     } catch (e) {

@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable no-underscore-dangle */
-import { buildContractId, Channel, unpackTx } from '@aeternity/aepp-sdk';
+import {
+  buildContractId,
+  Channel,
+  Contract,
+  unpackTx,
+} from '@aeternity/aepp-sdk';
 import { Encoded } from '@aeternity/aepp-sdk/es/utils/encoder';
 import BigNumber from 'bignumber.js';
 import { SignTx } from '@aeternity/aepp-sdk/es/channel/internal';
@@ -116,7 +121,8 @@ describe('botService', () => {
     const playerSdk = await getSdk();
 
     // The responder needs a contract instance in order to call contract
-    const contract = await playerSdk.initializeContract<RockPaperScissors>({
+    const contract = await Contract.initialize<RockPaperScissors>({
+      ...playerSdk.getContext(),
       aci: contractAci,
       bytecode: contractBytecode,
     });

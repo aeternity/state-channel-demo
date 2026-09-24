@@ -1,7 +1,7 @@
 import {
   AeSdk,
   Node,
-  generateKeyPair,
+  decode,
   encode,
   MemoryAccount,
   CompilerHttp,
@@ -33,8 +33,11 @@ const FAUCET_PUBLIC_ADDRESS = import.meta.env.VITE_FAUCET_PUBLIC_ADDRESS;
 
 export async function refreshSdkAccount() {
   if (sdk.selectedAddress) sdk.removeAccount(sdk.selectedAddress);
-  keypair = generateKeyPair();
-  const account = new MemoryAccount(keypair.secretKey);
+  const account = MemoryAccount.generate();
+  keypair = {
+    publicKey: decode(account.address),
+    secretKey: account.secretKey,
+  };
   sdk.addAccount(account, { select: true });
 
   const log = {
@@ -102,8 +105,17 @@ export async function fundThroughFaucet(retries = 10) {
 }
 
 // ! LOCAL NODE USAGE ONLY
+// VITE_FAUCET_SECRET_KEY is a legacy raw-hex secret key; MemoryAccount now requires sk_-prefixed keys.
 export const FAUCET_ACCOUNT = import.meta.env.VITE_FAUCET_SECRET_KEY
-  ? new MemoryAccount(import.meta.env.VITE_FAUCET_SECRET_KEY)
+  ? new MemoryAccount(
+      encode(
+        Buffer.from(import.meta.env.VITE_FAUCET_SECRET_KEY, 'hex').subarray(
+          0,
+          32
+        ),
+        Encoding.AccountSecretKey
+      )
+    )
   : null;
 
 /**
